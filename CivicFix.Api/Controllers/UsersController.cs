@@ -1,63 +1,90 @@
 using Microsoft.AspNetCore.Mvc;
-using CivicFix.Api.Data;
-using CivicFix.Api.Models;
 using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
+using CivicFix.Api.Models;
+using Dapper;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace CivicFix.Api.Controllers
 {
-    [ApiController]
+    [ApiController]//that contoles an missing email so you dont write error message
     [Route("api/[controller]")] //urls.py so path here api/Users/
-    public class UsersController : ControllerBase//userController is just inherting from controler lie inherting views functions
+    public class UsersController : ControllerBase //ControllerBase is inheriting ready made behavior like:ok(),unauthorized()
     {
-        private readonly AppDbContext _context;
+        private readonly SqlConnection _connection; // direct raw SQL connection Dapper use
+        private readonly IConfiguration _configuration; // reads appsettings.json
 
-        public UsersController(AppDbContext context)
+        public UsersController(SqlConnection connection, IConfiguration configuration) //so the UserController is created it run this method
         {
-            _context = context;
+            _connection = connection;  // the one object your controller uses to talk to the database.
+            _configuration = configuration;//the one object your controller uses to talk to the setting
         }
-    
 
-        [HttpPost("register")]//like urls.py file it became api/Users/register
-        public IActionResult Register([FromBody] User newUser)//isAction method return some web response (success, error, etc.)FromBody] User newUser means: take the incoming JSON data and automatically fill a User object with it, called newUser.
-        {
-            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(newUser.PasswordHash);
 
+
+        [HttpPost("register")] // api/Users/register
+        public async Task<IActionResult> Register([FromBody] User newUser) // [FromBody]the user that was registered well be under name newuser.fullname
+        {//async Task<IActionResult> dont let system frezze waiting for that one request
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(newUser.PasswordHash);// scramble the password before saving
             var sql = @"INSERT INTO Users (FullName, Email, PasswordHash, Role)
                         VALUES (@FullName, @Email, @PasswordHash, @Role)";
-
-            _context.Database.ExecuteSqlRaw(sql,
-                new SqlParameter("@FullName", newUser.FullName),
-                new SqlParameter("@Email", newUser.Email),
-                new SqlParameter("@PasswordHash", hashedPassword),
-                new SqlParameter("@Role", "Resident")
-            );
-
+            await _connection.ExecuteAsync(sql, new //// Dapper fills placeholders automatically from the anonymous object
+            {
+                newUser.FullName,
+                newUser.Email,
+                PasswordHash = hashedPassword,
+                Role = "Resident" // always Resident, never from user input
+            });
             return Ok("User registered successfully");
         }
 
-        [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequest request)//takes the incoming email + password and fills a LoginRequest object called request
-        {
-            var users = _context.Users
-                .FromSqlRaw("SELECT * FROM Users WHERE Email = {0}", request.Email)
-                .ToList();
 
-            if (users.Count == 0)
+
+        [HttpPost("login")]
+        // This method handles POST requests sent to: api/Users/login
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)//// "request" now holds the Email and Password that was sent in
+        {
+            var sql = "SELECT * FROM Users WHERE Email = @Email";
+            // Dapper runs the SQL and maps result directly into a User object
+            // returns null if no match found
+            var user = await _connection.QueryFirstOrDefaultAsync<User>(sql, new { request.Email });//user is assigned to database
+            if (user == null)//Nobody found with that email → stop here, reject with 401.
                 return Unauthorized("Invalid email or password");
 
-            var user = users[0];
-
-            bool passwordMatches = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
-
+            bool passwordMatches = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);//it scramble the entered pass to compare it with hashed
             if (!passwordMatches)
                 return Unauthorized("Invalid email or password");
+            // If it's false, reject here
 
-            return Ok(new { user.Id, user.FullName, user.Role });
+
+            // If we reach this line, both email and password were correct
+            // now generate JWT token
+            var claims = new[] //the info well be inside the token so that it doesnt go to database each time
+            {
+                new Claim("Id", user.Id.ToString()),
+                new Claim("FullName", user.FullName),
+                new Claim(ClaimTypes.Role, user.Role)
+            };
+
+            var key = new SymmetricSecurityKey(//Reads the secret key from appsettings convert it to bytes since jwt like this works wraps it to an object jwt understand
+                Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);//the seal if someone try to change tooken it brokes
+
+            var token = new JwtSecurityToken(//Assembles everything into one token object
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddHours(12),
+                signingCredentials: credentials
+            );
+
+            string tokenString = new JwtSecurityTokenHandler().WriteToken(token);//tokwn object is not a real text so we convet it to string(tokenString) to travel to frontend
+
+            // Send back the token plus basic user info to frontyend
+            return Ok(new { token = tokenString, user.Id, user.FullName, user.Role });
         }
-
-
-
-
     }
 }
