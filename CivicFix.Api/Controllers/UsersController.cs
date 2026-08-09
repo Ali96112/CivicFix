@@ -48,8 +48,9 @@ namespace CivicFix.Api.Controllers
         {
             var sql = "SELECT * FROM Users WHERE Email = @Email";
             // Dapper runs the SQL and maps result directly into a User object
-            // returns null if no match found
+            // returns null if no match found              QueryFirstOrDefaultAsync → returns one row or null
             var user = await _connection.QueryFirstOrDefaultAsync<User>(sql, new { request.Email });//user is assigned to database
+            //We used <User> because we knew exactly what shape was coming back — one row from the Users table, which maps perfectly to your User class
             if (user == null)//Nobody found with that email → stop here, reject with 401.
                 return Unauthorized("Invalid email or password");
 

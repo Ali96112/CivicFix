@@ -77,6 +77,48 @@ public async Task<IActionResult> CreateReport([FromBody] CreateReportRequest req
 }
 
 
+[HttpGet] // address: GET api/Reports
+public async Task<IActionResult> GetAllReports()//async: is for permession to use await function//task:C# would give a compile error — async methods must return a Task. You can't have async without wrapping the return type in Task<>.
+//<IActionResult> is that this function well give a web respone ok().
+{
+    var sql = @"
+        SELECT Reports.Id, Reports.Title, Reports.Description, Reports.Status, Reports.CreatedAt,
+               Reports.ReportedPhotoUrl, Reports.ResolvedPhotoUrl,
+               Reports.ReporterId, Reports.CategoryId, Reports.MunicipalityId, Reports.SecondaryMunicipalityId,
+               Categories.Name AS CategoryName,
+               Municipalities.Name AS MunicipalityName
+        FROM Reports
+        INNER JOIN Categories ON Reports.CategoryId = Categories.Id
+        INNER JOIN Municipalities ON Reports.MunicipalityId = Municipalities.Id
+        ORDER BY Reports.CreatedAt DESC";
+
+    // Dapper runs the SQL and maps each row into a dynamic object
+    var reports = await _connection.QueryAsync<dynamic>(sql); //QueryAsync → returns all matching rows as a list
+    //dynamic is used when the result can't be mapped to one single entity/class because it combines columns from multiple tables.
+    return Ok(reports);//// send back the full list as JSON to react
+}
+
+[HttpGet("{id}")] // address: GET api/Reports/1
+public async Task<IActionResult> GetReportById(int id)
+{
+    var sql = @"
+        SELECT Reports.Id, Reports.Title, Reports.Description, Reports.Status, Reports.CreatedAt,
+               Reports.ReportedPhotoUrl, Reports.ResolvedPhotoUrl,
+               Reports.ReporterId, Reports.CategoryId, Reports.MunicipalityId, Reports.SecondaryMunicipalityId,
+               Categories.Name AS CategoryName,
+               Municipalities.Name AS MunicipalityName
+        FROM Reports
+        INNER JOIN Categories ON Reports.CategoryId = Categories.Id
+        INNER JOIN Municipalities ON Reports.MunicipalityId = Municipalities.Id
+        WHERE Reports.Id = @Id"; // only get the report with this specific Id
+
+    var report = await _connection.QueryFirstOrDefaultAsync<dynamic>(sql, new { Id = id });
+
+    if (report == null)
+        return NotFound("Report not found."); // no report with that Id exists
+
+    return Ok(report); // send back the single report as JSON
+}
 
     }
 
