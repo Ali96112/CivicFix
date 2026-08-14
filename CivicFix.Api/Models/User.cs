@@ -1,20 +1,20 @@
-namespace CivicFix.Api.Models //is a way of grouping related codes .Models
+namespace CivicFix.Api.Models
 {
     public class User
     {
-        public int Id { get; set; }//EF core automatically well give id to be a primary key
-        public string FullName { get; set; }
-        public string Email { get; set; }
-        public string PasswordHash { get; set; }
-        public string? Role { get; set; }
-         public int? MunicipalityId { get; set; }
+        public int usr_Id { get; set; }
+        public string usr_FullName { get; set; }
+        public string usr_Email { get; set; }
+        public string usr_PasswordHash { get; set; }
+        public string usr_NationalId { get; set; }
+        public string? usr_Role { get; set; }
+        public int? usr_MunicipalityId { get; set; }
         public Municipality? Municipality { get; set; }
-
     }
 
     public class LoginRequest
     {
-        public string Email{get; set;}
-        public string Password{get; set;}
+        public string Email { get; set; }
+        public string Password { get; set; }
     }
 }

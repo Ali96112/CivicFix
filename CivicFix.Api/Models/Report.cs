@@ -4,27 +4,20 @@ namespace CivicFix.Api.Models
 {
     public class Report
     {
-        public int Id { get; set; }
-        public string Title { get; set; }
-        public string Description { get; set; }
-        public string Status { get; set; }
-        public DateTime CreatedAt { get; set; }
-
-        public string ReportedPhotoUrl { get; set; }  // photo uploaded when reporting
-        public string? ResolvedPhotoUrl { get; set; } // photo uploaded when resolved (optional until resolved)
-
-        public Point Location { get; set; } // GPS point captured from resident's device
-
-        public int ReporterId { get; set; }
+        public int rpt_Id { get; set; }
+        public string rpt_Title { get; set; }
+        public string rpt_Description { get; set; }
+        public string rpt_Status { get; set; }
+        public DateTime rpt_CreatedAt { get; set; }
+        public string rpt_ReportedPhotoUrl { get; set; }
+        public string? rpt_ResolvedPhotoUrl { get; set; }
+        public Point rpt_Location { get; set; }
+        public int rpt_ReporterId { get; set; }
         public User Reporter { get; set; }
-
-        public int MunicipalityId { get; set; }
-        public Municipality Municipality { get; set; }
-
-        public int CategoryId { get; set; }
+        public int rpt_CategoryId { get; set; }
         public Category Category { get; set; }
-        public int? SecondaryMunicipalityId { get; set; }
-        public Municipality? SecondaryMunicipality { get; set; }
-
+        public int rpt_AgreementCount { get; set; }      // total agreements
+        public int rpt_DisagreementCount { get; set; }   // total disagreements
+        public string rpt_Priority { get; set; }  // Low, Medium, High
     }
 }

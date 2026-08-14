@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CivicFix.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+11637c59e0fe2a01533903ae5b5bcddb5568a285")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cfea1dcce01549c79210f861f7bc349cbe5d24bf")]
 [assembly: System.Reflection.AssemblyProductAttribute("CivicFix.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CivicFix.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

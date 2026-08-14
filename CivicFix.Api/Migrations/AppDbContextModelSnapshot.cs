@@ -37,7 +37,7 @@ namespace CivicFix.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("CivicFix.Api.Models.Comment", b =>
@@ -67,7 +67,7 @@ namespace CivicFix.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Comments");
+                    b.ToTable("Comments", (string)null);
                 });
 
             modelBuilder.Entity("CivicFix.Api.Models.Municipality", b =>
@@ -86,12 +86,12 @@ namespace CivicFix.Api.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Points")
+                    b.Property<int>("TotalPoints")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Municipalities");
+                    b.ToTable("Municipalities", (string)null);
                 });
 
             modelBuilder.Entity("CivicFix.Api.Models.Report", b =>
@@ -116,9 +116,6 @@ namespace CivicFix.Api.Migrations
                         .IsRequired()
                         .HasColumnType("geography");
 
-                    b.Property<int>("MunicipalityId")
-                        .HasColumnType("int");
-
                     b.Property<string>("ReportedPhotoUrl")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -128,9 +125,6 @@ namespace CivicFix.Api.Migrations
 
                     b.Property<string>("ResolvedPhotoUrl")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("SecondaryMunicipalityId")
-                        .HasColumnType("int");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -144,13 +138,44 @@ namespace CivicFix.Api.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("MunicipalityId");
-
                     b.HasIndex("ReporterId");
 
-                    b.HasIndex("SecondaryMunicipalityId");
+                    b.ToTable("Reports", (string)null);
+                });
 
-                    b.ToTable("Reports");
+            modelBuilder.Entity("CivicFix.Api.Models.ReportAssignment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("AcceptedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsHandler")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MunicipalityId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ReportId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MunicipalityId");
+
+                    b.HasIndex("ReportId");
+
+                    b.ToTable("ReportAssignments", (string)null);
                 });
 
             modelBuilder.Entity("CivicFix.Api.Models.StatusHistory", b =>
@@ -184,7 +209,7 @@ namespace CivicFix.Api.Migrations
 
                     b.HasIndex("ReportId");
 
-                    b.ToTable("StatusHistories");
+                    b.ToTable("StatusHistories", (string)null);
                 });
 
             modelBuilder.Entity("CivicFix.Api.Models.User", b =>
@@ -206,19 +231,22 @@ namespace CivicFix.Api.Migrations
                     b.Property<int?>("MunicipalityId")
                         .HasColumnType("int");
 
+                    b.Property<string>("NationalId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Role")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("MunicipalityId");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("CivicFix.Api.Models.Comment", b =>
@@ -248,30 +276,34 @@ namespace CivicFix.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("CivicFix.Api.Models.Municipality", "Municipality")
-                        .WithMany()
-                        .HasForeignKey("MunicipalityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("CivicFix.Api.Models.User", "Reporter")
                         .WithMany()
                         .HasForeignKey("ReporterId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("CivicFix.Api.Models.Municipality", "SecondaryMunicipality")
-                        .WithMany()
-                        .HasForeignKey("SecondaryMunicipalityId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.Navigation("Category");
+
+                    b.Navigation("Reporter");
+                });
+
+            modelBuilder.Entity("CivicFix.Api.Models.ReportAssignment", b =>
+                {
+                    b.HasOne("CivicFix.Api.Models.Municipality", "Municipality")
+                        .WithMany()
+                        .HasForeignKey("MunicipalityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CivicFix.Api.Models.Report", "Report")
+                        .WithMany()
+                        .HasForeignKey("ReportId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Municipality");
 
-                    b.Navigation("Reporter");
-
-                    b.Navigation("SecondaryMunicipality");
+                    b.Navigation("Report");
                 });
 
             modelBuilder.Entity("CivicFix.Api.Models.StatusHistory", b =>

@@ -5,24 +5,26 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
+
+//this program first thing that run
 var builder = WebApplication.CreateBuilder(args);//builder is the assembler
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers();// when a request arrive it take it to controller folder
 
 builder.Services.AddScoped<SqlConnection>(sp =>
-    new SqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));//Registers a raw SQL connection so controllers can receive it and write plain SQL queries through Dapper.
+    new SqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));//AddScoped means a new connection is created per request and closed when the request finishes
+///this is what injected in _connection:database setting in appsetting
 
-
-builder.Services.AddDbContext<AppDbContext>(options =>
-    // Register AppDbContext(db key) so controllers can receive _context
+builder.Services.AddDbContext<AppDbContext>(options =>  //Registering AppDbContext but EF core read it at migration time
+    // appdbcontesxt used for migration to update/insert
     options.UseSqlServer(
-        // Use SQL Server as the database engine
+        //tell EF to Use SQL Server as the database engine
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        // Read the database address from appsettings.json
+        //tell EF to Read the database address from appsettings.json
         x => x.UseNetTopologySuite()
-        // Enable spatial/map support (Point, Polygon, etc.)
+        // this line activate the bridge  between the EF and and the installed NETTEPOLYGY library
     ));
 //"My application will have controllers, use SQL Server"
 
@@ -30,7 +32,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.TokenValidationParameters = new TokenValidationParameters
+        options.TokenValidationParameters = new TokenValidationParameters//sets validation rule fore every token want to pass
         {
             ValidateIssuer = true,           // check token came from "CivicFix"
             ValidateAudience = true,          // check token is meant for "CivicFixUsers"
@@ -47,11 +49,11 @@ var app = builder.Build();//runnable object
 
 app.UseHttpsRedirection();// Configure the HTTP request pipeline.
 
-app.UseAuthentication(); // reads the token from the request, validates it, extracts user info
+app.UseAuthentication(); // reads the token from the request, validates it, extracts user info in controller
 
-app.UseAuthorization();  // checks if that user is allowed to do this action
+app.UseAuthorization();  // checks if that user is allowed to do this action depending on role :[Authorize(Roles = "Staff,Admin")]
 
 app.MapControllers();//program here map controller with correct route
 
-app.Run();
+app.Run();//runs and start listening for request
 // this page is like setting.py and manage.py{ here where app is configured and lanched}

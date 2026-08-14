@@ -1,0 +1,39 @@
+:root {/*apply these variables to the entire page*/
+  /* Brand colors — Lebanese flag */
+  --red: #C8102E;
+  --red-light: #ff6b6b;
+  --green: #00A651;
+  --green-dark: #064e28;
+
+  /* Hero background */
+  --hero-bg: #0d0305;
+  --hero-card-bg: #140508;
+  --hero-card-border: #2a0a0f;
+  --hero-navbar-bg: #100407;
+
+  /* Text */
+  --text-white: #f0f0f0;
+  --text-muted: #aaaaaa;
+  --text-faint: #555555;
+  --text-arabic: #888888;
+
+  /* Font that if this not work try other three options */
+  --font: 'Segoe UI', -apple-system, sans-serif;
+
+  /* Border radius */
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-pill: 20px;
+}
+
+* {
+  font-family: var(--font);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--hero-bg);
+  color: var(--text-white);
+}
