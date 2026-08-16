@@ -1,4 +1,4 @@
-:root {/*apply these variables to the entire page*/
+:root {/*we xan use these in any file we want*/
   /* Brand colors — Lebanese flag */
   --red: #C8102E;
   --red-light: #ff6b6b;
@@ -6,7 +6,7 @@
   --green-dark: #064e28;
 
   /* Hero background */
-  --hero-bg: #0d0305;
+  --hero-bg: #f8f6f6;
   --hero-card-bg: #140508;
   --hero-card-border: #2a0a0f;
   --hero-navbar-bg: #100407;
@@ -26,14 +26,14 @@
   --radius-pill: 20px;
 }
 
-* {
+* {/*apply all these to html page*/
   font-family: var(--font);
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-body {
+body {/*BODY SETS THE PAINT FOR THE PAGE*/
   background-color: var(--hero-bg);
   color: var(--text-white);
 }

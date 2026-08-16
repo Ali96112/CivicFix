@@ -23,22 +23,58 @@ namespace CivicFix.Api.Controllers
         }
 
         [HttpPost("register")] // api/Users/register
-        public async Task<IActionResult> Register([FromBody] User newUser) // [FromBody]the user that was registered well be under name newuser.fullname
-        {//async Task<IActionResult> dont let system frezze waiting for that one request
-            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(newUser.usr_PasswordHash);// scramble the password before saving
+        public async Task<IActionResult> Register([FromBody] User newUser) // [FromBody] the user that was registered will be under name newUser.usr_FullName
+        {// async Task<IActionResult> dont let system freeze waiting for that one request
+
+            // scramble the password before saving
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(newUser.usr_PasswordHash);
+
+            // insert the new user and return their Id immediately
             var sql = @"INSERT INTO tbl_Users (usr_FullName, usr_Email, usr_PasswordHash, usr_Role, usr_NationalId)
-            VALUES (@FullName, @Email, @PasswordHash, @Role, @NationalId)";
-            await _connection.ExecuteAsync(sql, new
-            {//ExecuteAsync is used for INSERT/UPDATE/DELETE
+                OUTPUT INSERTED.usr_Id
+                VALUES (@FullName, @Email, @PasswordHash, @Role, @NationalId)";
+
+            var userId = await _connection.QueryFirstAsync<int>(sql, new
+            {// ExecuteAsync is used for INSERT/UPDATE/DELETE — QueryFirstAsync because we need the Id back
                 FullName = newUser.usr_FullName,
                 Email = newUser.usr_Email,
                 PasswordHash = hashedPassword,
                 Role = "Resident",
                 NationalId = newUser.usr_NationalId
             });
-            return Ok("User registered successfully");
-        }
 
+            // generate JWT token immediately after registration — same as login
+            var claims = new[]
+            {
+        new Claim("Id", userId.ToString()),           // user's Id
+        new Claim("FullName", newUser.usr_FullName),  // user's full name
+        new Claim(ClaimTypes.Role, "Resident")         // role is always Resident on register
+    };
+
+            var key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddHours(12), // token valid for 12 hours
+                signingCredentials: credentials
+            );
+
+            string tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+
+            // return token + user info so React can store and redirect
+            return Ok(new
+            {
+                token = tokenString,
+                usr_Id = userId,
+                usr_FullName = newUser.usr_FullName,
+                usr_Role = "Resident"
+            });
+        }
         [HttpPost("login")]
         // This method handles POST requests sent to: api/Users/login
         public async Task<IActionResult> Login([FromBody] LoginRequest request)//// "request" now holds the Email and Password that was sent in
@@ -87,73 +123,73 @@ namespace CivicFix.Api.Controllers
 
         [HttpPost("forgot-password")] // address: api/Users/forgot-password
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
-    {
-    // Step 1 — check if user exists with this email
-    var sql = "SELECT * FROM tbl_Users WHERE usr_Email = @Email";
-    var user = await _connection.QueryFirstOrDefaultAsync<User>(sql, new { request.Email });
+        {
+            // Step 1 — check if user exists with this email
+            var sql = "SELECT * FROM tbl_Users WHERE usr_Email = @Email";
+            var user = await _connection.QueryFirstOrDefaultAsync<User>(sql, new { request.Email });
 
-    if (user == null)
-        return NotFound("No account found with this email.");
+            if (user == null)
+                return NotFound("No account found with this email.");
 
-    // Step 2 — generate a random one-time token
-    string token = Guid.NewGuid().ToString(); // generates a unique random string like "d4f8a3b2-1c6e-..."
+            // Step 2 — generate a random one-time token
+            string token = Guid.NewGuid().ToString(); // generates a unique random string like "d4f8a3b2-1c6e-..."
 
-    // Step 3 — save the token to the database with 1 hour expiry
-    var insertSql = @"
+            // Step 3 — save the token to the database with 1 hour expiry
+            var insertSql = @"
         INSERT INTO tbl_PasswordReset (pwr_Token, pwr_ExpiresAt, pwr_IsUsed, pwr_UserId)
         VALUES (@Token, @ExpiresAt, 0, @UserId)";
 
-    await _connection.ExecuteAsync(insertSql, new
-    {
-        Token = token,
-        ExpiresAt = DateTime.Now.AddHours(1), // expires in 1 hour
-        UserId = user.usr_Id
-    });
+            await _connection.ExecuteAsync(insertSql, new
+            {
+                Token = token,
+                ExpiresAt = DateTime.Now.AddHours(1), // expires in 1 hour
+                UserId = user.usr_Id
+            });
 
-    // for now return the token directly
-    return Ok(new { message = "Password reset token generated.", token = token });
-    }
+            // for now return the token directly
+            return Ok(new { message = "Password reset token generated.", token = token });
+        }
 
 
         [HttpPost("reset-password")] // address: api/Users/reset-password
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
-{
-    // Step 1 — find the token in the database
-    var tokenSql = @"
+        {
+            // Step 1 — find the token in the database
+            var tokenSql = @"
         SELECT * FROM tbl_PasswordReset 
         WHERE pwr_Token = @Token";//when here it found the token it well know the user id
 
-    var resetRecord = await _connection.QueryFirstOrDefaultAsync<PasswordReset>(
-        tokenSql, new { request.Token });
+            var resetRecord = await _connection.QueryFirstOrDefaultAsync<PasswordReset>(
+                tokenSql, new { request.Token });
 
-    // Step 2 — check token exists
-    if (resetRecord == null)
-        return BadRequest("Invalid token.");
+            // Step 2 — check token exists
+            if (resetRecord == null)
+                return BadRequest("Invalid token.");
 
-    // Step 3 — check token hasn't expired
-    if (resetRecord.pwr_ExpiresAt < DateTime.Now)
-        return BadRequest("Token has expired.");
+            // Step 3 — check token hasn't expired
+            if (resetRecord.pwr_ExpiresAt < DateTime.Now)
+                return BadRequest("Token has expired.");
 
-    // Step 4 — check token hasn't been used before
-    if (resetRecord.pwr_IsUsed)
-        return BadRequest("Token has already been used.");
+            // Step 4 — check token hasn't been used before
+            if (resetRecord.pwr_IsUsed)
+                return BadRequest("Token has already been used.");
 
-    // Step 5 — hash the new password and update it
-    string hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            // Step 5 — hash the new password and update it
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
 
-    var updateSql = "UPDATE tbl_Users SET usr_PasswordHash = @PasswordHash WHERE usr_Id = @UserId";
-    await _connection.ExecuteAsync(updateSql, new
-    {
-        PasswordHash = hashedPassword,
-        UserId = resetRecord.pwr_UserId //resetRecord contin the full row of table tbl_PasswordReset ehich already contain user id
-    });
+            var updateSql = "UPDATE tbl_Users SET usr_PasswordHash = @PasswordHash WHERE usr_Id = @UserId";
+            await _connection.ExecuteAsync(updateSql, new
+            {
+                PasswordHash = hashedPassword,
+                UserId = resetRecord.pwr_UserId //resetRecord contin the full row of table tbl_PasswordReset ehich already contain user id
+            });
 
-    // Step 6 — mark the token as used so it can't be reused for security reasons
-    var markUsedSql = "UPDATE tbl_PasswordReset SET pwr_IsUsed = 1 WHERE pwr_Id = @Id";
-    await _connection.ExecuteAsync(markUsedSql, new { Id = resetRecord.pwr_Id });
+            // Step 6 — mark the token as used so it can't be reused for security reasons
+            var markUsedSql = "UPDATE tbl_PasswordReset SET pwr_IsUsed = 1 WHERE pwr_Id = @Id";
+            await _connection.ExecuteAsync(markUsedSql, new { Id = resetRecord.pwr_Id });
 
-    return Ok("Password reset successfully.");
-}
+            return Ok("Password reset successfully.");
+        }
 
 
 

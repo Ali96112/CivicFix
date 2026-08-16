@@ -1,178 +1,203 @@
 /* ── Google Font ── */
+/* imports Inter font from Google — weights 300 to 800 (light to extra bold) */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 /* ── Navbar ── */
+/* the top bar that stays fixed while you scroll */
 .navbar {
-  background-color: #ffffff;
-  border-bottom: 1px solid #f0f0f0;
-  padding: 14px 48px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  background-color: #ffffff;                  /* white background */
+  border-bottom: 1px solid #f0f0f0;          /* thin light gray line at the bottom */
+  padding: 14px 48px;                         /* top/bottom 14px, left/right 48px */
+  display: flex;                              /* puts brand, links, buttons side by side */
+  justify-content: space-between;            /* pushes them to left, center, right */
+  align-items: center;                        /* vertically centers everything */
+  position: sticky;                           /* stays at top of screen when scrolling */
+  top: 0;                                     /* sticks to the very top */
+  z-index: 100;                               /* sits above all other elements */
   font-family: 'Inter', sans-serif;
 }
 
+/* groups the logo emoji and "CivicFix" name together */
 .navbar__brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: flex;                              /* puts logo and name side by side */
+  align-items: center;                        /* vertically centers them */
+  gap: 8px;                                   /* space between logo and name */
 }
 
+/* the small red box containing the city emoji */
 .navbar__logo {
-  background: var(--red);
+  background: var(--red);                     /* Lebanese red background */
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: 8px;                         /* rounded corners */
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: center;                    /* centers the emoji inside the box */
   font-size: 16px;
 }
 
+/* "CivicFix" text next to the logo */
 .navbar__name {
   font-size: 16px;
-  font-weight: 700;
-  color: #111;
-  letter-spacing: -0.5px;
+  font-weight: 700;                           /* bold */
+  color: #111;                                /* near black */
+  letter-spacing: -0.5px;                    /* tightens the letters slightly */
 }
 
+/* targets the <span> inside navbar__name — colors "Fix" red */
 .navbar__name span {
   color: var(--red);
 }
 
+/* the three middle links: Features, How it works, For Municipalities */
 .navbar__links {
-  display: flex;
-  gap: 36px;
+  display: flex;                              /* puts links side by side */
+  gap: 36px;                                  /* space between each link */
 }
 
+/* styles each individual link */
 .navbar__link {
   font-size: 14px;
-  color: #555;
-  text-decoration: none;
-  cursor: pointer;
-  font-weight: 400;
-  transition: color 0.2s;
+  color: #555;                                /* gray text */
+  text-decoration: none;                      /* removes underline */
+  cursor: pointer;                            /* hand cursor on hover */
+  font-weight: 400;                           /* normal weight */
+  transition: color 0.2s;                    /* smooth color change on hover */
 }
 
+/* darkens the link when hovered */
 .navbar__link:hover {
-  color: #111;
+  color: #110101;
 }
 
+/* groups the Login and Demo buttons on the right */
 .navbar__buttons {
-  display: flex;
-  gap: 10px;
+  display: flex; /*set elements side by side */
+  gap: 10px;                                  /* space between the two buttons */
   align-items: center;
 }
 
+/* ── Button: outline style (Login button) ── */
 .btn-outline {
   padding: 8px 20px;
   border-radius: 8px;
-  border: 1px solid #ddd;
-  background: transparent;
+  border: 1px solid #ddd;                     /* light gray border */
+  background: transparent;                    /* no fill — just the border */
   color: #333;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s;             /* smooth border color change on hover */
   font-family: 'Inter', sans-serif;
 }
 
+/* darkens the border when hovered */
 .btn-outline:hover {
   border-color: #999;
 }
 
+/* ── Button: solid red (Request a Demo button) ── */
 .btn-red {
   padding: 8px 20px;
   border-radius: 8px;
-  border: none;
-  background: var(--red);
+  border: none;                               /* removes default browser button border */
+  background: var(--red);                     /* Lebanese red background */
   color: white;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 600;                           /* semi-bold */
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s;                  /* smooth fade on hover */
   font-family: 'Inter', sans-serif;
 }
 
+/* slightly dims the button on hover */
 .btn-red:hover {
   opacity: 0.9;
 }
 
 /* ── Hero ── */
+/* the main section — dark red-black background, two columns side by side */
 .hero {
   background: radial-gradient(ellipse at 60% 50%, #3a0a12 0%, #1a0308 40%, #0a0105 100%);
+                                              /* dark red glow from center-right */
   padding: 60px 72px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 48px;
-  align-items: center;
-  min-height: calc(100vh - 61px);
+  display: grid;                              /* two column layout */
+  grid-template-columns: 1fr 1fr;            /* each column takes equal space */
+  gap: 8px;                                  /* space between left and right */
+  align-items: center;                        /* vertically centers both sides */
+  min-height: calc(100vh - 61px);            /* fills the full screen minus navbar height */
   font-family: 'Inter', sans-serif;
 }
 
+/* left side — headline, description, buttons */
 .hero__left {
   display: flex;
-  flex-direction: column;
-  gap: 18px;
+  flex-direction: column;                     /* stacks children vertically */
+  gap: 18px;                                  /* space between each child */
 }
 
+/* row containing the "Built for Lebanon" badge and Live dot */
 .hero__badge-row {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
+/* the pill-shaped "Built for Lebanon" badge */
 .hero__badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 1px solid rgba(200,16,46,0.6);
-  color: #ff8fa0;
+  border: 1px solid rgba(200,16,46,0.6);     /* semi-transparent red border */
+  color: #ff8fa0;                             /* light pink text */
   font-size: 11px;
   padding: 5px 14px;
-  border-radius: 20px;
-  background: rgba(200,16,46,0.1);
+  border-radius: 20px;                        /* pill shape */
+  background: rgba(200,16,46,0.1);           /* very faint red background */
   letter-spacing: 0.3px;
   font-weight: 500;
 }
 
+/* "Live" text with green dot */
 .hero__live {
   display: flex;
   align-items: center;
   gap: 5px;
   font-size: 12px;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255,255,255,0.4);              /* faint white */
 }
 
+/* the small green pulsing dot next to "Live" */
 .hero__live-dot {
   width: 7px;
   height: 7px;
-  background: #4ade80;
-  border-radius: 50%;
+  background: #4ade80;                        /* green */
+  border-radius: 50%;                         /* makes it a circle */
 }
 
+/* container for the three headline lines */
 .hero__headlines {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 0;                                     /* no gap — lines sit tight together */
 }
 
+/* each headline line — "Your city", "deserves better.", "Let's fix it." */
 .hero__headline {
-  font-size: clamp(2.4rem, 4vw, 3.5rem);
+  font-size: clamp(2.4rem, 4vw, 3.5rem);    /* responsive — scales between 2.4rem and 3.5rem */
   font-weight: 700;
   color: #ffffff;
-  line-height: 1.1;
-  letter-spacing: -2px;
+  line-height: 1.1;                           /* tight line spacing */
+  letter-spacing: -2px;                      /* tightens letters for large display text */
   margin: 0;
 }
 
+/* modifier — makes "Let's fix it." line pink-red */
 .hero__headline--red {
   color: #ff4d6d;
 }
 
+/* short red horizontal bar below the headline */
 .hero__divider {
   width: 48px;
   height: 3px;
@@ -180,27 +205,31 @@
   border-radius: 2px;
 }
 
+/* the paragraph description below the divider */
 .hero__description {
   font-size: 15px;
-  color: rgba(255,255,255,0.5);
-  line-height: 1.75;
-  max-width: 420px;
+  color: rgba(255,255,255,0.5);              /* semi-transparent white */
+  line-height: 1.75;                          /* comfortable reading spacing */
+  max-width: 420px;                           /* stops it from stretching too wide */
   font-weight: 400;
 }
 
+/* Arabic subtitle below the description */
 .hero__arabic {
   font-size: 13px;
-  color: rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.2);              /* very faint white */
   font-style: italic;
-  font-weight: 300;
+  font-weight: 400; /*thickness*/
 }
 
+/* row of CTA buttons */
 .hero__cta {
   display: flex;
   gap: 12px;
-  flex-wrap: wrap;
+  flex-wrap: wrap;                            /* wraps to next line on small screens */
 }
 
+/* primary CTA — solid red "Report a Problem" button */
 .btn-hero-primary {
   padding: 14px 28px;
   background: var(--red);
@@ -217,15 +246,17 @@
   gap: 8px;
 }
 
+/* lifts up and adds red glow on hover */
 .btn-hero-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(200,16,46,0.4);
+  transform: translateY(-2px);               /* moves 2px upward */
+  box-shadow: 0 12px 32px rgba(200,16,46,0.4); /* red shadow below */
 }
 
+/* secondary CTA — ghost style "View Dashboard" button */
 .btn-hero-secondary {
   padding: 14px 28px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.08);        /* very faint white fill */
+  border: 1px solid rgba(255,255,255,0.15);  /* faint white border */
   color: rgba(255,255,255,0.8);
   border-radius: 10px;
   font-size: 14px;
@@ -238,149 +269,51 @@
   gap: 8px;
 }
 
+/* brightens slightly on hover */
 .btn-hero-secondary:hover {
   background: rgba(255,255,255,0.12);
 }
 
+/* trust line — "1,432 municipalities | Encrypted | Free for residents" */
 .hero__trust {
   display: flex;
   gap: 16px;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: wrap; /*squishes them*/
 }
 
+/* each trust item */
 .hero__trust span {
   font-size: 11px;
-  color: rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.25);             /* very faint */
   font-weight: 400;
 }
 
+/* the | dividers between trust items — even fainter */
 .hero__trust-divider {
-  color: rgba(255,255,255,0.1) !important;
+  color: rgba(255,255,255,0.1) !important;   /* !important overrides the span rule above */
 }
 
 /* ── Hero Right — Stats Cards ── */
+/* right side grid — holds all the stat cards */
 .hero__right {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr;            /* two cards per row */
   gap: 14px;
-  align-content: start;
-}
-
-.stat-card {
-  background: rgba(80,10,20,0.5);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 14px;
-  padding: 22px;
-  transition: border-color 0.2s;
-  backdrop-filter: blur(10px);
-}
-
-.stat-card:hover {
-  border-color: rgba(255,255,255,0.15);
-}
-
-.stat-card--wide {
-  grid-column: span 2;
-}
-
-.stat-card__label {
-  font-size: 10px;
-  color: rgba(255,255,255,0.35);
-  margin-bottom: 10px;
-  font-weight: 600;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-}
-
-.stat-card__number {
-  font-size: 28px;
-  font-weight: 700;
-  color: #ffffff;
-  margin-bottom: 4px;
-  letter-spacing: -1.5px;
-  line-height: 1;
-}
-
-.stat-card__number--red {
-  color: #ff4d6d;
-}
-
-.stat-card__number--green {
-  color: #4ade80;
-}
-
-.stat-card__sub {
-  font-size: 11px;
-  color: rgba(255,255,255,0.25);
-  margin-bottom: 14px;
-  font-weight: 400;
-}
-
-.stat-card__bar {
-  height: 3px;
-  border-radius: 2px;
-}
-
-.stat-card__bar--red {
-  background: linear-gradient(90deg, var(--red), rgba(200,16,46,0.15));
-}
-
-.stat-card__bar--green {
-  background: linear-gradient(90deg, #4ade80, rgba(34,197,94,0.1));
-}
-
-/* ── Flow steps ── */
-.flow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 14px;
-}
-
-.flow__step {
-  text-align: center;
-}
-
-.flow__icon-box {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  margin: 0 auto 8px;
-}
-
-.flow__label {
-  font-size: 11px;
-  color: rgba(255,255,255,0.6);
-  line-height: 1.4;
-  font-weight: 500;
-}
-
-.flow__sublabel {
-  font-size: 10px;
-  color: rgba(255,255,255,0.3);
-  font-weight: 400;
-}
-
-.flow__arrow {
-  color: rgba(255,255,255,0.2);
-  font-size: 14px;
+  align-content: start;                       /* cards start from the top */
 }
 
 /* ── Stats Strip ── */
+/* full-width red section — "Lebanon needs this. Now." */
 .stats-strip {
   background: linear-gradient(135deg, #a50e22 0%, #C8102E 50%, #a50e22 100%);
+                     /* diagonal red gradient  creates a smooth color transition between two or more colors*/
   padding: 64px 72px;
   text-align: center;
   font-family: 'Inter', sans-serif;
 }
 
+/* small uppercase text above the headline */
 .stats-strip__overline {
   font-size: 11px;
   letter-spacing: 3px;
@@ -390,6 +323,7 @@
   font-weight: 500;
 }
 
+/* "Lebanon needs this. Now." headline */
 .stats-strip__headline {
   font-size: clamp(1.6rem, 2.5vw, 2.2rem);
   font-weight: 700;
@@ -398,54 +332,107 @@
   letter-spacing: -1px;
 }
 
+/* four-column grid holding the stat cards */
 .stats-strip__grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, 1fr);     /* 4 equal columns */
   gap: 16px;
   max-width: 900px;
-  margin: 0 auto;
+  margin: 0 auto;                             /* centers the grid */
 }
 
+/* each card in the red strip */
 .stats-strip__card {
-  background: rgba(0,0,0,0.15);
+  background: rgba(0,0,0,0.15);              /* subtle dark overlay */
   border-radius: 14px;
   padding: 28px 16px;
 }
 
-.stats-strip__icon {
-  font-size: 1.6rem;
-  margin-bottom: 12px;
+.stats-strip__icon   { font-size: 1.6rem; margin-bottom: 12px; }
+.stats-strip__num    { font-size: 2.2rem; font-weight: 700; color: white; line-height: 1; margin-bottom: 8px; letter-spacing: -1.5px; }
+.stats-strip__name   { font-size: 12px; color: rgba(255,255,255,0.9); font-weight: 600; }
+.stats-strip__arabic { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 4px; font-weight: 400; }
+
+
+
+/* each individual stat card */
+.stat-card {
+  background: rgba(80,10,20,0.5);            /* dark semi-transparent red */
+  border: 1px solid rgba(255,255,255,0.08);  /* very faint white border */
+  border-radius: 14px;
+  padding: 22px;
+  transition: border-color 0.2s;
+  backdrop-filter: blur(10px);               /* blurs whatever is behind the card */
 }
 
-.stats-strip__num {
-  font-size: 2.2rem;
-  font-weight: 700;
-  color: white;
-  line-height: 1;
-  margin-bottom: 8px;
-  letter-spacing: -1.5px;
+/* brightens border on hover */
+.stat-card:hover {
+  border-color: rgba(255,255,255,0.15);
 }
 
-.stats-strip__name {
-  font-size: 12px;
-  color: rgba(255,255,255,0.9);
-  font-weight: 600;
+/* makes a card span both columns — used for the "How a report travels" card */
+.stat-card--wide {
+  grid-column: span 2;
 }
 
-.stats-strip__arabic {
-  font-size: 11px;
+/* small uppercase label at the top of each card */
+.stat-card__label {
+  font-size: 10px;
   color: rgba(255,255,255,0.35);
-  margin-top: 4px;
+  margin-bottom: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* the large number in each card */
+.stat-card__number {
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 4px;
+  letter-spacing: -1.5px;
+  line-height: 1;
+}
+
+.stat-card__number--red   { color: #ff4d6d; } /* red variant */
+.stat-card__number--green { color: #4ade80; } /* green variant */
+
+/* small descriptive text below the number */
+.stat-card__sub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.25);
+  margin-bottom: 14px;
   font-weight: 400;
 }
 
+/* thin colored bar at the bottom of a card */
+.stat-card__bar {
+  height: 3px;
+  border-radius: 2px;
+}
+
+/* red gradient bar */
+.stat-card__bar--red {
+  background: linear-gradient(90deg, var(--red), rgba(200,16,46,0.15));
+}
+
+/* green gradient bar */
+.stat-card__bar--green {
+  background: linear-gradient(90deg, #4ade80, rgba(34,197,94,0.1));
+}
+
+
+
 /* ── Steps Section ── */
+/* white background section — "Three steps. Real results." */
 .steps {
   background: #f9f9f9;
   padding: 80px 72px;
   font-family: 'Inter', sans-serif;
 }
 
+/* small red uppercase label above the headline */
 .steps__overline {
   font-size: 11px;
   letter-spacing: 3px;
@@ -456,6 +443,7 @@
   font-weight: 600;
 }
 
+/* "Three steps. Real results." headline */
 .steps__headline {
   font-size: clamp(1.6rem, 2.5vw, 2.2rem);
   font-weight: 700;
@@ -465,14 +453,16 @@
   letter-spacing: -1px;
 }
 
+/* three-column grid for the step cards */
 .steps__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, 1fr);     /* 3 equal columns */
   gap: 24px;
   max-width: 1000px;
   margin: 0 auto;
 }
 
+/* each step card — white box with border */
 .step-card {
   background: white;
   border-radius: 14px;
@@ -481,11 +471,13 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+/* lifts card slightly on hover */
 .step-card:hover {
   border-color: #e0e0e0;
   box-shadow: 0 4px 20px rgba(0,0,0,0.06);
 }
 
+/* top row — icon on left, step number on right */
 .step-card__top {
   display: flex;
   justify-content: space-between;
@@ -493,6 +485,7 @@
   margin-bottom: 20px;
 }
 
+/* colored emoji box */
 .step-card__icon {
   width: 48px;
   height: 48px;
@@ -503,13 +496,15 @@
   font-size: 1.4rem;
 }
 
+/* large faint number "01", "02", "03" */
 .step-card__num {
   font-size: 2rem;
   font-weight: 700;
   letter-spacing: -2px;
-  opacity: 0.1;
+  opacity: 0.1;                              /* very faint — decorative only */
 }
 
+/* colored tag like "Citizen Reports" */
 .step-card__tag {
   font-size: 11px;
   font-weight: 700;
@@ -518,6 +513,7 @@
   margin-bottom: 8px;
 }
 
+/* Arabic title of the step */
 .step-card__title {
   font-size: 1.05rem;
   font-weight: 700;
@@ -525,6 +521,7 @@
   margin-bottom: 10px;
 }
 
+/* description paragraph */
 .step-card__desc {
   font-size: 13px;
   color: #777;
@@ -533,6 +530,7 @@
   font-weight: 400;
 }
 
+/* short colored bar at the bottom of each step card */
 .step-card__bar {
   height: 3px;
   width: 32px;
@@ -541,7 +539,9 @@
   opacity: 0.4;
 }
 
+
 /* ── CTA Section ── */
+/* green gradient section — "ساهم في بناء لبنان أفضل" */
 .cta {
   background: linear-gradient(135deg, #064e28 0%, #00A651 50%, #064e28 100%);
   padding: 80px 72px;
@@ -549,35 +549,21 @@
   font-family: 'Inter', sans-serif;
 }
 
-.cta__icon {
-  font-size: 2.5rem;
-  margin-bottom: 20px;
-}
+.cta__icon            { font-size: 2.5rem; margin-bottom: 20px; }
+.cta__headline-arabic { font-size: clamp(1.8rem, 3vw, 2.6rem); font-weight: 700; color: white; margin-bottom: 8px; letter-spacing: -1px; }
+.cta__headline-en     { font-size: 1rem; color: rgba(255,255,255,0.6); margin-bottom: 16px; font-weight: 400; }
 
-.cta__headline-arabic {
-  font-size: clamp(1.8rem, 3vw, 2.6rem);
-  font-weight: 700;
-  color: white;
-  margin-bottom: 8px;
-  letter-spacing: -1px;
-}
-
-.cta__headline-en {
-  font-size: 1rem;
-  color: rgba(255,255,255,0.6);
-  margin-bottom: 16px;
-  font-weight: 400;
-}
-
+/* description paragraph */
 .cta__desc {
   font-size: 14px;
   color: rgba(255,255,255,0.5);
   max-width: 440px;
-  margin: 0 auto 40px;
+  margin: 0 auto 40px;                       /* centers it and adds space below */
   line-height: 1.8;
   font-weight: 400;
 }
 
+/* row of CTA buttons */
 .cta__buttons {
   display: flex;
   gap: 14px;
@@ -585,10 +571,11 @@
   flex-wrap: wrap;
 }
 
+/* white solid button — "ابدأ الآن / Get Started" */
 .btn-cta-primary {
   padding: 14px 36px;
   background: white;
-  color: var(--green);
+  color: var(--green);                        /* green text on white background */
   border: none;
   border-radius: 10px;
   font-size: 14px;
@@ -602,10 +589,9 @@
   gap: 8px;
 }
 
-.btn-cta-primary:hover {
-  transform: translateY(-2px);
-}
+.btn-cta-primary:hover { transform: translateY(-2px); } /* lifts on hover */
 
+/* ghost button — "View Dashboard" */
 .btn-cta-secondary {
   padding: 14px 36px;
   background: rgba(255,255,255,0.1);
@@ -622,30 +608,31 @@
   gap: 8px;
 }
 
-.btn-cta-secondary:hover {
-  background: rgba(255,255,255,0.15);
-}
+.btn-cta-secondary:hover { background: rgba(255,255,255,0.15); }
 
 /* ── Flag Strip ── */
+/* thin Lebanese flag bar — red line | cedar | green line */
 .flag-strip {
-  position: relative;
+  position: relative;                         /* needed so the red/green lines can be positioned inside */
   height: 30px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: center;                    /* centers the cedar SVG */
   background: white;
 }
 
+/* red line on the left */
 .flag-strip__red {
-  position: absolute;
+  position: absolute;                         /* positioned relative to flag-strip */
   left: 0;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(-50%);               /* vertically centers the line */
   height: 5px;
   background: var(--red);
-  width: 47%;
+  width: 47%;                                 /* leaves gap in center for cedar */
 }
 
+/* green line on the right */
 .flag-strip__green {
   position: absolute;
   right: 0;
@@ -656,6 +643,7 @@
   width: 47%;
 }
 
+/* small text below the flag strip */
 .flag-strip__label {
   font-size: 11px;
   color: #bbb;
@@ -667,6 +655,7 @@
 }
 
 /* ── Footer ── */
+/* white footer at the bottom of the page */
 .footer {
   background: white;
   padding: 24px 72px;
@@ -674,15 +663,17 @@
   font-family: 'Inter', sans-serif;
 }
 
+/* top row — brand on left, links on right */
 .footer__top {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding-bottom: 16px;
   margin-bottom: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f0f0f0;          /* divider line between top and bottom */
 }
 
+/* "CivicFix" brand text */
 .footer__brand {
   font-size: 1.1rem;
   font-weight: 700;
@@ -690,41 +681,85 @@
   letter-spacing: -0.5px;
 }
 
+/* colors "Fix" red — same trick as navbar */
 .footer__brand span {
   color: var(--red);
 }
 
+/* row of footer links */
 .footer__links {
   display: flex;
   gap: 28px;
 }
 
+/* each footer link */
 .footer__link {
   font-size: 13px;
-  color: #9ca3af;
+  color: #9ca3af;                             /* light gray */
   text-decoration: none;
   font-weight: 400;
   transition: color 0.2s;
 }
 
-.footer__link:hover {
-  color: #333;
-}
+.footer__link:hover { color: #333; }
 
+/* bottom row — copyright on left, tagline on right */
 .footer__bottom {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.footer__copy {
-  font-size: 12px;
-  color: #9ca3af;
+.footer__copy    { font-size: 12px; color: #9ca3af; font-weight: 400; }
+.footer__tagline { font-size: 11px; color: #9ca3af; font-weight: 400; }
+
+
+
+
+/* ── Flow steps (inside the wide stat card) ── */
+/* row of steps showing how a report travels */
+.flow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;            /* spreads steps and arrows evenly */
+  margin-top: 14px;
+}
+
+/* each step box (icon + label + sublabel) */
+.flow__step {
+  text-align: center;
+}
+
+/* the emoji box */
+.flow__icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  margin: 0 auto 8px;                        /* centers horizontally, adds space below */
+}
+
+.flow__label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.flow__sublabel {
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
   font-weight: 400;
 }
 
-.footer__tagline {
-  font-size: 11px;
-  color: #9ca3af;
-  font-weight: 400;
+/* the → arrows between steps */
+.flow__arrow {
+  color: rgba(255,255,255,0.2);
+  font-size: 14px;
 }
+
