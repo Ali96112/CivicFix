@@ -39,17 +39,19 @@ builder.Services.AddControllers()// when a request arrive it take it to controll
     });
 
 builder.Services.AddScoped<SqlConnection>(sp =>
-    new SqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));//AddScoped means a new connection is created per request and closed when the request finishes
-///this is what injected in _connection:database setting in appsetting
+    new SqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
+// AddScoped means a new connection is created per request and closed when the request finishes
+// this is what injected in _connection: database setting in appsettings
+
 
 builder.Services.AddDbContext<AppDbContext>(options =>  //Registering AppDbContext but EF core read it at migration time
-    // appdbcontesxt used for migration to update/insert
+    // appdbcontext used for migration to update/insert
     options.UseSqlServer(
         //tell EF to Use SQL Server as the database engine
         builder.Configuration.GetConnectionString("DefaultConnection"),
         //tell EF to Read the database address from appsettings.json
         x => x.UseNetTopologySuite()
-        // this line activate the bridge  between the EF and and the installed NETTEPOLYGY library
+        // this line activate the bridge between the EF and installed NetTopologySuite library
     ));
 //"My application will have controllers, use SQL Server"
 
@@ -57,16 +59,19 @@ builder.Services.AddDbContext<AppDbContext>(options =>  //Registering AppDbConte
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.TokenValidationParameters = new TokenValidationParameters//sets validation rule fore every token want to pass
+        options.TokenValidationParameters = new TokenValidationParameters//sets validation rule for every token want to pass
         {
             ValidateIssuer = true,           // check token came from "CivicFix"
-            ValidateAudience = true,          // check token is meant for "CivicFixUsers"
-            ValidateLifetime = true,          // check token hasn't expired
-            ValidateIssuerSigningKey = true,  // check token signature wasn't tampered with
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],        // reads "CivicFix" from appsettings.json
-            ValidAudience = builder.Configuration["Jwt:Audience"],    // reads "CivicFixUsers" from appsettings.json
+            ValidateAudience = true,         // check token is meant for "CivicFixUsers"
+            ValidateLifetime = true,         // check token hasn't expired
+            ValidateIssuerSigningKey = true, // check token signature wasn't tampered with
+
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],       // reads "CivicFix" from appsettings.json
+            ValidAudience = builder.Configuration["Jwt:Audience"],   // reads "CivicFixUsers" from appsettings.json
+
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])) // reads secret key from appsettings.json
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+            // reads secret key from appsettings.json
         };
     });
 
@@ -82,11 +87,18 @@ builder.Services.AddCors(options =>
 });
 
 
+// RESTORED — allows UsersController to receive EmailSender through its constructor
+builder.Services.AddScoped<CivicFix.Api.Services.EmailSender>();
+
+// RESTORED — starts LatePenaltyService when the API starts
+builder.Services.AddHostedService<CivicFix.Api.Services.LatePenaltyService>();
 
 
 var app = builder.Build();//runnable object
 
+
 app.UseHttpsRedirection();// Configure the HTTP request pipeline.
+
 
 // ADDED — serve uploaded photos as real files over http.
 //
@@ -99,9 +111,13 @@ app.UseHttpsRedirection();// Configure the HTTP request pipeline.
 // wwwroot does not exist — and it will not exist the very first time you run
 // this after pulling these changes.
 var wwwrootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
-Directory.CreateDirectory(Path.Combine(wwwrootPath, "uploads")); // creates both levels, no-op if present
+
+Directory.CreateDirectory(
+    Path.Combine(wwwrootPath, "uploads")
+); // creates both levels, no-op if present
 
 app.UseStaticFiles(); // must come before MapControllers, same as UseCors below
+
 
 // FIXED — ORDER BUG. UseCors("AllowReact") used to sit AFTER MapControllers(),
 // which means it was never reached: middleware runs top to bottom, and
@@ -109,13 +125,20 @@ app.UseStaticFiles(); // must come before MapControllers, same as UseCors below
 // "blocked by CORS policy" errors on every call, especially on the
 // browser's OPTIONS preflight for PUT/POST with an Authorization header.
 // CORS must come BEFORE UseAuthentication / UseAuthorization / MapControllers.
-app.UseCors("AllowReact"); // MOVED UP from below MapControllers()
 
-app.UseAuthentication(); // reads the token from the request, validates it, extracts user info in controller
+app.UseCors("AllowReact");
 
-app.UseAuthorization();  // checks if that user is allowed to do this action depending on role :[Authorize(Roles = "Staff,Admin")]
+
+app.UseAuthentication();
+// reads the token from the request, validates it, extracts user info in controller
+
+app.UseAuthorization();
+// checks if that user is allowed to do this action depending on role:
+// [Authorize(Roles = "Staff,Admin")]
 
 app.MapControllers();//program here map controller with correct route
 
 app.Run();//runs and start listening for request
-// this page is like setting.py and manage.py{ here where app is configured and lanched}
+
+// this page is like settings.py and manage.py
+// here where app is configured and launched

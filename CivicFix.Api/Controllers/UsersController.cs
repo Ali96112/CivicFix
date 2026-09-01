@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization; // ADDED: needed for [Authorize] on Ge
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using CivicFix.Api.Services;
 
 namespace CivicFix.Api.Controllers
 {
@@ -16,11 +17,13 @@ namespace CivicFix.Api.Controllers
     {
         private readonly SqlConnection _connection; // direct raw SQL connection Dapper use to know where to go with querys
         private readonly IConfiguration _configuration; // reads appsettings.json
+        private readonly EmailSender _emailSender;
 
-        public UsersController(SqlConnection connection, IConfiguration configuration) //so the UserController is created it run this method
+        public UsersController(SqlConnection connection, IConfiguration configuration, EmailSender emailSender) //so the UserController is created it run this method
         {//NET creates the controller, calls the constructor once, both objects are stored in _connection and _configuration — every method in the class can then use them freely without setting them up again.
             _connection = connection;  // the one object your controller uses to talk to the database.
             _configuration = configuration;//the one object your controller uses to talk to the setting
+            _emailSender = emailSender;
         }
 
         [HttpPost("register")] // api/Users/register
@@ -148,7 +151,24 @@ namespace CivicFix.Api.Controllers
             });
 
             // for now return the token directly
-            return Ok(new { message = "Password reset token generated.", token = token });
+            var resetLink = $"http://localhost:5173/reset-password?token={token}";
+
+            var emailBody = $@"
+    <h2>CivicFix Password Reset</h2>
+    <p>You requested to reset your password. Click below to set a new one:</p>
+    <p><a href='{resetLink}'>Reset My Password</a></p>
+";
+
+            await _emailSender.SendEmailAsync(
+                user.usr_Email,
+                "CivicFix Password Reset",
+                emailBody
+            );
+
+            return Ok(new
+            {
+                message = "A password reset link has been sent to your email."
+            });
         }
 
 
@@ -193,8 +213,8 @@ namespace CivicFix.Api.Controllers
         }
 
 
-       
-        [Authorize(Roles = "Staff")] 
+
+        [Authorize(Roles = "Staff")]
         [HttpGet("me")] // address: GET api/Users/me
         public async Task<IActionResult> GetMe()
         {
