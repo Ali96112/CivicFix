@@ -414,8 +414,6 @@ namespace CivicFix.Api.Controllers
         [HttpPut("{id:int}/move")] // address: PUT api/Reports/1/move
         public async Task<IActionResult> MoveReport(int id, [FromBody] MunicipalityRequest request)
         {
-            // MunicipalityRequest carries the one field needed:
-            // MunicipalityId, the baladiye the admin is moving the report to.
 
             // Step 1 — the report must exist
             var report = await _connection.QueryFirstOrDefaultAsync<dynamic>(
@@ -425,9 +423,11 @@ namespace CivicFix.Api.Controllers
             if (report == null)
                 return NotFound("Report not found.");
 
-            // Step 2 — the destination baladiye must exist.
-            // Unlike /assign-handler this is NOT limited to the report's current
-            // candidates, so the only check is that the baladiye is real.
+            if (Convert.ToString((object)report.rpt_Status) == "Resolved")
+                return BadRequest("This report is already resolved — it can no longer be moved.");
+
+            // Step 3 — the destination baladiye must exist.
+            
             var destination = await _connection.QueryFirstOrDefaultAsync<dynamic>(
                 "SELECT mun_Id, mun_Name FROM tbl_Municipalities WHERE mun_Id = @Id",
                 new { Id = request.MunicipalityId });
@@ -435,38 +435,33 @@ namespace CivicFix.Api.Controllers
             if (destination == null)
                 return NotFound("That baladiye does not exist.");
 
-            string destinationName = (object?)destination.mun_Name as string ?? "";
+            string destinationName = (object?)destination.mun_Name as string ?? "";//here is just saving baladeye name destination contains the row of this baladeye in sql 
 
-            // Step 3 — is it already there and nowhere else? Then there is nothing to do.
+            // Step 4 — is it already there and nowhere else? Then there is nothing to do.
             var existingAssignments = (await _connection.QueryAsync<dynamic>(
                 "SELECT rpa_Id, rpa_MunicipalityId, rpa_Points, rpa_IsHandler FROM tbl_ReportAssignments WHERE rpa_ReportId = @ReportId",
-                new { ReportId = id })).ToList();
+                new { ReportId = id })).ToList();//all current assignment rows for this report
 
             if (existingAssignments.Count == 1 &&
                 Convert.ToInt32((object)existingAssignments[0].rpa_MunicipalityId) == request.MunicipalityId)
             {
-                return Ok(new { message = $"This report is already assigned to {destinationName} only.", moved = false });
+                return Ok(new { message = $"This report is already assigned to {destinationName} only.", moved = false });//if you are changing the baladeye to same baladeye
             }
 
-            // everything below changes several tables, so it runs as one transaction:
-            // either the whole move happens, or none of it does.
-            if (_connection.State != System.Data.ConnectionState.Open)
+           
+            if (_connection.State != System.Data.ConnectionState.Open)//check connection
                 await _connection.OpenAsync();
 
-            using var transaction = _connection.BeginTransaction();
+            using var transaction = _connection.BeginTransaction();//start transaction
 
-            try
+            try//since inside transaction we use try block
             {
-                // Step 4 — take back any points the old baladiyat were given for this
-                // report, so the leaderboard does not keep crediting work that has
-                // been reassigned. rpa_Points is 0 on an unresolved report, so for
-                // those this loop does nothing.
-                foreach (var assignment in existingAssignments)
+                foreach (var assignment in existingAssignments)//Go through every current assignment for this report, one by one.
                 {
-                    int pointsToUndo = Convert.ToInt32((object)assignment.rpa_Points);
+                    int pointsToUndo = Convert.ToInt32((object)assignment.rpa_Points);//take each rpapoints and saving it in thius varable pointsToUndo
 
                     if (pointsToUndo != 0)
-                    {
+                    {//Subtract those report points from the old municipality's total score.
                         await _connection.ExecuteAsync(
                             "UPDATE tbl_Municipalities SET mun_TotalPoints = mun_TotalPoints - @Points WHERE mun_Id = @MunicipalityId",
                             new { Points = pointsToUndo, MunicipalityId = assignment.rpa_MunicipalityId },
@@ -474,32 +469,16 @@ namespace CivicFix.Api.Controllers
                     }
                 }
 
-                // Step 5 — remove the old assignments and put the chosen baladiye in
-                // their place. It is inserted as the handler, because an admin moving
-                // a report here is saying "this is the baladiye responsible for it".
-                await _connection.ExecuteAsync(
+                await _connection.ExecuteAsync(//removes all assignment rows for report id
                     "DELETE FROM tbl_ReportAssignments WHERE rpa_ReportId = @ReportId",
                     new { ReportId = id }, transaction);
 
-                await _connection.ExecuteAsync(@"
+                await _connection.ExecuteAsync(//This line inserts the new assignment row for the report.
+                    @"
                     INSERT INTO tbl_ReportAssignments (rpa_ReportId, rpa_MunicipalityId, rpa_AssignedAt, rpa_IsHandler, rpa_Points)
                     VALUES (@ReportId, @MunicipalityId, @AssignedAt, 1, 0)",
                     new { ReportId = id, MunicipalityId = request.MunicipalityId, AssignedAt = DateTime.Now },
                     transaction);
-
-                // Step 6 — if the report was already resolved, credit the new baladiye
-                // straight away. Its points were just zeroed by the insert above, and
-                // the work is finished, so the +10 belongs to whoever owns it now.
-                if (Convert.ToString((object)report.rpt_Status) == "Resolved")
-                {
-                    await _connection.ExecuteAsync(
-                        "UPDATE tbl_ReportAssignments SET rpa_Points = 10 WHERE rpa_ReportId = @ReportId AND rpa_MunicipalityId = @MunicipalityId",
-                        new { ReportId = id, MunicipalityId = request.MunicipalityId }, transaction);
-
-                    await _connection.ExecuteAsync(
-                        "UPDATE tbl_Municipalities SET mun_TotalPoints = mun_TotalPoints + 10 WHERE mun_Id = @MunicipalityId",
-                        new { MunicipalityId = request.MunicipalityId }, transaction);
-                }
 
                 transaction.Commit();
             }

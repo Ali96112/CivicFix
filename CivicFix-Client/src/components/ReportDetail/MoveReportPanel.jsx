@@ -44,7 +44,7 @@ function MoveReportPanel({ reportId, onMoved }) {//when onMoved true =fetchrepor
 //if confirmed
     setMoving(true);//changing button text
     setError("");
-    try {
+    try {//Backend, move report 15 to municipality 5. Here is my login token. //moveTargetId:the selected baladeye
       const token = localStorage.getItem("token");
       const response = await fetch(
         `http://localhost:5140/api/Reports/${reportId}/move`,
@@ -63,14 +63,14 @@ function MoveReportPanel({ reportId, onMoved }) {//when onMoved true =fetchrepor
       if (response.ok) {
         setMoveSearch("");
         setMoveTargetId("");
-        onMoved(); // reload so the new baladiye shows in the assignments list
+        onMoved(); // reload so the new baladiye shows in the assignments list fetchreport
       } else {
         setError(errorTextOf(body, "Could not move this report."));
       }
     } catch (err) {
       setError("Could not connect to server.");
     } finally {
-      setMoving(false);
+      setMoving(false);//redo the test 
     }
   };
 
@@ -84,24 +84,24 @@ function MoveReportPanel({ reportId, onMoved }) {//when onMoved true =fetchrepor
         className="form-input"
         type="text"
         placeholder="🔍 Type to search baladiyat..."
-        value={moveSearch}
+        value={moveSearch}//what typed ia shown in text
         onChange={(e) => setMoveSearch(e.target.value)}
       />
 
       <select
         className="form-input"
-        value={moveTargetId}
+        value={moveTargetId}//When the admin selects a municipality, save that selected municipality ID into moveTargetId
         onChange={(e) => setMoveTargetId(e.target.value)}
       >
         <option value="">Select a baladiye...</option>
-        {municipalities
+        {municipalities// all baladeyes
           // filter by what was typed, case-insensitively
           .filter((m) => m.mun_Name.toLowerCase().includes(moveSearch.toLowerCase()))
           // cap the list so a huge dropdown does not slow the page down;
           // narrowing the search further is how you reach the rest
           .slice(0, 50)
           .map((m) => (
-            <option key={m.mun_Id} value={m.mun_Id}>
+            <option key={m.mun_Id} value={m.mun_Id}>{/*for each option its value is its the id */}{/*this value when clicked is saved in move targetid */}
               {m.mun_Name}
             </option>
           ))}
@@ -110,15 +110,12 @@ function MoveReportPanel({ reportId, onMoved }) {//when onMoved true =fetchrepor
       <button
         className="btn-save-status"
         disabled={moving || !moveTargetId}
-        onClick={moveReport}
+        onClick={moveReport}//runs this function
       >
         {moving ? "Moving..." : "Move report"}
       </button>
 
-      <p className="detail-vote-panel__note">
-        The report leaves its current baladiye and the new one becomes
-        responsible for it. If it was already resolved, the points move too.
-      </p>
+      
 
       {error && <p className="report-status report-status--error">{error}</p>}
     </div>
