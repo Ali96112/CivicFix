@@ -2,12 +2,6 @@ import { useState } from "react";
 import MapPicker from "./MapPicker"; // click-a-spot map, for Admin and Staff
 import { readBody, errorTextOf, uploadPhoto } from "../../services/apiHelpers";
 
-// The Report a Problem" dropdown form.
-// Props:
-//   role       — decides which fields appear (priority for Resident, "after"
-//                photo for Staff, map + coordinates for Admin/Staff)
-//   categories — the dropdown options, already fetched by the parent
-//   onCreated  — called after a successful submit so the parent reloads the list
 function CreateReportForm({ role, categories, onCreated }) {//oncreated is called on end it inherets from parent so it load and refetch report and close the form
   const [formData, setFormData] = useState({
     Title: "",
@@ -38,12 +32,13 @@ function CreateReportForm({ role, categories, onCreated }) {//oncreated is calle
 
   const getLocation = () => {
     setLocationStatus("Getting your location...");
-    if (!navigator.geolocation) {
+    if (!navigator.geolocation) {//If this browser does not support location..
       setLocationStatus("Your browser does not support location.");
       return;
     }
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
+    //navigator .geo built-in browser object that gives JavaScript information and features from the browser.
+    navigator.geolocation.getCurrentPosition(//If the browser does support location, it reaches
+      (position) => {//position contains the location information returned by the browser
         setFormData({
           ...formData,
           Latitude: position.coords.latitude,
@@ -167,13 +162,6 @@ function CreateReportForm({ role, categories, onCreated }) {//oncreated is calle
           </select>
         </div>
 
-        {/*
-          Priority picker, shown ONLY to Residents.
-          This is the "resident can set priority" rule: the resident chooses the
-          starting priority, and other residents can change it later by voting
-          (POST api/Reports/{id}/priority). Staff and Admin do not see this —
-          the backend nulls their Priority anyway, so showing it would be a lie.
-        */}
         {role === "Resident" && (
           <div className="form-group">
             <label className="form-label">Priority / الأولوية</label>
@@ -184,8 +172,6 @@ function CreateReportForm({ role, categories, onCreated }) {//oncreated is calle
               onChange={handleChange}
             >
               <option value="">No priority</option>
-              {/* these three strings must match the backend exactly —
-                  ReportsController rejects anything else */}
               <option value="Low">🟢 Low</option>
               <option value="Medium">🟡 Medium</option>
               <option value="High">🔴 High</option>
@@ -193,25 +179,19 @@ function CreateReportForm({ role, categories, onCreated }) {//oncreated is calle
           </div>
         )}
 
-        {/*
-          "photo after the fix", shown ONLY to Staff.
-          The backend inserts a Staff report with status 'Resolved' straight away
-          and saves request.ResolvedPhotoUrl.
-        */}
-        {role === "Staff" && (
-          <div className="form-group">
-            <label className="form-label">Photo after fixing / صورة بعد الإصلاح</label>
-            <input
-              className="form-input"
-              type="file"
-              accept="image/*"
-              onChange={(e) => setResolvedPhotoFile(e.target.files[0])}
-            />
-            {resolvedPhotoFile && (
-              <p className="location-status">📷 {resolvedPhotoFile.name}</p>
-            )}
-          </div>
-        )}
+        
+        <div className="form-group">
+          <label className="form-label">Photo of the problem / صورة المشكلة</label>
+          <input
+            className="form-input"
+            type="file"
+            accept="image/*"
+            onChange={(e) => setReportedPhotoFile(e.target.files[0])}
+          />
+          {reportedPhotoFile && (
+            <p className="location-status">📷 {reportedPhotoFile.name}</p>
+          )}
+        </div>
 
         <div className="form-group">
           <label className="form-label">Title / العنوان</label>
@@ -239,25 +219,21 @@ function CreateReportForm({ role, categories, onCreated }) {//oncreated is calle
           />
         </div>
 
-        {/*
-          A real file picker: you choose an image from your phone or computer,
-          and on submit the file is uploaded to POST api/Uploads, which saves it
-          in the API's wwwroot/uploads folder and returns a URL. That returned URL
-          is what gets stored in rpt_ReportedPhotoUrl — so the database column did
-          not change, only how the URL is produced.
-        */}
-        <div className="form-group">
-          <label className="form-label">Photo of the problem / صورة المشكلة</label>
-          <input
-            className="form-input"
-            type="file"
-            accept="image/*"
-            onChange={(e) => setReportedPhotoFile(e.target.files[0])}
-          />
-          {reportedPhotoFile && (
-            <p className="location-status">📷 {reportedPhotoFile.name}</p>
-          )}
-        </div>
+        
+        {role === "Staff" && (
+          <div className="form-group">
+            <label className="form-label">Photo after fixing / صورة بعد الإصلاح</label>
+            <input
+              className="form-input"
+              type="file"
+              accept="image/*"
+              onChange={(e) => setResolvedPhotoFile(e.target.files[0])}
+            />
+            {resolvedPhotoFile && (
+              <p className="location-status">📷 {resolvedPhotoFile.name}</p>
+            )}
+          </div>
+        )}
 
         <div className="form-group">
           <label className="form-label">Location / الموقع</label>
@@ -266,15 +242,7 @@ function CreateReportForm({ role, categories, onCreated }) {//oncreated is calle
             📍 Capture My Location
           </button>
 
-          {/*
-            "Pick on Map", for Admin and Staff only.
-            A resident is standing at the problem, so GPS is right for them. An
-            admin or staff member is usually at a desk reporting something they
-            were told about, and GPS would give the office location.
-
-            The baladiye is still worked out automatically by the backend:
-            CreateReport runs a spatial query on whatever lat/long it receives.
-          */}
+         
           {canUseMap && (
             <button
               type="button"
@@ -327,15 +295,12 @@ function CreateReportForm({ role, categories, onCreated }) {//oncreated is calle
                 />
               </div>
 
-              {/* REMOVED: the "🔎 Check this location" button and its result
-                  line. You now just submit — if the point is outside your
-                  baladiye the API refuses and says how far off you are. */}
             </div>
           )}
 
           {canUseMap && showMap && (
             <MapPicker
-              initialLat={formData.Latitude}
+              initialLat={formData.Latitude}//Give MapPicker the current latitude and longitude from the form.
               initialLng={formData.Longitude}
               // called every time the admin clicks a new spot on the map
               onPick={(lat, lng) => {

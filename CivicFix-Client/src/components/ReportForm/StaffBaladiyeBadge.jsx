@@ -38,12 +38,6 @@ function StaffBaladiyeBadge() {
       </p>
     );
   }
-  return (
-    <p className="report-header__baladiye report-header__baladiye--missing">
-      ⚠️ Your account is not assigned to any baladiye yet — ask an admin to set
-      it, or you will not be able to see or submit reports.
-    </p>
-  );
 }
 
 export default StaffBaladiyeBadge;

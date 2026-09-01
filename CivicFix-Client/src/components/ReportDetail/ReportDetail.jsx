@@ -126,14 +126,14 @@ function ReportDetail() {
             <Navbar />
 
       <div className="detail-container">
-        {/* any error that happened AFTER the page loaded. Each child shows its
-            own errors inside its own panel now, so this is only for the reload
-            that follows one of their actions. */}
+        
         {error && <p className="report-status report-status--error">{error}</p>}
 
         {/* ── headline ── */}
         <div className="detail-head">
+          <span className="detail-head__id">#{report.rpt_Id}</span>
           <span className="report-item__category">{report.CategoryName}</span>
+            
           <span className={`report-badge ${getStatusClass(report.rpt_Status)}`}>
             {report.rpt_Status}
           </span>
@@ -178,15 +178,8 @@ function ReportDetail() {
             <span className="detail-fact__key">Reported by</span>
             <span className="detail-fact__value">
               {report.ReporterName} ({report.ReporterRole})
-              {/* Three conditions, each for its own reason:
-                    · only an Admin can block anyone at all
-                    · never on your own report — you cannot block yourself
-                    · never on another Admin's report — the API rejects that
-                      with 400, and a button that always fails is worse than
-                      no button
-                  The second is not covered by the third: they only overlap
-                  while Admins are unblockable. State it separately so it
-                  survives that rule changing. */}
+              
+
               {role === "Admin" &&
                 Number(report.rpt_ReporterId) !== myUserId &&
                 report.ReporterRole !== "Admin" && (
@@ -274,9 +267,7 @@ function ReportDetail() {
                   {assignment.rpa_IsHandler
                     ? "✅ handling this report"
                     : "not handling"}
-                  {assignment.rpa_Points !== 0
-                    ? ` — ${assignment.rpa_Points} pts`
-                    : ""}
+                  
                 </span>
               </div>
             ),
@@ -310,7 +301,7 @@ function ReportDetail() {
           ) : (
             data.StatusHistory.map((entry, index) => (
               <div key={index} className="detail-row">
-                <span>
+                <span>{/*Then for each entry, React creates */}
                   {entry.sth_OldStatus} → <strong>{entry.sth_NewStatus}</strong>
                 </span>
                 <span>
@@ -322,20 +313,9 @@ function ReportDetail() {
           )}
         </div>
 
-        {/* ── change status, Admin and Staff only ──
-            Staff can only reach this page for their own baladiye's reports (the
-            backend returns 403 otherwise), so no extra check is needed here.
-            currentStatus is passed so the dropdown opens on the real value. */}
         {canEditStatus && (
           <ReportStatusPanel
-            // `key` is not decoration here. ReportStatusPanel starts its
-            // dropdown from currentStatus with useState, and useState only
-            // reads its argument the FIRST time a component mounts — a later
-            // prop change is ignored. Because the reload after a save is now
-            // silent, the panel is never unmounted, so without this the
-            // dropdown would keep showing the old value.
-            // Changing `key` tells React "this is a different panel", and it
-            // mounts a fresh one that re-reads the new status.
+            
             key={report.rpt_Status}
             reportId={id}
             currentStatus={report.rpt_Status}

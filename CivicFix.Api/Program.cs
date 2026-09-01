@@ -153,6 +153,10 @@ app.Run();//runs and start listening for request
   //},
 
 
+//"ConnectionStrings": {
+//  "DefaultConnection": "Server=localhost\\MSSQLSERVER01;Database=CivicFixDb;Trusted_Connection=True;TrustServerCertificate=True;"
+//},
+
 
 
 

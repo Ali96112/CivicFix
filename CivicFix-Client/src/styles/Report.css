@@ -331,12 +331,7 @@
   background: linear-gradient(135deg, #3d8fd4 0%, #1e6bb8 100%);
   color: white;
 }
-/* ══════════════════════════════════════════════════════════════════
-   ADDED — Admin "Shared Reports" decision panel.
-   Appears only on the admin's second tab, under reports that sit on
-   the border between two or more baladiyat. Nothing above this block
-   was changed.
-   ══════════════════════════════════════════════════════════════════ */
+
 
 /* the whole panel — separated from the card above by a light rule */
 .report-item__assign {
@@ -1057,4 +1052,17 @@
   font-size: 13px;
   line-height: 1.5;
   color: #35404d;
+}
+
+.report-item__id {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #8a97a3;
+}
+.detail-head__id {
+  margin-left: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #8a97a3;
 }

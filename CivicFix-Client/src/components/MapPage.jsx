@@ -17,9 +17,6 @@ function colorForStatus(status) {
   if (status === "Submitted") {
     return "#3d8fd4"; // blue
   }
-  if (status === "Rejected") {
-    return "#8a8a8a"; // grey
-  }
   return "#e0a23c"; // amber — In Progress
 }
 
@@ -27,9 +24,9 @@ function MapPage() {
   const navigate = useNavigate();
   const [reports, setReports] = useState([]);
 
-  const mapDivRef = useRef(null);   // the <div> Leaflet draws into
-  const mapRef = useRef(null);      // the Leaflet map object
-  const markersRef = useRef(null);  // ONE layer group holding every pin
+  const mapDivRef = useRef(null);   // A reference to the actual HTML <div> where Leaflet will draw the map.
+  const mapRef = useRef(null);      // A reference that stores the actual Leaflet map object after the map is created./map it self
+  const markersRef = useRef(null);  //A reference that stores one Leaflet layer group containing all the report markers/pins.
 
   // ── effect 1: fetch the reports, once ──
   useEffect(() => {
@@ -57,15 +54,15 @@ function MapPage() {
     const map = L.map(mapDivRef.current).setView(LEBANON_CENTER, LEBANON_ZOOM);
     mapRef.current = map;
 
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {//for streets roads
       maxZoom: 19,
       attribution: "&copy; OpenStreetMap contributors",
     }).addTo(map);
 
-    // added to the map once, then emptied and refilled forever after
-    markersRef.current = L.layerGroup().addTo(map);
+    
+    markersRef.current = L.layerGroup().addTo(map);//Create one Leaflet group for markers
 
-    return () => {
+    return () => {//when closed the page
       map.remove();
       mapRef.current = null;
       markersRef.current = null;
@@ -88,9 +85,8 @@ function MapPage() {
         return; // nothing to place
       }
 
-      // A divIcon is plain HTML — the same trick MapPicker uses to dodge
-      // Leaflet's broken default icon path under Vite.
-      const pinIcon = L.divIcon({
+   
+      const pinIcon = L.divIcon({//This creates a custom Leaflet marker icon for one report.
         className: "",
         html:
           `<div style="width:16px;height:16px;border-radius:50%;` +
@@ -98,27 +94,25 @@ function MapPage() {
           `background:${colorForStatus(report.rpt_Status)}"></div>`,
       });
 
-      const marker = L.marker([report.Latitude, report.Longitude], {
+      const marker = L.marker([report.Latitude, report.Longitude], {//draw it on map
         icon: pinIcon,
       });
 
-      // Build the popup as real DOM, not an HTML string. That lets us attach a
-      // normal click listener and use navigate() instead of a plain <a>,
-      // which would reload the whole React app.
-      const popupNode = document.createElement("div");
+      // This code is building the popup content that will appear when you click a report marker.
+      const popupNode = document.createElement("div");//Create a real HTML <div> using JavaScript.
       popupNode.className = "map-popup";
 
-      const titleEl = document.createElement("strong");
-      titleEl.textContent = report.rpt_Title; // textContent, so a title with
-                                              // < or > can't break the popup
-
+      const titleEl = document.createElement("strong");//Create a <strong> element for the report title.
+      
+      titleEl.textContent = report.rpt_Title; //report title
+      titleEl.textContent = `#${report.rpt_Id} — ${report.rpt_Title}`;
       const statusEl = document.createElement("p");
       statusEl.textContent = `${report.rpt_Status} · ${report.CategoryName}`;
 
       const muniEl = document.createElement("p");
       muniEl.textContent = `🏛️ ${report.AssignedMunicipalities}`;
 
-      popupNode.appendChild(titleEl);
+      popupNode.appendChild(titleEl);//puting them inside popup
       popupNode.appendChild(statusEl);
       popupNode.appendChild(muniEl);
 
@@ -133,16 +127,16 @@ function MapPage() {
         popupNode.appendChild(openButton);
       }
 
-      marker.bindPopup(popupNode);
-      markersRef.current.addLayer(marker);
-      points.push([report.Latitude, report.Longitude]);
+      marker.bindPopup(popupNode);//connect popup to marker
+      markersRef.current.addLayer(marker);//Add this marker into the marker group we created earlie
+      points.push([report.Latitude, report.Longitude]);//Save this report's coordinates into the points array.
     });
 
     // zoom so every pin is visible instead of always showing all of Lebanon
     if (points.length > 0) {
       mapRef.current.fitBounds(points, { padding: [50, 50], maxZoom: 15 });
     }
-  }, [reports, navigate]);
+  }, [reports, navigate]);//whennever the report changes refetch the pins
 
   return (
     <div className="map-page">

@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../../styles/layout/Navbar.css";
 
 function Navbar() {
@@ -26,6 +26,8 @@ function Navbar() {
     }
   };
 
+  
+
   return (
     <nav className="navbar">
       <div className="navbar__brand" onClick={() => navigate("/")}>
@@ -36,10 +38,12 @@ function Navbar() {
       </div>
 
                  <div className="navbar__links">
+        <a className="navbar__link" onClick={() => navigate("/map")}>Map</a>
         <a className="navbar__link" onClick={() => navigate("/features")}>Features</a>
         <a className="navbar__link" onClick={() => navigate("/about")}>About</a>
         <a className="navbar__link" onClick={goToReport}>My Reports</a>
         <a className="navbar__link" onClick={() => navigate("/dashboard")}>Dashboard</a>
+        
       </div>
 
       <div className="navbar__buttons">

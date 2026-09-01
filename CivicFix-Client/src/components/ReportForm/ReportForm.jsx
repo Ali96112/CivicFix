@@ -8,13 +8,6 @@ import ReportCard from "./ReportCard";
 
 import "../../styles/Report.css";
 
-//   ReportNavbar         the top bar (also used by ReportDetail)
-//   StaffBaladiyeBadge   "Your baladiye: Beirut — 140 pts"
-//   ReportTabs           All / My Reports / Shared Reports
-//   StatusFilterBar      All · Submitted · In Progress · Finished
-//   CreateReportForm     the "Report a Problem" dropdown
-//   ReportCard           one report, including the admin controls
-//   services/apiHelpers  readBody / errorTextOf / uploadPhoto, shared with ReportDetail
 function ReportForm() {
   const role = localStorage.getItem("usr_Role"); // "Resident", "Staff", or "Admin"
 
@@ -141,7 +134,7 @@ function ReportForm() {
             categories={categories}
             onCreated={() => {
               setShowForm(false);
-              fetchReports(activeTab);//reload reports
+              fetchReports(activeTab);//Reload the reports for whichever tab the user is currently looking at.
             }}
           />
         )}

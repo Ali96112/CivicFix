@@ -35,8 +35,7 @@ function MoveReportPanel({ reportId, onMoved }) {//when onMoved true =fetchrepor
 
     const confirmed = window.confirm(//popup msg
       `Move this report to ${target ? target.mun_Name : "the selected baladiye"}?\n\n` +
-        "It will be removed from its current baladiye. If the report was already " +
-        "resolved, the points move across too.",
+        "It will be removed from its current baladiye. If the report was already " ,
     );
     if (!confirmed) {
       return;
@@ -78,8 +77,6 @@ function MoveReportPanel({ reportId, onMoved }) {//when onMoved true =fetchrepor
     <div className="detail-move">
       <h3 className="detail-section-title">↪️ Move to another baladiye</h3>
 
-      {/* there are hundreds of baladiyat, so type to narrow the list down
-          before picking — a raw dropdown of them all is unusable */}
       <input
         className="form-input"
         type="text"

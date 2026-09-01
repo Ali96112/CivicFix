@@ -136,35 +136,17 @@ function ReportCard({ rep, role, onChanged }) {
     >
       {/* top row — category + status */}
       <div className="report-item__top">
+          <span className="report-item__id">#{rep.rpt_Id}</span>
         <span className="report-item__category">{rep.CategoryName}</span>
 
         <span className="report-item__top-right">
-          {/* the status badge is a BUTTON for an Admin, so clicking it opens the
-              change-status panel below. For everyone else it stays a plain badge. */}
-          {role === "Admin" ? (
-            <button
-              type="button"
-              className={`report-badge report-badge--button ${getStatusClass(rep.rpt_Status)}`}
-              title="Click to change the status"
-              onClick={(e) => {
-                // the card itself navigates to the detail page, so every control
-                // inside it must stop the click bubbling up — otherwise pressing
-                // this would navigate away before the panel could open
-                e.stopPropagation();
-                setEditStatus(rep.rpt_Status);
-                setEditPhotoUrl(rep.rpt_ResolvedPhotoUrl || "");
-                setEditing(!editing);
-              }}
-            >
-              {rep.rpt_Status} ✎
-            </button>
-          ) : (
+          
             <span className={`report-badge ${getStatusClass(rep.rpt_Status)}`}>
               {rep.rpt_Status}
             </span>
-          )}
+          
 
-          {/* the small delete button, Admin only */}
+          
           {role === "Admin" && (
             <button
               type="button"
@@ -182,66 +164,17 @@ function ReportCard({ rep, role, onChanged }) {
         </span>
       </div>
 
-      {/* the Admin's change-status panel, only when this card's badge was clicked */}
-      {role === "Admin" && editing && (
-        <div className="report-item__edit" onClick={(e) => e.stopPropagation()}>
-          <label className="form-label">Change status</label>
-          <select
-            className="form-input"
-            value={editStatus}
-            onChange={(e) => setEditStatus(e.target.value)}
-          >
-            {STATUS_OPTIONS.map((statusOption) => (
-              <option key={statusOption} value={statusOption}>
-                {statusOption}
-              </option>
-            ))}
-          </select>
-
-          {/* the backend requires a proof photo before it accepts "Resolved",
-              so the field only appears when it is needed */}
-          {editStatus === "Resolved" && (
-            <>
-              <label className="form-label">Photo of the fix (required)</label>
-              <input
-                className="form-input"
-                type="text"
-                placeholder="Paste a link to the after photo"
-                value={editPhotoUrl}
-                onChange={(e) => setEditPhotoUrl(e.target.value)}
-              />
-            </>
-          )}
-
-          <div className="report-item__edit-actions">
-            <button
-              type="button"
-              className="btn-save-status"
-              disabled={busy}
-              onClick={saveStatus}
-            >
-              {busy ? "Saving..." : "Save status"}
-            </button>
-            <button
-              type="button"
-              className="btn-cancel-status"
-              onClick={() => setEditing(false)}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      
+      
 
       <h3 className="report-item__title">{rep.rpt_Title}</h3>
-      <p className="report-item__desc">{rep.rpt_Description}</p>
+      <p className="report-item__desc">{rep.rpt_Description.substring(0, 120) + "..."}</p>
 
-      {/* bottom row — baladiye + date + agreement count */}
+     
       <div className="report-item__bottom">
-        {/* the "shared" endpoint returns a Candidates array instead of the
-            AssignedMunicipalities string the other two endpoints return, so we
-            build the names from whichever one this report actually has */}
-        <span className="report-item__muni">
+        
+       
+        <span className="report-item__muni"> {/*the "shared" endpoint returns a Candidates array instead of the  AssignedMunicipalities string*/}
           🏛️{" "}
           {rep.Candidates
             ? rep.Candidates.map((c) => c.mun_Name).join(", ")
@@ -253,16 +186,6 @@ function ReportCard({ rep, role, onChanged }) {
         <span className="report-item__agree">👍 {rep.rpt_AgreementCount || 0}</span>
       </div>
 
-      {/*
-        The admin's decision panel. Only rendered on the shared tab, where the
-        backend attached a Candidates array to each report.
-
-        One button per baladiye the report touches. Clicking one calls
-        PUT api/Reports/{id}/assign-handler, and that baladiye becomes the single
-        owner — the others are REMOVED from the report by the backend, so it
-        stops being shared and disappears from this tab. To change it afterwards,
-        open the report and use "↪️ Move to another baladiye".
-      */}
       {rep.Candidates && (
         <div className="report-item__assign" onClick={(e) => e.stopPropagation()}>
           <p className="report-item__assign-label">
