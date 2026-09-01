@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { readBody, errorTextOf } from "../../services/apiHelpers";
 
-function MoveReportPanel({ reportId, onMoved }) {//when onMoved true =fetchreport we used it here since when we move to other baladeye  we get the new version of this report it is refteched
+function MoveReportPanel({ reportId, onMoved }) {
   const [municipalities, setMunicipalities] = useState([]); 
-  const [moveSearch, setMoveSearch] = useState(""); // what the admin typed, to narrow the list
-  const [moveTargetId, setMoveTargetId] = useState(""); // the baladiye the admin picked
-  const [moving, setMoving] = useState(false); // when true change the button text
+  const [moveSearch, setMoveSearch] = useState(""); 
+  const [moveTargetId, setMoveTargetId] = useState(""); 
+  const [moving, setMoving] = useState(false); 
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -13,24 +13,24 @@ function MoveReportPanel({ reportId, onMoved }) {//when onMoved true =fetchrepor
       try {
         const response = await fetch("http://localhost:5140/api/Municipalities");
         if (response.ok) {
-          setMunicipalities(await response.json());//so now muncipalities has list of all muncipalities
+          setMunicipalities(await response.json());
         }
       } catch (err) {
-        // ignore — without this list the dropdown just has nothing to pick from
+        
       }
     };
 
     fetchMunicipalities();
   }, []); 
 
-  const moveReport = async () => {//this function goal is to Move the current report to the municipality the admin selected
+  const moveReport = async () => {
     if (!moveTargetId) {
       setError("Choose a baladiye to move this report to.");
       return;
     }
 
     const target = municipalities.find(
-      (m) => String(m.mun_Id) === String(moveTargetId),//Is this municipality's ID equal to the ID the admin selected?
+      (m) => String(m.mun_Id) === String(moveTargetId),
     );
 
     const confirmed = window.confirm(//popup msg
@@ -43,7 +43,7 @@ function MoveReportPanel({ reportId, onMoved }) {//when onMoved true =fetchrepor
 //if confirmed
     setMoving(true);//changing button text
     setError("");
-    try {//Backend, move report 15 to municipality 5. Here is my login token. //moveTargetId:the selected baladeye
+    try {
       const token = localStorage.getItem("token");
       const response = await fetch(
         `http://localhost:5140/api/Reports/${reportId}/move`,
@@ -62,7 +62,7 @@ function MoveReportPanel({ reportId, onMoved }) {//when onMoved true =fetchrepor
       if (response.ok) {
         setMoveSearch("");
         setMoveTargetId("");
-        onMoved(); // reload so the new baladiye shows in the assignments list fetchreport
+        onMoved();
       } else {
         setError(errorTextOf(body, "Could not move this report."));
       }
@@ -87,18 +87,17 @@ function MoveReportPanel({ reportId, onMoved }) {//when onMoved true =fetchrepor
 
       <select
         className="form-input"
-        value={moveTargetId}//When the admin selects a municipality, save that selected municipality ID into moveTargetId
+        value={moveTargetId}
         onChange={(e) => setMoveTargetId(e.target.value)}
       >
         <option value="">Select a baladiye...</option>
-        {municipalities// all baladeyes
-          // filter by what was typed, case-insensitively
+        {municipalities
+          
           .filter((m) => m.mun_Name.toLowerCase().includes(moveSearch.toLowerCase()))
-          // cap the list so a huge dropdown does not slow the page down;
-          // narrowing the search further is how you reach the rest
+          
           .slice(0, 50)
           .map((m) => (
-            <option key={m.mun_Id} value={m.mun_Id}>{/*for each option its value is its the id */}{/*this value when clicked is saved in move targetid */}
+            <option key={m.mun_Id} value={m.mun_Id}>
               {m.mun_Name}
             </option>
           ))}

@@ -25,14 +25,19 @@
 
 /* the small blue box containing the city emoji */
 .navbar__logo {
-  background: linear-gradient(135deg, #5aa8e0 0%, #3d8fd4 100%); /* sky blue to match hero */
+  background: #ffffff;                        /* white background */
   width: 32px;
   height: 32px;
   border-radius: 8px;                         /* rounded corners */
   display: flex;
   align-items: center;
-  justify-content: center;                    /* centers the emoji inside the box */
-  font-size: 16px;
+  justify-content: center;                    /* centers the icon inside the box */
+  padding: 0;                                  /* no padding — icon fills the box */
+  border: 1px solid #f0f0f0;                  /* subtle border so it's visible on white navbar */
+}
+.navbar__logo svg {
+  width: 100%;                                 /* icon fills the full box */
+  height: 100%;
 }
 
 /* "CivicFix" text next to the logo */

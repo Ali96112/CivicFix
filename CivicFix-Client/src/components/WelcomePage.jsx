@@ -419,27 +419,18 @@ function WelcomePage() {
           fill="none"
           style={{ zIndex: 2 }}
         >
-          <rect x="36" y="60" width="8" height="15" rx="3" fill="#7B4A1E" />{" "}
-          {/* trunk */}
-          <ellipse cx="40" cy="56" rx="34" ry="6" fill="#00843D" />{" "}
-          {/* bottom layer */}
-          <ellipse cx="40" cy="44" rx="26" ry="6" fill="#009A47" />{" "}
-          {/* middle layer */}
-          <ellipse cx="40" cy="33" rx="18" ry="5.5" fill="#00B050" />{" "}
-          {/* upper layer */}
-          <ellipse cx="40" cy="23" rx="12" ry="5" fill="#00C45A" />{" "}
-          {/* top layer */}
+          <rect x="36" y="60" width="8" height="15" rx="3" fill="#7B4A1E" />{" "}          
+          <ellipse cx="40" cy="56" rx="34" ry="6" fill="#00843D" />{" "}      
+          <ellipse cx="40" cy="44" rx="26" ry="6" fill="#009A47" />{" "}   
+          <ellipse cx="40" cy="33" rx="18" ry="5.5" fill="#00B050" />{" "}      
+          <ellipse cx="40" cy="23" rx="12" ry="5" fill="#00C45A" />{" "}  
           <ellipse cx="40" cy="14" rx="7" ry="4.5" fill="#00D464" />{" "}
-          {/* near top */}
           <ellipse cx="40" cy="7" rx="4" ry="3.5" fill="#00E070" /> {/* tip */}
         </svg>
         <div className="flag-strip__green" />{" "}
-        {/* green line on the right — empty div styled by CSS */}
       </div>{" "}
-      {/* end flag-strip */}
-      {/* small text below the flag strip */}
       <p className="flag-strip__label">🇱🇧 Free for all Lebanese residents</p>
-      {/* ── Footer ── */}
+
        <Footer />
     </div>
   );

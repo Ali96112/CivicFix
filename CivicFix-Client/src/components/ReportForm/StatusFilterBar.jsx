@@ -7,18 +7,17 @@ const STATUS_FILTERS = [
 ];
 
 function StatusFilterBar({ reports, statusFilter, setStatusFilter }) {
-  // counts for the little number on each button, so you can see there are
-  // e.g. 3 unresolved reports without clicking through
+
   const countForStatus = (statusKey) => {
     if (statusKey === "All") {
       return reports.length;
     }
-    return reports.filter((r) => r.rpt_Status === statusKey).length;//That creates a new array containing only Submitted reports and then get their length
+    return reports.filter((r) => r.rpt_Status === statusKey).length;
   };
 
   return (
     <div className="status-filters">
-      {STATUS_FILTERS.map((filter) => (//create a button for each statusfilter filter just represent each button 
+      {STATUS_FILTERS.map((filter) => (
         <button
           key={filter.key}
           type="button"

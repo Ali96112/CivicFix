@@ -1,5 +1,4 @@
-/* ── Google Font ── */
-/* imports Inter font from Google — weights 300 to 800 (light to extra bold) */
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 
@@ -452,9 +451,7 @@
   letter-spacing: -1px;
 }
 
-/* ── the rail ── */
-/* one flex row: node, line, node, line, node. The lines are flex-grow, so
-   they stretch to whatever space is left between the fixed-width nodes. */
+
 .journey__rail {
   display: flex;
   align-items: center;
@@ -707,17 +704,7 @@
   font-size: 14px;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   RESPONSIVE
-   Everything above is the desktop design, unchanged. These blocks only
-   take effect on narrower screens, so nothing here can alter how the
-   page looks on a laptop.
 
-   Three sizes:
-     1024px — tablets: less padding, stats drop from 4 columns to 2
-      860px — the hero stops being two columns and stacks
-      620px — phones: one column everywhere, padding tightened
-   ══════════════════════════════════════════════════════════════════ */
 
 @media (max-width: 1024px) {
   .hero          { padding: 48px 40px; gap: 32px; }

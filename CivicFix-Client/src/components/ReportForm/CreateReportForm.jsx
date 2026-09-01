@@ -1,14 +1,14 @@
 import { useState } from "react";
-import MapPicker from "./MapPicker"; // click-a-spot map, for Admin and Staff
+import MapPicker from "./MapPicker"; 
 import { readBody, errorTextOf, uploadPhoto } from "../../services/apiHelpers";
 
-function CreateReportForm({ role, categories, onCreated }) {//oncreated is called on end it inherets from parent so it load and refetch report and close the form
+function CreateReportForm({ role, categories, onCreated }) {
   const [formData, setFormData] = useState({
     Title: "",
     Description: "",
     CategoryId: "",
     ReportedPhotoUrl: "",
-    ResolvedPhotoUrl: "", // staff only — the "after the fix" photo
+    ResolvedPhotoUrl: "", 
     Latitude: "",
     Longitude: "",
     Priority: "",
@@ -32,13 +32,13 @@ function CreateReportForm({ role, categories, onCreated }) {//oncreated is calle
 
   const getLocation = () => {
     setLocationStatus("Getting your location...");
-    if (!navigator.geolocation) {//If this browser does not support location..
+    if (!navigator.geolocation) {
       setLocationStatus("Your browser does not support location.");
       return;
     }
-    //navigator .geo built-in browser object that gives JavaScript information and features from the browser.
-    navigator.geolocation.getCurrentPosition(//If the browser does support location, it reaches
-      (position) => {//position contains the location information returned by the browser
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
         setFormData({
           ...formData,
           Latitude: position.coords.latitude,
@@ -51,11 +51,6 @@ function CreateReportForm({ role, categories, onCreated }) {//oncreated is calle
       },
     );
   };
-
-  // REMOVED: checkCoordinates(). It used to call GET api/Reports/location-check
-  // to preview which baladiyat a typed point belongs to. The report is validated
-  // on submit instead — CreateReport runs the same spatial test and rejects with
-  // an explanation, so the preview round trip was doing the work twice.
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -88,19 +83,12 @@ function CreateReportForm({ role, categories, onCreated }) {//oncreated is calle
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({//convert to jsn
+        body: JSON.stringify({
           ...formData,
           CategoryId: parseInt(formData.CategoryId),
-          
           ReportedPhotoUrl: reportedPhotoUrl,
-          // NOTE: the backend IGNORES this and takes the reporter's Id from the
-          // JWT token instead, because a body field can be faked. It is still
-          // sent so nothing breaks, but it no longer decides who owns the report.
           ReporterId: parseInt(userId),
-          
           Priority: formData.Priority || null,
-          // only staff send an "after" photo; for anyone else this stays null,
-          // so an empty string is never stored as a photo URL
           ResolvedPhotoUrl: resolvedPhotoUrl,
         }),
       });
@@ -121,17 +109,14 @@ function CreateReportForm({ role, categories, onCreated }) {//oncreated is calle
           setResolvedPhotoFile(null);
           setLocationStatus("");
           setShowMap(false);
-          onCreated(); // tell the parent to reload the list and close this form
+          onCreated(); 
         }
       } else {
-        // the API returns a bare string for most errors, so the real reason
-        // ("You can only submit reports within your baladiye boundaries.")
-        // actually reaches the user
+        
         setError(errorTextOf(data, "Could not submit report."));
       }
     } catch (err) {
-      // uploadPhoto throws a real Error with the server's reason
-      // ("The photo is too large.", "Only image files are allowed.")
+     
       setError(err.message || "Could not connect to server.");
     } finally {
       setLoading(false);
@@ -152,8 +137,7 @@ function CreateReportForm({ role, categories, onCreated }) {//oncreated is calle
             required
           >
             <option value="">Select a category...</option>
-            {/* the backend (CategoriesController) returns rows shaped like
-                { ctg_Id: 1, ctg_Name: "Roads" } */}
+           
             {categories.map((cat) => (
               <option key={cat.ctg_Id} value={cat.ctg_Id}>
                 {cat.ctg_Name}
@@ -267,8 +251,7 @@ function CreateReportForm({ role, categories, onCreated }) {//oncreated is calle
             <div className="coord-entry">
               <div className="coord-entry__row">
                 <label className="form-label">Latitude</label>
-                {/* step="any" matters: without it a number input rejects
-                    decimals, and every coordinate is a decimal */}
+                
                 <input
                   className="form-input"
                   type="number"
@@ -300,9 +283,9 @@ function CreateReportForm({ role, categories, onCreated }) {//oncreated is calle
 
           {canUseMap && showMap && (
             <MapPicker
-              initialLat={formData.Latitude}//Give MapPicker the current latitude and longitude from the form.
+              initialLat={formData.Latitude}
               initialLng={formData.Longitude}
-              // called every time the admin clicks a new spot on the map
+             
               onPick={(lat, lng) => {
                 setFormData((current) => ({
                   ...current,

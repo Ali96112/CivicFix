@@ -1,3 +1,155 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ── Navbar ── */
+/* the top bar that stays fixed while you scroll */
+.navbar {
+  background-color: #ffffff;                  /* white background */
+  border-bottom: 1px solid #f0f0f0;          /* thin light gray line at the bottom */
+  padding: 14px 48px;                         /* top/bottom 14px, left/right 48px */
+  display: flex;                              /* puts brand, links, buttons side by side */
+  justify-content: space-between;            /* pushes them to left, center, right */
+  align-items: center;                        /* vertically centers everything */
+  position: sticky;                           /* stays at top of screen when scrolling */
+  top: 0;                                     /* sticks to the very top */
+  z-index: 100;                               /* sits above all other elements */
+  font-family: 'Inter', sans-serif;
+}
+
+/* groups the logo emoji and "CivicFix" name together — clickable, goes home */
+.navbar__brand {
+  display: flex;                              /* puts logo and name side by side */
+  align-items: center;                        /* vertically centers them */
+  gap: 8px;                                   /* space between logo and name */
+  cursor: pointer;                            /* hand cursor — it navigates to "/" */
+}
+
+/* the small white box containing the logo icon */
+.navbar__logo {
+  background: #ffffff;                        /* white background */
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;                         /* rounded corners */
+  display: flex;
+  align-items: center;
+  justify-content: center;                    /* centers the icon inside the box */
+  padding: 0;                                  /* no padding — icon fills the box */
+  border: 1px solid #f0f0f0;                  /* subtle border so it's visible on white navbar */
+}
+
+.navbar__logo svg {
+  width: 100%;                                 /* icon fills the full box */
+  height: 100%;
+}
+
+/* "CivicFix" text next to the logo */
+.navbar__name {
+  font-size: 16px;
+  font-weight: 700;                           /* bold */
+  color: #111;                                /* near black */
+  letter-spacing: -0.5px;                    /* tightens the letters slightly */
+}
+
+/* targets the <span> inside navbar__name — colors "Fix" blue */
+.navbar__name span {
+  color: #3d8fd4;                             /* sky blue — matches logo */
+}
+
+/* the middle links: Features, How it works */
+.navbar__links {
+  display: flex;                              /* puts links side by side */
+  gap: 36px;                                  /* space between each link */
+}
+
+/* styles each individual link */
+.navbar__link {
+  font-size: 14px;
+  color: #555;                                /* gray text */
+  text-decoration: none;                      /* removes underline */
+  cursor: pointer;                            /* hand cursor on hover */
+  font-weight: 400;                           /* normal weight */
+  transition: color 0.2s;                    /* smooth color change on hover */
+}
+
+/* darkens the link when hovered */
+.navbar__link:hover {
+  color: #110101;
+}
+
+/* groups the buttons on the right */
+.navbar__buttons {
+  display: flex;                              /* set elements side by side */
+  gap: 10px;                                  /* space between the two buttons */
+  align-items: center;
+}
+
+/* ── Button: outline style (Login) ── */
+.btn-outline {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 1px solid #d8dee6;
+  background: #ffffff;
+  color: #555;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-outline:hover {
+  border-color: #3d8fd4;
+  color: #3d8fd4;
+}
+
+/* ── Button: solid blue (Register / Logout) ── */
+.btn-red {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: none;                               /* removes default browser button border */
+  background: linear-gradient(135deg, #5aa8e0 0%, #3d8fd4 100%); /* sky blue matches logo */
+  color: white;
+  font-size: 13px;
+  font-weight: 600;                           /* semi-bold */
+  cursor: pointer;
+  transition: opacity 0.2s;                  /* smooth fade on hover */
+  font-family: 'Inter', sans-serif;
+}
+
+/* slightly dims the button on hover */
+.btn-red:hover {
+  opacity: 0.9;
+}
+/* ── Who is signed in ── */
+.navbar__user {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #f4f7fa;                        /* light grey pill */
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+}
+
+.navbar__role {
+  padding: 2px 8px;
+  background: #e3eef8;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #3d8fd4;                             /* brand blue */
+}
+/* on a narrow phone the chip is the first thing to drop — the buttons matter more */
+@media (max-width: 620px) {
+  .navbar__user {
+    display: none;
+  }
+}
+
 /* ── Report Page ── */
 .report-page {
   min-height: 100vh;
@@ -387,10 +539,7 @@
   opacity: 0.75;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   ADDED — Admin per-report controls (change status + delete)
-   and the Leaflet map picker. Nothing above this block was changed.
-   ══════════════════════════════════════════════════════════════════ */
+
 
 /* holds the status badge and the delete button side by side */
 .report-item__top-right {
@@ -438,7 +587,8 @@
 /* the change-status panel that opens under a report when its badge is clicked */
 .report-item__edit {
   margin-top: 12px;
-  padding: 12px;
+  padding: 16px;
+  padding-bottom: 20px;                       /* extra room so the button isn't flush with the edge */
   background: #f4f8fc;
   border: 1px solid #dfe6ee;
   border-radius: 10px;
@@ -447,11 +597,10 @@
 .report-item__edit-actions {
   display: flex;
   gap: 8px;
-  margin-top: 10px;
 }
 
 .btn-save-status {
-  padding: 8px 18px;
+  padding: 10px 20px;
   background: linear-gradient(135deg, #3d8fd4 0%, #1e6bb8 100%);
   color: white;
   border: none;
@@ -468,7 +617,7 @@
 }
 
 .btn-cancel-status {
-  padding: 8px 18px;
+  padding: 10px 20px;
   background: white;
   color: #6b7684;
   border: 1.5px solid #dfe6ee;
@@ -489,9 +638,7 @@
   margin-top: 12px;
 }
 
-/* IMPORTANT: Leaflet needs an explicit height on its container.
-   Without this rule the map is created but has zero height, so the
-   area looks empty and nothing appears to happen. */
+
 .map-picker__canvas {
   height: 320px;
   width: 100%;
@@ -505,10 +652,6 @@
   color: #6b7684;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   ADDED — clickable cards and the single-report detail page (/report/:id).
-   Nothing above this block was changed.
-   ══════════════════════════════════════════════════════════════════ */
 
 /* the whole report card opens the detail page now, so show a pointer */
 .report-item--clickable {
@@ -578,9 +721,10 @@
   width: 100%;
   height: 220px;
   object-fit: cover;      /* fills the box without stretching the picture */
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid #dfe6ee;
   background: white;
+  box-shadow: 0 2px 10px rgba(46,82,110,0.08);
 }
 
 .detail-photo__empty {
@@ -590,7 +734,7 @@
   align-items: center;
   justify-content: center;
   border: 1px dashed #cfd9e4;
-  border-radius: 10px;
+  border-radius: 12px;
   color: #9aa5b1;
   font-size: 13px;
   background: #f7fafd;
@@ -600,16 +744,18 @@
 .detail-facts {
   background: white;
   border: 1px solid #dfe6ee;
-  border-radius: 12px;
-  padding: 6px 16px;
+  border-radius: 14px;
+  padding: 4px 20px;
   margin-bottom: 24px;
+  box-shadow: 0 2px 12px rgba(46,82,110,0.06);
 }
 
 .detail-fact {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 12px;
-  padding: 10px 0;
+  padding: 12px 0;
   border-bottom: 1px solid #f0f4f8;
   font-size: 14px;
 }
@@ -628,9 +774,6 @@
   text-align: right;
 }
 
-/* ── Block user (Admin only, sits in the "Reported by" row) ── */
-/* inline-flex keeps the buttons on the same baseline as the reporter's name
-   and lets them wrap onto a second line on a narrow screen */
 .block-user {
   display: inline-flex;
   gap: 6px;
@@ -700,7 +843,7 @@
 }
 
 .detail-section-title {
-  margin: 26px 0 10px 0;
+  margin: 28px 0 10px 0;
   font-size: 15px;
   font-weight: 700;
   color: #1e6bb8;
@@ -709,15 +852,17 @@
 .detail-list {
   background: white;
   border: 1px solid #dfe6ee;
-  border-radius: 12px;
-  padding: 6px 16px;
+  border-radius: 14px;
+  padding: 4px 20px;
+  box-shadow: 0 2px 12px rgba(46,82,110,0.06);
 }
 
 .detail-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 12px;
-  padding: 10px 0;
+  padding: 12px 0;
   border-bottom: 1px solid #f0f4f8;
   font-size: 13px;
   color: #4a5460;
@@ -729,21 +874,24 @@
 
 .detail-empty {
   margin: 0;
-  padding: 12px 0;
+  padding: 16px 0;
   color: #9aa5b1;
   font-size: 13px;
+  text-align: center;
 }
 
 .detail-votes {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 16px;
   background: white;
   border: 1px solid #dfe6ee;
-  border-radius: 12px;
-  padding: 14px 16px;
+  border-radius: 14px;
+  padding: 16px 18px;
   font-size: 14px;
   color: #4a5460;
+  box-shadow: 0 2px 12px rgba(46,82,110,0.06);
 }
 
 .detail-edit {
@@ -751,11 +899,12 @@
   border: 1px solid #dfe6ee;
   border-radius: 12px;
   padding: 16px;
+  padding-bottom: 20px;                        /* extra room so the button isn't flush with the edge */
   margin-top: 12px;
 }
 
 .detail-comment {
-  padding: 12px 0;
+  padding: 14px 0;
   border-bottom: 1px solid #f0f4f8;
 }
 
@@ -777,7 +926,8 @@
 }
 
 .detail-add-comment {
-  margin-top: 12px;
+  margin-top: 14px;
+  margin-bottom: 8px;                           /* keeps the comment box off the card's bottom edge */
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -789,15 +939,17 @@
   background: white;
   color: #1e6bb8;
   border: 1.5px solid #3d8fd4;
-  border-radius: 8px;
+  border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
   font-family: 'Inter', sans-serif;
+  transition: background 0.2s, transform 0.2s;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   ADDED — the Staff member's baladiye line under the page title.
-   ══════════════════════════════════════════════════════════════════ */
+.btn-back:hover {
+  background: #f4f8fc;
+  transform: translateX(-2px);
+}
 
 .report-header__baladiye {
   margin: 8px 0 0 0;
@@ -834,10 +986,7 @@
   line-height: 1.5;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   ADDED — the status filter row (All / Submitted / In Progress / Finished)
-   that sits under the tabs on the reports page.
-   ══════════════════════════════════════════════════════════════════ */
+
 
 .status-filters {
   display: flex;
@@ -892,14 +1041,12 @@
   color: white;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   ADDED — the Resident action panels on the detail page:
-   voting on a report's priority, and confirming a baladiye's finished work.
-   ══════════════════════════════════════════════════════════════════ */
+
 
 .detail-vote-panel {
   margin-top: 12px;
   padding: 16px;
+  padding-bottom: 20px;                        /* extra room so vote buttons aren't flush with the edge */
   background: #f4f8fc;
   border: 1px solid #dfe6ee;
   border-radius: 12px;
@@ -913,7 +1060,7 @@
 }
 
 .detail-vote-panel__ask {
-  margin: 0 0 12px 0;
+  margin: 0 0 14px 0;
   font-size: 14px;
   font-weight: 600;
   color: #35404d;
@@ -1001,38 +1148,33 @@
                    unavailable, so it should stay bright */
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   ADDED — the Admin's "move this report to another baladiye" panel
-   on the detail page.
-   ══════════════════════════════════════════════════════════════════ */
+
 
 .detail-move {
   margin-top: 12px;
   padding: 16px;
+  padding-bottom: 20px;                        /* extra room so the button isn't flush with the edge */
   background: #fdf8ef;          /* amber-ish: this is a corrective action */
   border: 1px solid #f0e0c0;
   border-radius: 12px;
 }
 
-/* the search box and the dropdown stack with a little breathing room */
-.detail-move .form-input {
-  margin-bottom: 10px;
+.detail-move .form-input:not(:last-of-type) {
+  margin-bottom: 14px;
 }
 
 .detail-move .detail-section-title {
   margin-top: 0;
+  margin-bottom: 14px;
   color: #8a6414;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   ADDED — the "type coordinates" panel on the report form (Admin/Staff).
-   Lets you file a report at an exact point, which is how the shared-report
-   case (a point on a border between two baladiyat) can be tested.
-   ══════════════════════════════════════════════════════════════════ */
+
 
 .coord-entry {
   margin-top: 12px;
-  padding: 14px;
+  padding: 16px;
+  padding-bottom: 20px;                        /* matches every other action panel */
   background: #f4f8fc;
   border: 1px solid #dfe6ee;
   border-radius: 10px;
@@ -1065,4 +1207,19 @@
   font-size: 13px;
   font-weight: 500;
   color: #8a97a3;
+}
+
+
+.report-item__edit button,
+.detail-edit button,
+.detail-move button,
+.coord-entry button,
+.detail-add-comment button,
+.report-item__assign-buttons button {
+  margin-top: 14px;
+}
+
+
+.report-item__edit-actions button:not(:first-child) {
+  margin-top: 0;
 }

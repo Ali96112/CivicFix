@@ -9,29 +9,26 @@ import ReportCard from "./ReportCard";
 import "../../styles/Report.css";
 
 function ReportForm() {
-  const role = localStorage.getItem("usr_Role"); // "Resident", "Staff", or "Admin"
+  const role = localStorage.getItem("usr_Role"); 
 
-  const [activeTab, setActiveTab] = useState("all"); // which set of reports to fetch
-  const [statusFilter, setStatusFilter] = useState("All"); // which of those to draw
-  const [categories, setCategories] = useState([]); // for the create form's dropdown
-  const [showForm, setShowForm] = useState(false); // is the dropdown open?
+  const [activeTab, setActiveTab] = useState("all"); 
+  const [statusFilter, setStatusFilter] = useState("All"); 
+  const [categories, setCategories] = useState([]); 
+  const [showForm, setShowForm] = useState(false); 
 
-  // ── list state ──
+
   const [reports, setReports] = useState([]);
   const [listLoading, setListLoading] = useState(true);
   const [listError, setListError] = useState("");
 
-  // ── fetch the reports list ──
+
   const fetchReports = async (tab) => {
     setListLoading(true);
     setListError("");
     try {
       const token = localStorage.getItem("token");
 
-      // the tab decides the endpoint:
-      //   "all"    → every report the role is allowed to see
-      //   "shared" → ADMIN ONLY: reports sitting on the border between 2+ baladiyat
-      //   "mine"   → my own reports (Resident) / my baladiye's reports (Staff)
+
       const url =
         tab === "shared"
           ? "http://localhost:5140/api/Reports/shared"
@@ -47,8 +44,7 @@ function ReportForm() {
         const data = await response.json();
         setReports(data.slice(0, 20));
       } else {
-        // show the server's actual answer, not a generic sentence — the API
-        // explains itself (a plain sentence, or an ASP.NET problem-details JSON)
+       
         const rawBody = await response.text();
         console.error("Reports request failed:", response.status, url, rawBody);
 
@@ -60,7 +56,7 @@ function ReportForm() {
             parsed.message ||
             (parsed.errors ? JSON.stringify(parsed.errors) : rawBody);
         } catch {
-          // it was a plain sentence, keep it as-is
+         
         }
 
         setListError(`Failed to load reports (${response.status}): ${serverMessage}`);
@@ -79,17 +75,18 @@ function ReportForm() {
         setCategories(await response.json());
       }
     } catch (err) {
-      // ignore
+      
     }
   };
 
   useEffect(() => {
     fetchReports(activeTab);
-    fetchCategories();
-  }, [activeTab]); // re-run whenever activeTab changes
+}, [activeTab]);
 
-  // the status filter runs on the reports ALREADY fetched, so clicking is
-  // instant — no extra request, no loading spinner
+  useEffect(()=>{
+    fetchCategories();
+  },[])
+
   const visibleReports =
     statusFilter === "All"
       ? reports
@@ -101,13 +98,13 @@ function ReportForm() {
 
       <div className="report-container">
 
-        {/* ── Header + Report button ── */}
+        
         <div className="report-header">
           <div>
             <h1 className="report-header__title">Community Reports</h1>
             <p className="report-header__sub">بلاغات منطقتك — latest issues reported</p>
 
-            {/* only Staff have a baladiye to show */}
+           
             {role === "Staff" && <StaffBaladiyeBadge />}
           </div>
 
@@ -118,8 +115,7 @@ function ReportForm() {
 
         <ReportTabs role={role} activeTab={activeTab} setActiveTab={setActiveTab} />
 
-        {/* hidden on the admin's Shared Reports tab, because that tab is about
-            deciding which baladiye handles a report, not about its status */}
+       
         {activeTab !== "shared" && (
           <StatusFilterBar
             reports={reports}
@@ -134,7 +130,7 @@ function ReportForm() {
             categories={categories}
             onCreated={() => {
               setShowForm(false);
-              fetchReports(activeTab);//Reload the reports for whichever tab the user is currently looking at.
+              fetchReports(activeTab);
             }}
           />
         )}
@@ -147,9 +143,7 @@ function ReportForm() {
           ) : listError ? (
             <p className="report-status report-status--error">{listError}</p>
           ) : visibleReports.length === 0 ? (
-            // the message has to tell the difference between "there are no
-            // reports at all" and "there are reports, but none in the status you
-            // filtered to" — otherwise clicking a filter looks like a bug
+           
             <p className="report-status">
               {activeTab === "shared"
                 ? "No shared reports — nothing is stuck between two baladiyat right now."

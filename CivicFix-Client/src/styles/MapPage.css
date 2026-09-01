@@ -1,7 +1,4 @@
-/* ── page layout ──
-   Pinned to exactly one screen and split into a column: the navbar and
-   the count line take their natural height, the map takes whatever is
-   left. Nothing scrolls, so the navbar never slides off the top. */
+
 .map-page {
   display: flex;
   flex-direction: column;
@@ -18,12 +15,7 @@
   border-bottom: 1px solid #e3ecf2;
 }
 
-/* ── the map canvas ──
-   flex:1 hands it all the remaining height, so there is no magic pixel
-   number to keep in sync with the navbar.
-   min-height:0 is required: flex children default to min-height:auto,
-   which refuses to shrink below their content and is what pushed the
-   page into scrolling. */
+
 .map-page__canvas {
   flex: 1;
   width: 100%;

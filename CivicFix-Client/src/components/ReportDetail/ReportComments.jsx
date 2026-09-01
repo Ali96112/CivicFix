@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { readBody, errorTextOf } from "../../services/apiHelpers";
 
-function ReportComments({ reportId, comments, onPosted }) {//coments:contains the list of comments for this report  //onposted:when i write the comment it reloads the report so it well show
+function ReportComments({ reportId, comments, onPosted }) {
   const [commentText, setCommentText] = useState("");
   const [postingComment, setPostingComment] = useState(false);
   const [error, setError] = useState("");
 
-  // POST api/Reports/{id}/comments  →  ReportsFeedbackController.AddComment
+ 
   const postComment = async () => {
-    // an empty comment is not worth a round trip
+    
     if (!commentText.trim()) {
       return;
     }

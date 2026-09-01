@@ -125,7 +125,17 @@ function ReportCard({ rep, role, onChanged }) {
       setBusy(false);
     }
   };
-
+const AgreementIcon = () => (
+    <svg
+      height="1em"
+      width="1em"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ verticalAlign: "middle", fill: "black" }}
+    >
+      <path d="m19.954 8.641h-5.716l1.256-3.141a2.413 2.413 0 0 0 -.534-2.607 1.824 1.824 0 0 0 -2.776.23l-3.323 4.651a15.386 15.386 0 0 1 -1.65 1.949l-.421.421a2.5 2.5 0 0 0 -4.79 1v8a2.5 2.5 0 0 0 4.79 1l.549.55a3.237 3.237 0 0 0 2.3.953h6.481a2.627 2.627 0 0 0 2.4-1.558l3.18-7.157a3.527 3.527 0 0 0 .3-1.432v-.811a2.049 2.049 0 0 0 -2.046-2.048zm-15.454 12a1.5 1.5 0 0 1 -1.5-1.5v-8a1.5 1.5 0 0 1 3 0v8a1.5 1.5 0 0 1 -1.5 1.5zm16.5-9.141a2.514 2.514 0 0 1 -.218 1.028l-3.182 7.149a1.624 1.624 0 0 1 -1.484.964h-6.474a2.245 2.245 0 0 1 -1.6-.661l-1.042-1.046v-7.586l.918-.918a16.466 16.466 0 0 0 1.758-2.075l3.324-4.65a.82.82 0 0 1 .6-.343.831.831 0 0 1 .652.239 1.415 1.415 0 0 1 .313 1.528l-1.53 3.827a.5.5 0 0 0 .464.685h6.454a1.047 1.047 0 0 1 1.047 1.046z" />
+    </svg>
+  );
   return (
     // the whole card is clickable and opens /report/<id>, the full detail page.
     // Works for every role; Staff opening another baladiye's report is stopped
@@ -183,7 +193,7 @@ function ReportCard({ rep, role, onChanged }) {
         <span className="report-item__date">
           📅 {new Date(rep.rpt_CreatedAt).toLocaleDateString()}
         </span>
-        <span className="report-item__agree">👍 {rep.rpt_AgreementCount || 0}</span>
+        <span className="report-item__agree"><AgreementIcon /> {rep.rpt_AgreementCount || 0}</span>
       </div>
 
       {rep.Candidates && (
