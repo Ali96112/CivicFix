@@ -7,17 +7,7 @@ using System.Security.Claims;
 
 namespace CivicFix.Api.Controllers
 {
-    // ══════════════════════════════════════════════════════════════════════════
-    // WHAT RESIDENTS DO TO A REPORT — comment, agree, vote on priority.
-    //
-    // This is the participation side of CivicFix: residents confirming that a
-    // baladiye really did the work, and deciding together how urgent something is.
-    // ══════════════════════════════════════════════════════════════════════════
     [ApiController]
-    // NOT [Route("api/[controller]")] — that token expands to the class name, so
-    // this file would answer on api/ReportsFeedback and every URL below would change.
-    // Written out in full, these endpoints keep the exact addresses they had when
-    // they all lived in one ReportsController.
     [Route("api/Reports")]
     public class ReportsFeedbackController : ControllerBase
     {
@@ -30,27 +20,24 @@ namespace CivicFix.Api.Controllers
 
 
         [Authorize(Roles = "Resident,Staff,Admin")]
-        [HttpPost("{id:int}/comments")] // address: POST api/Reports/1/comments
+        [HttpPost("{id:int}/comments")]
         public async Task<IActionResult> AddComment(int id, [FromBody] AddCommentRequest request)
         {
-            // who is asking? Straight from the signed JWT, never the request body.
             var currentUserId = int.Parse(User.FindFirst("Id")!.Value);
 
-            //empty comments are not useful
             if (string.IsNullOrWhiteSpace(request.Text))
                 return BadRequest("Comment text cannot be empty.");
 
-            // insert the comment
             var sql = @"
                 INSERT INTO tbl_Comments (cmt_Text, cmt_CreatedAt, cmt_ReportId, cmt_UserId)
                 VALUES (@Text, @CreatedAt, @ReportId, @UserId)";
 
             await _connection.ExecuteAsync(sql, new
             {
-                request.Text,              // the comment text written by staff/admin
-                CreatedAt = DateTime.Now,  // when the comment was added — set by system
-                ReportId = id,             // which report this comment belongs to — from URL
-                UserId = currentUserId // FIXED: who wrote the comment — now from the TOKEN, not the body (body was spoofable)
+                request.Text,
+                CreatedAt = DateTime.Now,
+                ReportId = id,
+                UserId = currentUserId
             });
 
             return Ok("Comment added successfully");
@@ -58,13 +45,12 @@ namespace CivicFix.Api.Controllers
 
 
         [Authorize(Roles = "Resident")]
-        [HttpPost("{id:int}/agree")] // address: POST api/Reports/1/agree
+        [HttpPost("{id:int}/agree")]
 
         public async Task<IActionResult> AgreeOnReport(int id, [FromBody] AgreementRequest request)
         {
-            var currentUserId = int.Parse(User.FindFirst("Id")!.Value);//find which resdient is answering
+            var currentUserId = int.Parse(User.FindFirst("Id")!.Value);
 
-            // Step 1 — check the report exists and was submitted by staff
             var checkSql = @"
                 SELECT rpt_Id, rpt_ReporterId FROM tbl_Reports
                 WHERE rpt_Id = @Id";
@@ -73,7 +59,6 @@ namespace CivicFix.Api.Controllers
             if (report == null)
                 return NotFound("Report not found.");
 
-            // check if reporter is staff so resdient just agree on reporter
             var reporterSql = "SELECT usr_Role FROM tbl_Users WHERE usr_Id = @Id";
             var reporterRole = await _connection.QueryFirstOrDefaultAsync<string>(
                 reporterSql, new { Id = (int)report.rpt_ReporterId });
@@ -81,18 +66,16 @@ namespace CivicFix.Api.Controllers
             if (reporterRole != "Staff")
                 return BadRequest("You can only agree on staff-submitted reports.");
 
-            // Step 2 — check if this resident already agreed/disagreed on this report
             var existingSql = @"
                 SELECT rga_Id FROM tbl_ReportAgreements
                 WHERE rga_ReportId = @ReportId AND rga_UserId = @UserId";
 
             var existing = await _connection.QueryFirstOrDefaultAsync<int?>(
-                existingSql, new { ReportId = id, UserId = currentUserId }); // FIXED: token Id, not body Id
+                existingSql, new { ReportId = id, UserId = currentUserId });
 
             if (existing != null)
                 return BadRequest("You have already submitted your agreement on this report.");
 
-            // Step 3 — save the agreement
             var insertSql = @"
                 INSERT INTO tbl_ReportAgreements (rga_ReportId, rga_UserId, rga_IsAgreement)
                 VALUES (@ReportId, @UserId, @IsAgreement)";
@@ -100,25 +83,21 @@ namespace CivicFix.Api.Controllers
             await _connection.ExecuteAsync(insertSql, new
             {
                 ReportId = id,
-                UserId = currentUserId, // FIXED: was request.UserId from the body
+                UserId = currentUserId,
                 IsAgreement = request.IsAgreement
             });
 
-            // Step 4 — increment the correct counter on the report
             if (request.IsAgreement)
             {
-                // increment agreement count
                 await _connection.ExecuteAsync(
                     "UPDATE tbl_Reports SET rpt_AgreementCount = rpt_AgreementCount + 1 WHERE rpt_Id = @Id",
                     new { Id = id });
 
-                // check if agreement count reached threshold of 3
                 var countSql = "SELECT rpt_AgreementCount FROM tbl_Reports WHERE rpt_Id = @Id";
                 var agreementCount = await _connection.QueryFirstAsync<int>(countSql, new { Id = id });
 
                 if (agreementCount >= 3)
                 {
-                    // get the assignment for this report
                     var assignmentSql = @"
                         SELECT rpa_Id, rpa_MunicipalityId, rpa_Points
                         FROM tbl_ReportAssignments
@@ -130,7 +109,6 @@ namespace CivicFix.Api.Controllers
 
                     if (assignment != null && Convert.ToInt32((object)assignment.rpa_Points) == 0)
                     {
-                        // award points only once — rpa_Points == 0 prevents double awarding
                         await _connection.ExecuteAsync(
                             "UPDATE tbl_ReportAssignments SET rpa_Points = 10 WHERE rpa_Id = @Id",
                             new { Id = assignment.rpa_Id });
@@ -143,7 +121,6 @@ namespace CivicFix.Api.Controllers
             }
             else
             {
-                // increment disagreement count
                 await _connection.ExecuteAsync(
                     "UPDATE tbl_Reports SET rpt_DisagreementCount = rpt_DisagreementCount + 1 WHERE rpt_Id = @Id",
                     new { Id = id });
@@ -154,39 +131,34 @@ namespace CivicFix.Api.Controllers
 
 
         [Authorize(Roles = "Resident")]
-        [HttpPost("{id:int}/priority")] // address: POST api/Reports/1/priority
-        public async Task<IActionResult> VoteOnPriority(int id, [FromBody] PriorityVoteRequest request)//the frontend send to here priority:High 
+        [HttpPost("{id:int}/priority")]
+        public async Task<IActionResult> VoteOnPriority(int id, [FromBody] PriorityVoteRequest request)
         {
-            var currentUserId = int.Parse(User.FindFirst("Id")!.Value);//find how is voting
+            var currentUserId = int.Parse(User.FindFirst("Id")!.Value);
 
-            // Step 1 — check report exists //give me its report ID and the ID of the person who created it
             var checkSql = @"SELECT rpt_Id, rpt_ReporterId FROM tbl_Reports WHERE rpt_Id = @Id";
-            var report = await _connection.QueryFirstOrDefaultAsync<dynamic>(checkSql, new { Id = id });//report id from url
+            var report = await _connection.QueryFirstOrDefaultAsync<dynamic>(checkSql, new { Id = id });
 
             if (report == null)
                 return NotFound("Report not found.");
 
-            // check reporter how created the report is resident
             var reporterSql = "SELECT usr_Role FROM tbl_Users WHERE usr_Id = @Id";
             var reporterRole = await _connection.QueryFirstOrDefaultAsync<string>(
-                reporterSql, new { Id = (int)report.rpt_ReporterId });//getting the reporter to here 
+                reporterSql, new { Id = (int)report.rpt_ReporterId });
 
             if (reporterRole != "Resident")
                 return BadRequest("You can only vote on priority of resident-submitted reports.");
 
-            // Step 2 — check if this resident already voted on this report
             var existingSql = @"
                 SELECT pvt_Id FROM tbl_PriorityVotes
                 WHERE pvt_ReportId = @ReportId AND pvt_UserId = @UserId";
 
-            var existing = await _connection.QueryFirstOrDefaultAsync<int?>(//if existingSql =1 mean already voted if =null still not voted
+            var existing = await _connection.QueryFirstOrDefaultAsync<int?>(
                 existingSql, new { ReportId = id, UserId = currentUserId });
 
 
-            // Step 4 — save the vote: update the existing one, or insert a first one
             if (existing != null)
             {
-                // this person has voted before — overwrite their choice
                 await _connection.ExecuteAsync(
                     "UPDATE tbl_PriorityVotes SET pvt_Priority = @Priority WHERE pvt_Id = @Id",
                     new { Priority = request.Priority, Id = existing.Value });
