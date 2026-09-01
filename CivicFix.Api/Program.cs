@@ -11,7 +11,32 @@ var builder = WebApplication.CreateBuilder(args);//builder is the assembler
 
 // Add services to the container.
 
-builder.Services.AddControllers();// when a request arrive it take it to controller folder
+builder.Services.AddControllers()// when a request arrive it take it to controller folder
+    // ══════════════════════════════════════════════════════════════════════
+    // FIXED — THE JSON NAMING MISMATCH.
+    //
+    // By default ASP.NET Core renames every C# property to camelCase on its way
+    // out. So this in the controller:
+    //     return Ok(new { Report = report, Assignments = assignments });
+    // arrived in React as { "report": ..., "assignments": ... } — lowercase.
+    // That is why ReportDetail crashed with
+    //     Cannot read properties of undefined (reading 'CategoryName')
+    // It asked for data.Report, but the JSON only had data.report.
+    //
+    // The confusing part: the LISTS always worked. That is because Dapper's
+    // `dynamic` rows are dictionaries, and the camelCase rule applies to real
+    // class properties, NOT to dictionary keys. So rpt_Id, CategoryName and
+    // MunicipalityName came through untouched, while anything returned from a
+    // real C# class or `new { ... }` got renamed. Two different conventions in
+    // the same API — impossible to guess from the React side.
+    //
+    // Setting the policy to null turns the renaming off, so what you write in
+    // C# is exactly what React receives, everywhere.
+    // ══════════════════════════════════════════════════════════════════════
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+    });
 
 builder.Services.AddScoped<SqlConnection>(sp =>
     new SqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));//AddScoped means a new connection is created per request and closed when the request finishes
@@ -45,9 +70,46 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReact", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173") // React frontend URL
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+
+
+
 var app = builder.Build();//runnable object
 
 app.UseHttpsRedirection();// Configure the HTTP request pipeline.
+
+// ADDED — serve uploaded photos as real files over http.
+//
+// UploadsController saves images into wwwroot/uploads. UseStaticFiles is what
+// makes that folder reachable from a browser: wwwroot/uploads/abc.jpg becomes
+// http://localhost:5140/uploads/abc.jpg, which is the URL stored in
+// rpt_ReportedPhotoUrl and put into an <img src="..."> by React.
+//
+// The folder is created first because UseStaticFiles throws on startup when
+// wwwroot does not exist — and it will not exist the very first time you run
+// this after pulling these changes.
+var wwwrootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
+Directory.CreateDirectory(Path.Combine(wwwrootPath, "uploads")); // creates both levels, no-op if present
+
+app.UseStaticFiles(); // must come before MapControllers, same as UseCors below
+
+// FIXED — ORDER BUG. UseCors("AllowReact") used to sit AFTER MapControllers(),
+// which means it was never reached: middleware runs top to bottom, and
+// MapControllers() ends the pipeline. React on :5173 was getting
+// "blocked by CORS policy" errors on every call, especially on the
+// browser's OPTIONS preflight for PUT/POST with an Authorization header.
+// CORS must come BEFORE UseAuthentication / UseAuthorization / MapControllers.
+app.UseCors("AllowReact"); // MOVED UP from below MapControllers()
 
 app.UseAuthentication(); // reads the token from the request, validates it, extracts user info in controller
 

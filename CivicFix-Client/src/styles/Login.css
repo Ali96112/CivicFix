@@ -1,0 +1,155 @@
+/* ── Login Page ── */
+/* full page — soft sky-tinted background, centers the card */
+.login-page {
+  min-height: 100vh;                          /* fills full screen */
+  background: #eef4f8;                        /* very light sky-blue tint */
+  display: flex;
+  align-items: center;                        /* vertically centers the card */
+  justify-content: center;                    /* horizontally centers the card */
+  font-family: 'Inter', sans-serif;
+  padding: 40px 16px;                         /* breathing room on small screens */
+}
+
+/* ── Card ── */
+/* white centered box containing everything */
+.login-card {
+  background: white;
+  border-radius: 16px;                        /* rounded corners */
+  box-shadow: 0 4px 32px rgba(58,109,148,0.12); /* soft sky-blue tinted shadow */
+  padding: 40px;
+  width: 100%;
+  max-width: 700px;                           /* card doesn't stretch too wide */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;                           /* clips the flag strip at bottom */
+  position: relative;                         /* needed for flag strip positioning */
+}
+
+/* ── Logo ── */
+/* CivicFix logo at the top of the card */
+.login-card__logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;                    /* centers logo horizontally */
+  gap: 8px;
+  margin-bottom: 20px;
+  cursor: pointer;                            /* hand cursor — clickable, goes home */
+}
+
+/* sky blue box with city emoji */
+.login-card__logo-box {
+  background: linear-gradient(135deg, #5aa8e0 0%, #3d8fd4 100%); /* sky blue — matches navbar logo */
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+/* "CivicFix" text */
+.login-card__logo-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111;
+  letter-spacing: -0.5px;
+}
+
+/* colors "Fix" sky blue */
+.login-card__logo-name span {
+  color: #3d8fd4;
+}
+
+/* "Welcome back" title */
+.login-card__title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #111;
+  letter-spacing: -1px;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+/* "Don't have an account?" line */
+.login-card__register {
+  font-size: 13px;
+  color: #777;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+/* "Register →" link */
+.login-card__register-link {
+  color: #3d8fd4;                             /* sky blue link */
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── Form ── */
+/* stacks fields vertically */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ── Flag Strip ── */
+/* blue line | cedar | green line at the bottom of the card */
+.login-card__flag {
+  position: relative;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 24px;
+  margin-left: -40px;                         /* cancels card padding to go full width */
+  margin-right: -40px;
+}
+
+/* sky blue line on the left */
+.login-card__flag-red {
+  position: absolute;
+  left: 0;
+  height: 5px;
+  background: #3d8fd4;                        /* sky blue */
+  width: 47%;                                 /* leaves gap in center for cedar */
+}
+
+/* baby green line on the right */
+.login-card__flag-green {
+  position: absolute;
+  right: 0;
+  height: 5px;
+  background: #7ed687;                        /* baby green */
+  width: 47%;
+}
+
+/* ── Submit Button ── */
+/* solid sky blue login button */
+.btn-login {
+  padding: 14px;
+  background: linear-gradient(135deg, #3d8fd4 0%, #1e6bb8 100%); /* sky blue — matches hero button */
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+  font-family: 'Inter', sans-serif;
+  width: 100%;                                /* full width */
+}
+
+/* slightly dims and lifts on hover */
+.btn-login:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);               /* lifts 1px upward */
+}
+
+/* dims button and blocks clicks while loading */
+.btn-login:disabled {
+  opacity: 0.6;                              /* looks faded */
+  cursor: not-allowed;                       /* shows a blocked cursor */
+  transform: none;                           /* no lift effect when disabled */
+}

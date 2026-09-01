@@ -3,6 +3,7 @@ using Microsoft.Data.SqlClient;
 using CivicFix.Api.Models;
 using Dapper;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authorization; // ADDED: needed for [Authorize] on GetMe below
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -192,7 +193,36 @@ namespace CivicFix.Api.Controllers
         }
 
 
+       
+        [Authorize(Roles = "Staff")] 
+        [HttpGet("me")] // address: GET api/Users/me
+        public async Task<IActionResult> GetMe()
+        {
+            var idClaim = User.FindFirst("Id")?.Value;
 
+            if (!int.TryParse(idClaim, out int userId))//id chanding icliam from string to int send bade request
+                return BadRequest("Could not read user Id from token. Claim 'Id' not found.");
+
+            var sql = @"
+                SELECT
+                    tbl_Users.usr_Id,
+                    tbl_Users.usr_FullName,
+                    tbl_Users.usr_Role,
+                    tbl_Users.usr_MunicipalityId,
+                    tbl_Municipalities.mun_Name AS MunicipalityName,
+                    tbl_Municipalities.mun_TotalPoints AS MunicipalityPoints
+                FROM tbl_Users
+                LEFT JOIN tbl_Municipalities
+                    ON tbl_Users.usr_MunicipalityId = tbl_Municipalities.mun_Id
+                WHERE tbl_Users.usr_Id = @Id";
+
+            var me = await _connection.QueryFirstOrDefaultAsync<dynamic>(sql, new { Id = userId });
+
+            if (me == null)
+                return NotFound("User not found.");
+
+            return Ok(me);
+        }
 
 
     }

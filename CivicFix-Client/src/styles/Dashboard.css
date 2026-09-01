@@ -1,0 +1,222 @@
+/* ── Dashboard Page ── */
+/* full page wrapper — soft gradient background */
+.dashboard-page {
+  min-height: 100vh;                          /* fills full screen */
+  background: linear-gradient(180deg, #eef4f8 0%, #ffffff 100%); /* light sky fading to white */
+  font-family: 'Inter', sans-serif;
+}
+
+/* ── Navbar ── */
+/* dark navbar at the top */
+.dashboard-nav {
+  background: #10202e;                        /* deep navy — matches hero body */
+  padding: 16px 48px;
+  display: flex;
+  justify-content: space-between;            /* brand on left, button on right */
+  align-items: center;
+  position: sticky;                           /* stays at top when scrolling */
+  top: 0;
+  z-index: 100;
+}
+
+/* logo + "CivicFix" name */
+.dashboard-nav__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;                            /* hand cursor — goes back to home */
+}
+
+/* sky blue box with city emoji */
+.dashboard-nav__logo {
+  background: linear-gradient(135deg, #5aa8e0 0%, #3d8fd4 100%); /* sky blue — matches navbar logo */
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+/* "CivicFix" text */
+.dashboard-nav__name {
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.5px;
+}
+
+/* colors "Fix" sky blue */
+.dashboard-nav__name span {
+  color: #5aa8e0;
+}
+
+/* "Report a Problem" button in navbar */
+.dashboard-nav__btn {
+  padding: 8px 20px;
+  background: linear-gradient(135deg, #3d8fd4 0%, #1e6bb8 100%); /* sky blue */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.dashboard-nav__btn:hover {
+  opacity: 0.9;
+}
+
+/* ── Header band ── */
+/* gradient banner behind the title + search — gives depth */
+.dashboard-header {
+  text-align: center;
+  padding: 56px 24px 72px;
+  background: linear-gradient(135deg, #2e526e 0%, #3d6684 50%, #2e526e 100%); /* steel blue band, matches hero */
+  color: white;
+}
+
+/* "🏆 Baladiye Leaderboard" title */
+.dashboard-header__title {
+  font-size: clamp(1.8rem, 3vw, 2.4rem);    /* responsive font size */
+  font-weight: 700;
+  color: white;
+  letter-spacing: -1.5px;
+  margin-bottom: 8px;
+}
+
+/* arabic subtitle */
+.dashboard-header__sub {
+  font-size: 14px;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 28px;
+  font-weight: 400;
+}
+
+/* search input */
+.dashboard-search {
+  width: 100%;
+  max-width: 480px;                           /* doesn't stretch too wide */
+  padding: 13px 22px;
+  border: 1.5px solid transparent;
+  border-radius: 30px;                        /* pill shape */
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  color: #111;
+  outline: none;
+  transition: box-shadow 0.2s;
+  background: white;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);   /* floating shadow */
+}
+
+.dashboard-search:focus {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.25);   /* stronger shadow on focus */
+}
+
+/* ── Leaderboard List ── */
+/* container for all the baladiye rows — pulled up over the header band */
+.dashboard-list {
+  max-width: 720px;                           /* centered, not too wide */
+  margin: -40px auto 0;                       /* negative margin lifts list over the band */
+  padding: 0 24px 48px;
+  position: relative;                         /* sits above the band */
+}
+
+/* status messages — loading, error, no results */
+.dashboard-status {
+  text-align: center;
+  color: #777;
+  font-size: 14px;
+  padding: 32px 0;
+}
+
+/* error status — red text */
+.dashboard-status--error {
+  color: #dc2626;
+}
+
+/* each baladiye row */
+.dashboard-item {
+  background: white;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 10px;                        /* space between rows */
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 12px rgba(46,82,110,0.1); /* soft steel-blue shadow */
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.dashboard-item:hover {
+  box-shadow: 0 6px 20px rgba(46,82,110,0.18);
+  transform: translateY(-1px);               /* lifts slightly on hover */
+}
+
+/* ── Top 3 — gold / silver / bronze tint ── */
+/* first place — gold */
+.dashboard-item--gold {
+  background: linear-gradient(90deg, #fffdf5 0%, #ffffff 40%);
+  border: 1.5px solid #f5d76e;               /* gold border */
+}
+
+/* second place — silver */
+.dashboard-item--silver {
+  background: linear-gradient(90deg, #fafafa 0%, #ffffff 40%);
+  border: 1.5px solid #d4d4d8;               /* silver border */
+}
+
+/* third place — bronze */
+.dashboard-item--bronze {
+  background: linear-gradient(90deg, #fdf6f0 0%, #ffffff 40%);
+  border: 1.5px solid #e0b088;               /* bronze border */
+}
+
+/* rank number or medal emoji */
+.dashboard-item__rank {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111;
+  width: 40px;                                /* fixed width so names align */
+  text-align: center;
+  flex-shrink: 0;                             /* doesn't shrink when space is tight */
+}
+
+/* baladiye name */
+.dashboard-item__name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111;
+  width: 180px;                               /* fixed width so bars align */
+  flex-shrink: 0;
+}
+
+/* wrapper for the points bar — takes remaining space */
+.dashboard-item__bar-wrap {
+  flex: 1;                                    /* takes all remaining space */
+  background: #eef4f8;                        /* light sky track */
+  border-radius: 4px;
+  height: 8px;
+  overflow: hidden;                           /* clips the bar inside */
+}
+
+/* the colored fill inside the bar */
+.dashboard-item__bar {
+  height: 100%;
+  background: linear-gradient(90deg, #1e6bb8, #5aa8e0); /* sky blue gradient */
+  border-radius: 4px;
+  transition: width 0.6s ease;               /* animates when width changes */
+}
+
+/* points number on the right */
+.dashboard-item__points {
+  font-size: 14px;
+  font-weight: 700;
+  color: #3d8fd4;                             /* sky blue */
+  width: 60px;                                /* fixed width so they align */
+  text-align: right;
+  flex-shrink: 0;
+}

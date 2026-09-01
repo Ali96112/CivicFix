@@ -1,0 +1,1100 @@
+/* ── Report Page ── */
+.report-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #eef4f8 0%, #ffffff 100%);
+  font-family: 'Inter', sans-serif;
+}
+
+/* ── Navbar ── */
+.report-nav {
+  background: #10202e;
+  padding: 16px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.report-nav__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.report-nav__logo {
+  background: linear-gradient(135deg, #5aa8e0 0%, #3d8fd4 100%);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.report-nav__name {
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.5px;
+}
+
+.report-nav__name span {
+  color: #5aa8e0;
+}
+
+.report-nav__btn {
+  padding: 8px 20px;
+  background: linear-gradient(135deg, #3d8fd4 0%, #1e6bb8 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.report-nav__btn:hover {
+  opacity: 0.9;
+}
+
+/* ── Container ── */
+.report-container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+/* ── Header + toggle button ── */
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.report-header__title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #111;
+  letter-spacing: -1px;
+  margin-bottom: 4px;
+}
+
+.report-header__sub {
+  font-size: 13px;
+  color: #777;
+}
+
+/* toggle form button */
+.btn-toggle-form {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #3d8fd4 0%, #1e6bb8 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+}
+
+.btn-toggle-form:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* ── Dropdown form ── */
+.report-form-dropdown {
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(58,109,148,0.15);
+  padding: 28px;
+  margin-bottom: 28px;
+  border: 1.5px solid #d3e0ea;
+  animation: slideDown 0.25s ease;           /* smooth drop animation */
+}
+
+/* drop-down slide animation */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.report-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-input {
+  padding: 12px 16px;
+  border: 1.5px solid #d3e0ea;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  color: #111;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+  background: white;
+}
+
+.form-input:focus {
+  border-color: #3d8fd4;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* location button */
+.btn-location {
+  padding: 12px;
+  background: rgba(61,143,212,0.1);
+  color: #1e6bb8;
+  border: 1.5px dashed #3d8fd4;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-location:hover {
+  background: rgba(61,143,212,0.18);
+}
+
+.location-status {
+  font-size: 12px;
+  color: #555;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+/* messages */
+.form-error {
+  background: #fef2f2;
+  border: 1px solid rgba(220,38,38,0.3);
+  color: #dc2626;
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.form-success {
+  background: #f0fdf4;
+  border: 1px solid rgba(22,163,74,0.3);
+  color: #16a34a;
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+/* submit button */
+.btn-submit {
+  padding: 14px;
+  background: linear-gradient(135deg, #3d8fd4 0%, #1e6bb8 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+  font-family: 'Inter', sans-serif;
+  width: 100%;
+}
+
+.btn-submit:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Reports list ── */
+.report-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.report-status {
+  text-align: center;
+  color: #777;
+  font-size: 14px;
+  padding: 32px 0;
+}
+
+.report-status--error {
+  color: #dc2626;
+}
+
+/* each report card */
+.report-item {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(46,82,110,0.08);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.report-item:hover {
+  box-shadow: 0 6px 20px rgba(46,82,110,0.15);
+  transform: translateY(-1px);
+}
+
+/* top row — category + status */
+.report-item__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.report-item__category {
+  font-size: 12px;
+  font-weight: 600;
+  color: #3d8fd4;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* status badge */
+.report-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.report-badge--submitted {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.report-badge--progress {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.report-badge--resolved {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+/* title */
+.report-item__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 6px;
+}
+
+/* description */
+.report-item__desc {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+
+/* bottom row */
+.report-item__bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #888;
+}
+
+.report-item__muni {
+  font-weight: 500;
+}
+
+.report-item__agree {
+  font-weight: 600;
+  color: #3d8fd4;
+}
+/* date in the bottom row */
+.report-item__date {
+  font-weight: 500;
+  color: #888;
+}
+/* ── Tabs ── */
+.report-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  background: white;
+  padding: 6px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(46,82,110,0.06);
+  width: fit-content;
+}
+
+.report-tab {
+  padding: 10px 24px;
+  background: transparent;
+  color: #666;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.report-tab:hover {
+  color: #111;
+}
+
+/* active tab — sky blue fill */
+.report-tab--active {
+  background: linear-gradient(135deg, #3d8fd4 0%, #1e6bb8 100%);
+  color: white;
+}
+/* ══════════════════════════════════════════════════════════════════
+   ADDED — Admin "Shared Reports" decision panel.
+   Appears only on the admin's second tab, under reports that sit on
+   the border between two or more baladiyat. Nothing above this block
+   was changed.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* the whole panel — separated from the card above by a light rule */
+.report-item__assign {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed #dfe6ee;
+}
+
+/* the "choose who handles it" sentence */
+.report-item__assign-label {
+  margin: 0 0 10px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7684;
+}
+
+/* the row of baladiye buttons — wraps if a report touches many baladiyat */
+.report-item__assign-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* one baladiye the admin can push the report to */
+.btn-assign {
+  padding: 8px 16px;
+  background: white;
+  color: #1e6bb8;
+  border: 1.5px solid #3d8fd4;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, opacity 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-assign:hover:not(:disabled) {
+  background: linear-gradient(135deg, #3d8fd4 0%, #1e6bb8 100%);
+  color: white;
+}
+
+/* the baladiye that currently owns the report — green, and not clickable */
+.btn-assign--chosen {
+  background: #e8f6ee;
+  color: #1f7a4d;
+  border-color: #1f7a4d;
+}
+
+/* greyed out while the assign call is running, and on the current owner */
+.btn-assign:disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ADDED — Admin per-report controls (change status + delete)
+   and the Leaflet map picker. Nothing above this block was changed.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* holds the status badge and the delete button side by side */
+.report-item__top-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* the status badge becomes clickable for an Admin — same look, plus a pointer */
+.report-badge--button {
+  border: none;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: filter 0.2s;
+}
+
+.report-badge--button:hover {
+  filter: brightness(0.92);
+}
+
+/* small red trash button, Admin only */
+.btn-delete {
+  padding: 4px 9px;
+  background: white;
+  color: #c0392b;
+  border: 1.5px solid #e8b7b1;
+  border-radius: 7px;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-delete:hover:not(:disabled) {
+  background: #c0392b;
+  color: white;
+  border-color: #c0392b;
+}
+
+.btn-delete:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* the change-status panel that opens under a report when its badge is clicked */
+.report-item__edit {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f4f8fc;
+  border: 1px solid #dfe6ee;
+  border-radius: 10px;
+}
+
+.report-item__edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.btn-save-status {
+  padding: 8px 18px;
+  background: linear-gradient(135deg, #3d8fd4 0%, #1e6bb8 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-save-status:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.btn-cancel-status {
+  padding: 8px 18px;
+  background: white;
+  color: #6b7684;
+  border: 1.5px solid #dfe6ee;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+
+/* second location button, sits next to "Capture My Location" */
+.btn-location--map {
+  margin-left: 8px;
+}
+
+/* ── the map picker ── */
+.map-picker {
+  margin-top: 12px;
+}
+
+/* IMPORTANT: Leaflet needs an explicit height on its container.
+   Without this rule the map is created but has zero height, so the
+   area looks empty and nothing appears to happen. */
+.map-picker__canvas {
+  height: 320px;
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #dfe6ee;
+}
+
+.map-picker__status {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  color: #6b7684;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ADDED — clickable cards and the single-report detail page (/report/:id).
+   Nothing above this block was changed.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* the whole report card opens the detail page now, so show a pointer */
+.report-item--clickable {
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.report-item--clickable:hover {
+  box-shadow: 0 4px 16px rgba(30, 107, 184, 0.14);
+  transform: translateY(-1px);
+}
+
+/* ── detail page ── */
+.detail-page {
+  min-height: 100vh;
+  background: #eef3f8;
+}
+
+.detail-container {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 28px 20px 60px;
+}
+
+.detail-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.detail-title {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 800;
+  color: #111;
+}
+
+.detail-desc {
+  margin: 0 0 22px 0;
+  color: #4a5460;
+  line-height: 1.6;
+}
+
+/* before / after photos, side by side on desktop, stacked on a phone */
+.detail-photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.detail-photo {
+  flex: 1 1 300px;
+}
+
+.detail-photo__label {
+  margin: 0 0 6px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7684;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.detail-photo__img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;      /* fills the box without stretching the picture */
+  border-radius: 10px;
+  border: 1px solid #dfe6ee;
+  background: white;
+}
+
+.detail-photo__empty {
+  height: 220px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #cfd9e4;
+  border-radius: 10px;
+  color: #9aa5b1;
+  font-size: 13px;
+  background: #f7fafd;
+}
+
+/* the key/value facts block */
+.detail-facts {
+  background: white;
+  border: 1px solid #dfe6ee;
+  border-radius: 12px;
+  padding: 6px 16px;
+  margin-bottom: 24px;
+}
+
+.detail-fact {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f4f8;
+  font-size: 14px;
+}
+
+.detail-fact:last-child {
+  border-bottom: none;
+}
+
+.detail-fact__key {
+  color: #6b7684;
+  font-weight: 600;
+}
+
+.detail-fact__value {
+  color: #111;
+  text-align: right;
+}
+
+.detail-section-title {
+  margin: 26px 0 10px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e6bb8;
+}
+
+.detail-list {
+  background: white;
+  border: 1px solid #dfe6ee;
+  border-radius: 12px;
+  padding: 6px 16px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f4f8;
+  font-size: 13px;
+  color: #4a5460;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-empty {
+  margin: 0;
+  padding: 12px 0;
+  color: #9aa5b1;
+  font-size: 13px;
+}
+
+.detail-votes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: white;
+  border: 1px solid #dfe6ee;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 14px;
+  color: #4a5460;
+}
+
+.detail-edit {
+  background: #f4f8fc;
+  border: 1px solid #dfe6ee;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 12px;
+}
+
+.detail-comment {
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f4f8;
+}
+
+.detail-comment:last-child {
+  border-bottom: none;
+}
+
+.detail-comment__meta {
+  margin: 0 0 4px 0;
+  font-size: 12px;
+  color: #6b7684;
+}
+
+.detail-comment__text {
+  margin: 0;
+  font-size: 14px;
+  color: #111;
+  line-height: 1.5;
+}
+
+.detail-add-comment {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.btn-back {
+  padding: 10px 20px;
+  background: white;
+  color: #1e6bb8;
+  border: 1.5px solid #3d8fd4;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ADDED — the Staff member's baladiye line under the page title.
+   ══════════════════════════════════════════════════════════════════ */
+
+.report-header__baladiye {
+  margin: 8px 0 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  background: #e8f1fb;
+  border: 1px solid #cfe1f5;
+  border-radius: 20px;
+  font-size: 13px;
+  color: #1e6bb8;
+}
+
+/* the baladiye's score, same number as the public leaderboard */
+.report-header__points {
+  padding: 2px 9px;
+  background: #1e6bb8;
+  color: white;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* shown instead when the staff account has no baladiye set — this is a
+   blocking problem, not decoration, so it is amber and full width */
+.report-header__baladiye--missing {
+  display: block;
+  max-width: 520px;
+  background: #fdf4e3;
+  border-color: #f0d9a8;
+  color: #8a6414;
+  border-radius: 10px;
+  line-height: 1.5;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ADDED — the status filter row (All / Submitted / In Progress / Finished)
+   that sits under the tabs on the reports page.
+   ══════════════════════════════════════════════════════════════════ */
+
+.status-filters {
+  display: flex;
+  flex-wrap: wrap;   /* drops onto a second line on a narrow phone */
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.status-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: white;
+  color: #6b7684;
+  border: 1.5px solid #dfe6ee;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.status-filter:hover {
+  border-color: #3d8fd4;
+  color: #1e6bb8;
+}
+
+/* the one currently selected — filled, same blue as the active tab */
+.status-filter--active {
+  background: linear-gradient(135deg, #3d8fd4 0%, #1e6bb8 100%);
+  color: white;
+  border-color: transparent;
+}
+
+/* the little number bubble showing how many reports are in that status */
+.status-filter__count {
+  min-width: 20px;
+  padding: 1px 6px;
+  background: #eef3f8;
+  color: #6b7684;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* on the selected button the bubble inverts so it stays readable */
+.status-filter--active .status-filter__count {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ADDED — the Resident action panels on the detail page:
+   voting on a report's priority, and confirming a baladiye's finished work.
+   ══════════════════════════════════════════════════════════════════ */
+
+.detail-vote-panel {
+  margin-top: 12px;
+  padding: 16px;
+  background: #f4f8fc;
+  border: 1px solid #dfe6ee;
+  border-radius: 12px;
+}
+
+/* the "did the baladiye really do this?" panel is tinted green to
+   separate it visually from the priority vote above it */
+.detail-vote-panel--agree {
+  background: #f2faf5;
+  border-color: #cfe8da;
+}
+
+.detail-vote-panel__ask {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #35404d;
+}
+
+/* shown instead of the buttons once this person has already voted */
+.detail-vote-panel__done {
+  margin: 0;
+  font-size: 14px;
+  color: #35404d;
+  line-height: 1.6;
+}
+
+.detail-vote-panel__note {
+  margin: 10px 0 0 0;
+  font-size: 12px;
+  color: #6b7684;
+}
+
+.detail-vote-panel__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.btn-vote {
+  padding: 10px 18px;
+  background: white;
+  border: 1.5px solid #dfe6ee;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #35404d;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-vote:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.btn-vote--low:hover:not(:disabled) {
+  background: #e8f6ee;
+  border-color: #1f7a4d;
+  color: #1f7a4d;
+}
+
+.btn-vote--medium:hover:not(:disabled) {
+  background: #fdf6e3;
+  border-color: #b8860b;
+  color: #8a6414;
+}
+
+.btn-vote--high:hover:not(:disabled) {
+  background: #fdecea;
+  border-color: #c0392b;
+  color: #c0392b;
+}
+
+.btn-vote--agree:hover:not(:disabled) {
+  background: #1f7a4d;
+  border-color: #1f7a4d;
+  color: white;
+}
+
+.btn-vote--disagree:hover:not(:disabled) {
+  background: #c0392b;
+  border-color: #c0392b;
+  color: white;
+}
+
+/* the priority option this resident currently holds — filled, with a tick.
+   Disabled too, since re-picking it would change nothing. */
+.btn-vote--chosen {
+  background: #1e6bb8;
+  border-color: #1e6bb8;
+  color: white;
+}
+
+.btn-vote--chosen:disabled {
+  opacity: 1;   /* overrides the general .btn-vote:disabled fade — this one is
+                   disabled because it is already selected, not because it is
+                   unavailable, so it should stay bright */
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ADDED — the Admin's "move this report to another baladiye" panel
+   on the detail page.
+   ══════════════════════════════════════════════════════════════════ */
+
+.detail-move {
+  margin-top: 12px;
+  padding: 16px;
+  background: #fdf8ef;          /* amber-ish: this is a corrective action */
+  border: 1px solid #f0e0c0;
+  border-radius: 12px;
+}
+
+/* the search box and the dropdown stack with a little breathing room */
+.detail-move .form-input {
+  margin-bottom: 10px;
+}
+
+.detail-move .detail-section-title {
+  margin-top: 0;
+  color: #8a6414;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ADDED — the "type coordinates" panel on the report form (Admin/Staff).
+   Lets you file a report at an exact point, which is how the shared-report
+   case (a point on a border between two baladiyat) can be tested.
+   ══════════════════════════════════════════════════════════════════ */
+
+.coord-entry {
+  margin-top: 12px;
+  padding: 14px;
+  background: #f4f8fc;
+  border: 1px solid #dfe6ee;
+  border-radius: 10px;
+}
+
+.coord-entry__row {
+  margin-bottom: 10px;
+}
+
+/* the answer from "check this location" — which baladiyat this point hits */
+.coord-entry__result {
+  margin: 10px 0 0 0;
+  padding: 10px 12px;
+  background: white;
+  border: 1px solid #dfe6ee;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #35404d;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ADDED — the "who is signed in" chip and Logout button in the navbar.
+   Shown for every role; the name comes from localStorage, not an API call.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* groups the user chip with the nav buttons on the right-hand side */
+.report-nav__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.report-nav__user {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  white-space: nowrap;
+}
+
+/* the small role pill: Resident / Staff / Admin */
+.report-nav__role {
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* logout is deliberately quieter than the primary nav button */
+.report-nav__btn--logout {
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  color: white;
+}
+
+.report-nav__btn--logout:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* on a narrow phone the chip is the first thing to drop — the buttons matter more */
+@media (max-width: 620px) {
+  .report-nav__user {
+    display: none;
+  }
+}

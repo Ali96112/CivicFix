@@ -8,26 +8,43 @@ using System.Security.Claims;
 
 namespace CivicFix.Api.Controllers
 {
+    // ══════════════════════════════════════════════════════════════════════════
+    // CORE REPORT ENDPOINTS — creating a report, listing them, opening one.
+    // These are the endpoints every role touches.
+    //
+    // Split out of the original 1,900-line ReportsController. Each of the four
+    // report controllers is self-contained — it carries its own connection and its
+    // own copy of the small helpers it needs, so no file depends on another.
+    // ══════════════════════════════════════════════════════════════════════════
     [ApiController]
-    [Route("api/[controller]")] // base address: api/Reports
+    // NOT [Route("api/[controller]")] — that token expands to the class name, so
+    // this file would answer on api/Reports and every URL below would change.
+    // Written out in full, these endpoints keep the exact addresses they had when
+    // they all lived in one ReportsController.
+    [Route("api/Reports")]
     public class ReportsController : ControllerBase
     {
         private readonly SqlConnection _connection;
-        private readonly IConfiguration _configuration;
 
-        public ReportsController(SqlConnection connection, IConfiguration configuration)
+        public ReportsController(SqlConnection connection)
         {
             _connection = connection;
-            _configuration = configuration;
         }
+
 
         [Authorize(Roles = "Resident,Staff,Admin")]
         [HttpPost] // address: api/Reports
         public async Task<IActionResult> CreateReport([FromBody] CreateReportRequest request)
         {
-            // check if reporter is Staff — if yes, verify location is within their baladiye
-            var reporterRole = User.FindFirst(ClaimTypes.Role)?.Value;//User is bult in objeect here  that present logged-in user
-            var reporterIdClaim = User.FindFirst("Id")?.Value;
+            // Who is filing this report? Both facts come from the signed JWT, never
+            // from the request body — a body field can be faked, a signed token cannot.
+            // "User" is built into ControllerBase and represents the logged-in caller.
+            var reporterRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            // TryParse, not int.Parse: a token without an "Id" claim gives a clean 400
+            // instead of throwing and returning a 500.
+            if (!int.TryParse(User.FindFirst("Id")?.Value, out int currentUserId))
+                return BadRequest("Could not read user Id from token. Claim 'Id' not found.");
 
             IEnumerable<Municipality> municipalities;//this list is empty it well hold baladiye names
 
@@ -36,31 +53,99 @@ namespace CivicFix.Api.Controllers
                 // get staff's MunicipalityId from database
                 var staffSql = "SELECT usr_MunicipalityId FROM tbl_Users WHERE usr_Id = @Id";
                 var municipalityId = await _connection.QueryFirstOrDefaultAsync<int?>(
-                    staffSql, new { Id = int.Parse(reporterIdClaim) });
+                    staffSql, new { Id = currentUserId });
 
                 if (municipalityId == null)
                     return BadRequest("Staff member is not assigned to any baladiye.");
 
                 // check if report location is within staff's baladiye boundary + 100m tolerance
+                //
+                // ══════════════════════════════════════════════════════════════
+                // FIXED — every spatial query in this file used to build the point
+                // by gluing strings together:
+                //
+                //   geography::STPointFromText(
+                //       'POINT(' + CAST(@Longitude AS NVARCHAR) + ' ' +
+                //                  CAST(@Latitude  AS NVARCHAR) + ')', 4326)
+                //
+                // Two problems with that:
+                //
+                // 1) PRECISION LOSS. CAST(<float> AS NVARCHAR) with no style keeps
+                //    only about 6 significant digits, so 35.501789 becomes "35.5018".
+                //    Every location was rounded to roughly 4 decimal places — about
+                //    10 metres — before it ever reached the polygon test. Near a
+                //    boundary that is enough to land in the wrong baladiye, or to
+                //    trip the 100m rule when it should not.
+                //
+                // 2) IT IS EASY TO GET THE ORDER BACKWARDS. WKT is POINT(long lat),
+                //    the opposite of how people say "lat, long".
+                //
+                // geography::Point(@Latitude, @Longitude, 4326) takes the two numbers
+                // as real floats — no text conversion, no rounding — and its argument
+                // order is Latitude FIRST, which reads the way coordinates are spoken.
+                // ══════════════════════════════════════════════════════════════
+                // CHANGED: this used to be SELECT COUNT(*), which answered only
+                // "yes" or "no". When it said no, the staff member got
+                // "You can only submit reports within your baladiye boundaries."
+                // and had no way to tell WHY — were they 5 metres out, or 40 km out,
+                // or is the baladiye's polygon simply wrong? Now the query returns
+                // the actual numbers, so the error message can say.
                 var locationCheckSql = @"
-                    SELECT COUNT(*) FROM tbl_Municipalities-- here count well return 0 or 1
-                    WHERE mun_Id = @MunicipalityId
-                    AND (
+                    SELECT
+                        mun_Name,
+                        -- 1 when the point is inside the polygon
                         mun_Boundary.STContains(
-                            geography::STPointFromText(
-                                'POINT(' + CAST(@Longitude AS NVARCHAR) + ' ' + CAST(@Latitude AS NVARCHAR) + ')'
-                            , 4326)) = 1
-                        OR mun_Boundary.STDistance(
-                            geography::STPointFromText(
-                                'POINT(' + CAST(@Longitude AS NVARCHAR) + ' ' + CAST(@Latitude AS NVARCHAR) + ')'
-                            , 4326)) < 100
-                    )";
+                            geography::Point(@Latitude, @Longitude, 4326)) AS ContainsPoint,
+                        -- metres from the point to the polygon (0 when inside)
+                        mun_Boundary.STDistance(
+                            geography::Point(@Latitude, @Longitude, 4326)) AS DistanceMeters,
+                        -- used to spot a polygon that was imported wound the wrong way
+                        mun_Boundary.STArea() / 1000000.0 AS AreaSquareKm
+                    FROM tbl_Municipalities
+                    WHERE mun_Id = @MunicipalityId";
 
-                var isWithinBoundary = await _connection.QueryFirstAsync<int>(
+                var boundaryCheck = await _connection.QueryFirstOrDefaultAsync<dynamic>(
                     locationCheckSql, new { MunicipalityId = municipalityId, request.Longitude, request.Latitude });
 
-                if (isWithinBoundary == 0)
-                    return BadRequest("You can only submit reports within your baladiye boundaries.");
+                if (boundaryCheck == null)
+                    return BadRequest("Your baladiye could not be found in the database.");
+
+                string myBaladiyeName = (object?)boundaryCheck.mun_Name as string ?? "your baladiye";
+
+                // STContains and STDistance both return NULL when mun_Boundary is NULL,
+                // so guard before converting or this throws instead of explaining.
+                object? containsRaw = (object?)boundaryCheck.ContainsPoint;
+                object? distanceRaw = (object?)boundaryCheck.DistanceMeters;
+
+                if (containsRaw == null || distanceRaw == null)
+                    return BadRequest($"{myBaladiyeName} has no boundary polygon saved, so its area cannot be checked. Re-run the boundary seeder.");
+
+                bool isInsideBoundary = Convert.ToInt32(containsRaw) == 1;
+                double distanceMeters = Convert.ToDouble(distanceRaw);
+                double areaSquareKm = Convert.ToDouble((object)boundaryCheck.AreaSquareKm);
+
+                if (!isInsideBoundary && distanceMeters >= 100)
+                {
+                    // ADDED: say exactly how far off the location is. A few metres means
+                    // the boundary is slightly imprecise; kilometres means either the
+                    // staff member really is outside their baladiye, or the polygon is
+                    // in the wrong place (usually lat/long swapped when it was imported).
+                    var distanceText = distanceMeters >= 1000
+                        ? $"{(distanceMeters / 1000):N1} km"
+                        : $"{distanceMeters:N0} m";
+
+                    // Lebanon is about 10,450 km2 in total. A single baladiye that
+                    // claims more than 20,000 km2 has an inverted ring, which SQL Server
+                    // reads as "the whole Earth except this area".
+                    var polygonWarning = areaSquareKm > 20000
+                        ? $" WARNING: {myBaladiyeName}'s boundary covers {areaSquareKm:N0} km2, which is impossible — that polygon is wound the wrong way and needs ReorientObject()."
+                        : "";
+
+                    return BadRequest(
+                        $"You can only submit reports within your baladiye boundaries. " +
+                        $"Your location is {distanceText} away from {myBaladiyeName} " +
+                        $"(you must be inside it, or within 100 m of it).{polygonWarning}");
+                }
 
                 // assign only staff's own baladiye — no spatial query needed
                 var staffMunicipalitySql = "SELECT mun_Id, mun_Name FROM tbl_Municipalities WHERE mun_Id = @Id";
@@ -72,24 +157,35 @@ namespace CivicFix.Api.Controllers
             }
             else
             {
+                // NOTE (ADDED): this branch runs for BOTH Resident and Admin.
+                // Admin is allowed to create reports and is treated exactly like a Resident
+                // (no boundary restriction). If you ever want to block Admin from creating,
+                // change the [Authorize] line above to Roles = "Resident,Staff".
+
                 // Step 1 — resident: find all baladiyat whose polygon contains or is near this point
                 var municipalitySql = @"--this query runs for each row in database so it it may return multiple baladiyes
                     SELECT mun_Id, mun_Name
-                    FROM tbl_Municipalities 
+                    FROM tbl_Municipalities
                     WHERE mun_Boundary.STContains(
-                        geography::STPointFromText(
-                            'POINT(' + CAST(@Longitude AS NVARCHAR) + ' ' + CAST(@Latitude AS NVARCHAR) + ')'
-                        , 4326)) = 1
+                        geography::Point(@Latitude, @Longitude, 4326)) = 1
                     OR mun_Boundary.STDistance(
-                        geography::STPointFromText(
-                            'POINT(' + CAST(@Longitude AS NVARCHAR) + ' ' + CAST(@Latitude AS NVARCHAR) + ')'
-                        , 4326)) < 100";
+                        geography::Point(@Latitude, @Longitude, 4326)) < 100";
 
                 municipalities = await _connection.QueryAsync<Municipality>(
                     municipalitySql, new { request.Longitude, request.Latitude });
 
                 if (!municipalities.Any())
                     return BadRequest("Location does not fall within any registered baladiye.");
+
+                // ADDED: a Resident is allowed to SET THE PRIORITY when creating the report,
+                // but only one of the three legal values. Before, any string went straight
+                // into the database ("banana" would have been saved as a priority) and then
+                // the ORDER BY CASE in the list queries silently dropped it to "ELSE 4".
+                if (!string.IsNullOrEmpty(request.Priority) &&
+                    request.Priority != "Low" && request.Priority != "Medium" && request.Priority != "High")
+                {
+                    return BadRequest("Priority must be Low, Medium, or High.");
+                }
             }
 
             // Duplicate check — for ALL users including staff
@@ -102,31 +198,27 @@ namespace CivicFix.Api.Controllers
                     INNER JOIN tbl_ReportAssignments ON rpt_Id = rpa_ReportId--joins 2 tables depending on common rpt_ID=rpsa_ReportID
                     WHERE rpt_CategoryId = @CategoryId
                     AND rpt_CreatedAt > DATEADD(day, -20, GETDATE())
-                    AND rpa_MunicipalityId IN (SELECT mun_Id FROM tbl_Municipalities 
+                    AND rpa_MunicipalityId IN (SELECT mun_Id FROM tbl_Municipalities
                         WHERE mun_Boundary.STContains(
-                            geography::STPointFromText(
-                                'POINT(' + CAST(@Longitude AS NVARCHAR) + ' ' + CAST(@Latitude AS NVARCHAR) + ')'
-                            , 4326)) = 1)
+                            geography::Point(@Latitude, @Longitude, 4326)) = 1)
                     AND rpt_Location.STDistance(
-                        geography::STPointFromText(
-                            'POINT(' + CAST(@Longitude AS NVARCHAR) + ' ' + CAST(@Latitude AS NVARCHAR) + ')'
-                        , 4326)) < 30"
+                        geography::Point(@Latitude, @Longitude, 4326)) < 30"
+                // NOTE (ADDED, kept on purpose): the Staff query above has NO
+                // "rpt_Status != 'Resolved'" filter, because staff reports are inserted
+                // as 'Resolved' straight away — adding that filter would make duplicate
+                // detection useless for staff. This is intentional, not a bug.
                 : @"
-                    SELECT TOP 1 rpt_Id 
+                    SELECT TOP 1 rpt_Id
                     FROM tbl_Reports
                     INNER JOIN tbl_ReportAssignments ON rpt_Id = rpa_ReportId
                     WHERE rpt_Status != 'Resolved'
                     AND rpt_CategoryId = @CategoryId
                     AND rpt_CreatedAt > DATEADD(day, -20, GETDATE())
-                    AND rpa_MunicipalityId IN (SELECT mun_Id FROM tbl_Municipalities 
+                    AND rpa_MunicipalityId IN (SELECT mun_Id FROM tbl_Municipalities
                         WHERE mun_Boundary.STContains(
-                            geography::STPointFromText(
-                                'POINT(' + CAST(@Longitude AS NVARCHAR) + ' ' + CAST(@Latitude AS NVARCHAR) + ')'
-                            , 4326)) = 1)
+                            geography::Point(@Latitude, @Longitude, 4326)) = 1)
                     AND rpt_Location.STDistance(
-                        geography::STPointFromText(
-                            'POINT(' + CAST(@Longitude AS NVARCHAR) + ' ' + CAST(@Latitude AS NVARCHAR) + ')'
-                        , 4326)) < 30";
+                        geography::Point(@Latitude, @Longitude, 4326)) < 30";
 
             var existingReportId = await _connection.QueryFirstOrDefaultAsync<int?>(
                 duplicateSql, new { request.CategoryId, request.Longitude, request.Latitude });
@@ -161,9 +253,7 @@ namespace CivicFix.Api.Controllers
                 OUTPUT INSERTED.rpt_Id
                 VALUES (@Title, @Description, @Status, @CreatedAt, @ReportedPhotoUrl,
                         @ResolvedPhotoUrl,
-                        geography::STPointFromText(
-                            'POINT(' + CAST(@Longitude AS NVARCHAR) + ' ' + CAST(@Latitude AS NVARCHAR) + ')'
-                        , 4326),
+                        geography::Point(@Latitude, @Longitude, 4326),
                         @ReporterId, @CategoryId, @Priority)";
 
             var reportId = await _connection.QueryFirstAsync<int>(insertReportSql, new
@@ -176,7 +266,9 @@ namespace CivicFix.Api.Controllers
                 ResolvedPhotoUrl = reporterRole == "Staff" ? request.ResolvedPhotoUrl : null, // only staff provides this
                 request.Longitude,
                 request.Latitude,
-                request.ReporterId,
+                // FIXED: was request.ReporterId (came from the body, so a user could
+                // file a report in someone else's name). Now taken from the signed token.
+                ReporterId = currentUserId,
                 request.CategoryId,
                 Priority = reporterRole == "Staff" ? null : request.Priority // staff reports dont need priority
             });
@@ -200,11 +292,29 @@ namespace CivicFix.Api.Controllers
             return Ok(new { ReportId = reportId, AssignedMunicipalities = municipalities.Select(m => m.mun_Name) });
         }
 
-        [HttpGet] // public — no login required, everyone can see
+
+        [Authorize] // a token IS required — every role, but you must be logged in
+        [HttpGet] // address: GET api/Reports
         public async Task<IActionResult> GetAllReports()
         {
-            var sql = @"
-        SELECT 
+            // What each role gets back:
+            //   Admin    → all reports
+            //   Resident → all reports (so they can agree and vote on priority)
+            //   Staff    → only reports assigned to their own baladiye
+            // The filter is the WHERE clause built further down.
+
+            // who is asking? Straight from the signed JWT, never the request body.
+            if (!int.TryParse(User.FindFirst("Id")?.Value, out int userId))
+                return BadRequest("Could not read user Id from token. Claim 'Id' not found.");
+
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+            if (string.IsNullOrEmpty(role))
+                return BadRequest("Could not read role from token.");
+
+            // CHANGED: the query is now built in 3 pieces (base + where + group/order)
+            // exactly like GetMyReports, so a role filter can be slotted in the middle.
+            var baseSql = @"
+        SELECT
             tbl_Reports.rpt_Id,
             tbl_Reports.rpt_Title,
             tbl_Reports.rpt_Description,
@@ -219,42 +329,231 @@ namespace CivicFix.Api.Controllers
         FROM tbl_Reports
         INNER JOIN tbl_Categories ON tbl_Reports.rpt_CategoryId = tbl_Categories.ctg_Id
         INNER JOIN tbl_ReportAssignments ON tbl_Reports.rpt_Id = tbl_ReportAssignments.rpa_ReportId
-        INNER JOIN tbl_Municipalities ON tbl_ReportAssignments.rpa_MunicipalityId = tbl_Municipalities.mun_Id
-        GROUP BY 
+        INNER JOIN tbl_Municipalities ON tbl_ReportAssignments.rpa_MunicipalityId = tbl_Municipalities.mun_Id ";
+
+            // ADDED: the role filter
+            string whereClause = "";
+
+            if (role == "Staff")
+            {
+                // Staff only: keep a report if at least ONE of its assignments points
+                // at the staff member's own baladiye. EXISTS is used (not a plain
+                // WHERE on the join) so STRING_AGG still lists every baladiye.
+                //
+                // ADDED — the second condition hides UNDECIDED SHARED REPORTS.
+                //
+                // A report that landed on a border is assigned to 2 or 3 baladiyat at
+                // once and nobody owns it yet. Showing it to all of them means three
+                // staff members each thinking it might be someone else's job. So it
+                // stays hidden from every baladiye until an Admin allocates it on the
+                // Shared Reports screen.
+                //
+                // Why counting rows is enough: AssignHandler DELETES the losing
+                // baladiyat when the Admin picks one. So the count tells you the state
+                // directly —
+                //     2 or more rows = still shared, nobody decided
+                //     exactly 1 row  = decided (or was never shared)
+                // which is why there is no need to look at rpa_IsHandler here.
+                whereClause = @"WHERE EXISTS (
+                            SELECT 1 FROM tbl_ReportAssignments AS my_assignment
+                            WHERE my_assignment.rpa_ReportId = tbl_Reports.rpt_Id
+                            AND my_assignment.rpa_MunicipalityId =
+                                (SELECT usr_MunicipalityId FROM tbl_Users WHERE usr_Id = @userId))
+                          AND (SELECT COUNT(*) FROM tbl_ReportAssignments
+                               WHERE rpa_ReportId = tbl_Reports.rpt_Id) = 1 ";
+            }
+            // Resident and Admin fall through with whereClause = "" → they see everything
+
+            var groupOrderSql = @"
+        GROUP BY
             tbl_Reports.rpt_Id, tbl_Reports.rpt_Title, tbl_Reports.rpt_Description,
             tbl_Reports.rpt_Status, tbl_Reports.rpt_CreatedAt,
             tbl_Reports.rpt_ReportedPhotoUrl, tbl_Reports.rpt_ResolvedPhotoUrl,
             tbl_Reports.rpt_Priority, tbl_Reports.rpt_AgreementCount,
             tbl_Categories.ctg_Name
-        ORDER BY 
-            CASE tbl_Reports.rpt_Priority 
-                WHEN 'High' THEN 1 
-                WHEN 'Medium' THEN 2 
-                WHEN 'Low' THEN 3 
+        ORDER BY
+            CASE tbl_Reports.rpt_Priority
+                WHEN 'High' THEN 1
+                WHEN 'Medium' THEN 2
+                WHEN 'Low' THEN 3
                 ELSE 4
             END,
             tbl_Reports.rpt_CreatedAt DESC";
 
-            var reports = await _connection.QueryAsync<dynamic>(sql);
+            // ADDED: stitch the three parts together, same idea as GetMyReports
+            var sql = baseSql + whereClause + groupOrderSql;
+
+            var reports = await _connection.QueryAsync<dynamic>(sql, new { userId = userId });
             return Ok(reports);
         }
 
+
         [Authorize]
-        [HttpGet("{id}")] // address: GET api/Reports/1
+        [HttpGet("mine")] // address: GET api/Reports/mine
+        public async Task<IActionResult> GetMyReports()
+        {
+
+            // read the Id claim safely
+            var idClaim = User.FindFirst("Id")?.Value;
+            if (string.IsNullOrEmpty(idClaim))
+                return BadRequest("Could not read user Id from token. Claim 'Id' not found.");
+
+            var userId = int.Parse(idClaim);
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+            if (string.IsNullOrEmpty(role))
+                return BadRequest("Could not read role from token.");
+
+            // the base SELECT is the same as GetAllReports
+            var baseSql = @"
+        SELECT
+            tbl_Reports.rpt_Id,
+            tbl_Reports.rpt_Title,
+            tbl_Reports.rpt_Description,
+            tbl_Reports.rpt_Status,
+            tbl_Reports.rpt_CreatedAt,
+            tbl_Reports.rpt_ReportedPhotoUrl,
+            tbl_Reports.rpt_ResolvedPhotoUrl,
+            tbl_Reports.rpt_Priority,
+            tbl_Reports.rpt_AgreementCount,
+            tbl_Categories.ctg_Name AS CategoryName,
+            STRING_AGG(tbl_Municipalities.mun_Name, ', ') AS AssignedMunicipalities
+        FROM tbl_Reports
+        INNER JOIN tbl_Categories ON tbl_Reports.rpt_CategoryId = tbl_Categories.ctg_Id
+        INNER JOIN tbl_ReportAssignments ON tbl_Reports.rpt_Id = tbl_ReportAssignments.rpa_ReportId
+        INNER JOIN tbl_Municipalities ON tbl_ReportAssignments.rpa_MunicipalityId = tbl_Municipalities.mun_Id ";
+
+            // the WHERE clause changes based on role
+            string whereClause;
+
+            if (role == "Resident")
+            {
+                // resident sees only reports they submitted
+                whereClause = "WHERE tbl_Reports.rpt_ReporterId = @userId ";
+            }
+            else if (role == "Staff")
+            {
+                // staff sees only reports assigned to their baladiye
+                // subquery gets their MunicipalityId from tbl_Users
+                //
+                // FIXED: this used to be
+                //   WHERE tbl_ReportAssignments.rpa_MunicipalityId = (SELECT ...)
+                // which filtered the JOINED rows. Because STRING_AGG runs AFTER the
+                // WHERE, a report shared by 2 baladiyat would only show ONE name in
+                // AssignedMunicipalities. EXISTS filters the REPORT instead of the
+                // joined rows, so the full list of baladiyat is still aggregated.
+                //
+                // ADDED — same "hide undecided shared reports" rule as GetAllReports.
+                // Both list endpoints need it, or the report simply reappears on the
+                // other tab and the rule achieves nothing.
+                whereClause = @"WHERE EXISTS (
+                            SELECT 1 FROM tbl_ReportAssignments AS my_assignment
+                            WHERE my_assignment.rpa_ReportId = tbl_Reports.rpt_Id
+                            AND my_assignment.rpa_MunicipalityId =
+                                (SELECT usr_MunicipalityId FROM tbl_Users WHERE usr_Id = @userId))
+                          AND (SELECT COUNT(*) FROM tbl_ReportAssignments
+                               WHERE rpa_ReportId = tbl_Reports.rpt_Id) = 1 ";
+            }
+            else
+            {
+                // admin sees everything — no filter
+                whereClause = "";
+            }
+
+            // the GROUP BY and ORDER BY are the same as GetAllReports
+            var groupOrderSql = @"
+        GROUP BY
+            tbl_Reports.rpt_Id, tbl_Reports.rpt_Title, tbl_Reports.rpt_Description,
+            tbl_Reports.rpt_Status, tbl_Reports.rpt_CreatedAt,
+            tbl_Reports.rpt_ReportedPhotoUrl, tbl_Reports.rpt_ResolvedPhotoUrl,
+            tbl_Reports.rpt_Priority, tbl_Reports.rpt_AgreementCount,
+            tbl_Categories.ctg_Name
+        ORDER BY
+            CASE tbl_Reports.rpt_Priority
+                WHEN 'High' THEN 1
+                WHEN 'Medium' THEN 2
+                WHEN 'Low' THEN 3
+                ELSE 4
+            END,
+            tbl_Reports.rpt_CreatedAt DESC";
+
+            // stitch the three parts together
+            var fullSql = baseSql + whereClause + groupOrderSql;
+
+            var reports = await _connection.QueryAsync<dynamic>(fullSql, new { userId });
+            return Ok(reports);
+        }
+
+
+        [Authorize]
+        // FIXED — added the ":int" route constraint.
+        //
+        // Without it this route matched ANY text, including the word "shared".
+        // So if a named route above (mine / shared) is missing — for example when
+        // the API has not been rebuilt after adding one — the request silently fell
+        // through to here, ASP.NET tried to stuff "shared" into `int id`, model
+        // binding failed, and [ApiController] answered 400 Bad Request. That error
+        // says nothing about the real problem and is very confusing to debug.
+        //
+        // With ":int" this route only matches numbers, so a missing named route
+        // now returns a plain, honest 404 instead of a misleading 400.
+        [HttpGet("{id:int}")] // address: GET api/Reports/1
         public async Task<IActionResult> GetReportById(int id)
         {
+            // ADDED: same rule as the list above — a Staff member must not be able to
+            // open a report from another baladiye just by typing its Id in the URL.
+            // Resident and Admin can open any report.
+            // who is asking? Straight from the signed JWT, never the request body.
+            // TryParse, not int.Parse: a missing claim gives a 400, not a 500 crash.
+            var idClaim = User.FindFirst("Id")?.Value;
+            if (!int.TryParse(idClaim, out int currentUserId))
+                return BadRequest("Could not read user Id from token. Claim 'Id' not found.");
+
+            if (User.FindFirst(ClaimTypes.Role)?.Value == "Staff")
+            {
+                var myMunicipalityId = await _connection.QueryFirstOrDefaultAsync<int?>(
+                    "SELECT usr_MunicipalityId FROM tbl_Users WHERE usr_Id = @Id", new { Id = currentUserId });
+                if (myMunicipalityId == null)
+                    return BadRequest("Staff member is not assigned to any baladiye.");
+
+                if (await _connection.QueryFirstAsync<int>(
+                    @"SELECT COUNT(*) FROM tbl_ReportAssignments
+                      WHERE rpa_ReportId = @ReportId AND rpa_MunicipalityId = @MunicipalityId",
+                    new { ReportId = id, MunicipalityId = myMunicipalityId.Value }) == 0)
+                    return StatusCode(403, "This report does not belong to your baladiye."); // 403 = logged in, but not allowed
+
+                // ADDED — an undecided shared report is hidden from Staff in the lists,
+                // so it must be blocked here too. Hiding a card does nothing if the
+                // report can still be opened by typing /report/13 in the address bar.
+                // 2 or more assignment rows = the Admin has not allocated it yet.
+                if (await _connection.QueryFirstAsync<int>(
+                    "SELECT COUNT(*) FROM tbl_ReportAssignments WHERE rpa_ReportId = @ReportId",
+                    new { ReportId = id }) > 1)
+                    return StatusCode(403, "This report is shared between several baladiyat. An admin has not decided who handles it yet.");
+            }
+
             // get the report details
+            // CHANGED: also returns the reporter's name and role, and the exact
+            // latitude/longitude, so the detail page can show WHO reported it and
+            // where, instead of only an Id number.
             var reportSql = @"
-        SELECT 
+        SELECT
             tbl_Reports.rpt_Id, tbl_Reports.rpt_Title, tbl_Reports.rpt_Description,
             tbl_Reports.rpt_Status, tbl_Reports.rpt_CreatedAt,
             tbl_Reports.rpt_ReportedPhotoUrl, tbl_Reports.rpt_ResolvedPhotoUrl,
             tbl_Reports.rpt_ReporterId, tbl_Reports.rpt_CategoryId,
             tbl_Reports.rpt_Priority, tbl_Reports.rpt_AgreementCount,
             tbl_Reports.rpt_DisagreementCount,
-            tbl_Categories.ctg_Name AS CategoryName
+            tbl_Categories.ctg_Name AS CategoryName,
+            tbl_Users.usr_FullName AS ReporterName,   -- ADDED: who reported it
+            tbl_Users.usr_Role AS ReporterRole,       -- ADDED: Resident or Staff
+            -- ADDED: the point is stored as a geography type, which cannot be sent
+            -- as JSON directly. .Lat and .Long pull out the plain numbers so React
+            -- can show them (and later drop a pin on a map).
+            tbl_Reports.rpt_Location.Lat AS Latitude,
+            tbl_Reports.rpt_Location.Long AS Longitude
         FROM tbl_Reports
         INNER JOIN tbl_Categories ON tbl_Reports.rpt_CategoryId = tbl_Categories.ctg_Id
+        INNER JOIN tbl_Users ON tbl_Reports.rpt_ReporterId = tbl_Users.usr_Id
         WHERE tbl_Reports.rpt_Id = @Id";
 
             var report = await _connection.QueryFirstOrDefaultAsync<dynamic>(reportSql, new { Id = id });
@@ -264,7 +563,7 @@ namespace CivicFix.Api.Controllers
 
             // get all assigned municipalities for this report
             var assignmentsSql = @"
-        SELECT 
+        SELECT
             tbl_Municipalities.mun_Name AS MunicipalityName,
             tbl_ReportAssignments.rpa_IsHandler,
             tbl_ReportAssignments.rpa_AcceptedAt,
@@ -277,7 +576,7 @@ namespace CivicFix.Api.Controllers
 
             // get priority votes breakdown — how many voted High, Medium, Low
             var priorityVotesSql = @"
-        SELECT 
+        SELECT
             pvt_Priority,
             COUNT(*) AS VoteCount
         FROM tbl_PriorityVotes
@@ -286,296 +585,104 @@ namespace CivicFix.Api.Controllers
 
             var priorityVotesRaw = await _connection.QueryAsync<dynamic>(priorityVotesSql, new { Id = id });
 
+            // ADDED: copy the `dynamic` rows into a plain Dictionary<string,int> first.
+            // The old code compared dynamics inside LINQ lambdas
+            // (v.pvt_Priority == "High" and v.Sum(v => (int)v.VoteCount)), which the
+            // compiler cannot check — those only fail at RUNTIME with a
+            // RuntimeBinderException. A simple foreach with explicit Convert calls is
+            // boring, but it is checked at build time and it is obvious what it does.
+            var voteCounts = new Dictionary<string, int>();
+            foreach (var voteRow in priorityVotesRaw)
+            {
+                string priorityName = Convert.ToString((object)voteRow.pvt_Priority) ?? "";
+                int voteCount = Convert.ToInt32((object)voteRow.VoteCount);
+                voteCounts[priorityName] = voteCount;
+            }
+
             // build the breakdown — default 0 for any priority that has no votes
+            // (TryGetValue writes 0 into the out variable when the key is missing)
+            voteCounts.TryGetValue("High", out int highVotes);
+            voteCounts.TryGetValue("Medium", out int mediumVotes);
+            voteCounts.TryGetValue("Low", out int lowVotes);
+
             var priorityBreakdown = new
             {
-                High = priorityVotesRaw.FirstOrDefault(v => v.pvt_Priority == "High")?.VoteCount ?? 0,
-                Medium = priorityVotesRaw.FirstOrDefault(v => v.pvt_Priority == "Medium")?.VoteCount ?? 0,
-                Low = priorityVotesRaw.FirstOrDefault(v => v.pvt_Priority == "Low")?.VoteCount ?? 0,
-                Total = priorityVotesRaw.Sum(v => (int)v.VoteCount)
+                High = highVotes,
+                Medium = mediumVotes,
+                Low = lowVotes,
+                Total = highVotes + mediumVotes + lowVotes
             };
 
-            return Ok(new { Report = report, Assignments = assignments, PriorityVotes = priorityBreakdown });
-        }
+            // ADDED — the comments people left on this report, newest last so the
+            // detail page can read them top to bottom like a conversation.
+            // Joined to tbl_Users so each comment shows a name, not a user Id.
+            var commentsSql = @"
+        SELECT
+            tbl_Comments.cmt_Id,
+            tbl_Comments.cmt_Text,
+            tbl_Comments.cmt_CreatedAt,
+            tbl_Users.usr_FullName AS AuthorName,
+            tbl_Users.usr_Role AS AuthorRole
+        FROM tbl_Comments
+        INNER JOIN tbl_Users ON tbl_Comments.cmt_UserId = tbl_Users.usr_Id
+        WHERE tbl_Comments.cmt_ReportId = @Id
+        ORDER BY tbl_Comments.cmt_CreatedAt ASC";
 
-        [Authorize(Roles = "Staff,Admin")]
-        [HttpPut("{id}/status")] // address: PUT api/Reports/1/status
-        public async Task<IActionResult> UpdateReportStatus(int id, [FromBody] UpdateStatusRequest request)
-        {
-            // Step 1 — check the report exists
-            var checkSql = "SELECT rpt_Id, rpt_Status FROM tbl_Reports WHERE rpt_Id = @Id";
-            var report = await _connection.QueryFirstOrDefaultAsync<dynamic>(checkSql, new { Id = id });
+            var comments = await _connection.QueryAsync<dynamic>(commentsSql, new { Id = id });
 
-            if (report == null)
-                return NotFound("Report not found.");
-
-            // Step 2 — update the report's status
-            var updateSql = @"
-                UPDATE tbl_Reports 
-                SET rpt_Status = @NewStatus,
-                    rpt_ResolvedPhotoUrl = @ResolvedPhotoUrl
-                WHERE rpt_Id = @Id";
-
-            await _connection.ExecuteAsync(updateSql, new //ExecuteAsync because we're changing data, not fetching it.
-            {
-                NewStatus = request.NewStatus,
-                ResolvedPhotoUrl = request.ResolvedPhotoUrl,
-                Id = id
-            });
-
-            // Step 3 — log the status change in StatusHistory
+            // ADDED — the full status trail (Submitted → In Progress → Resolved),
+            // written by UpdateReportStatus every time the status changes.
+            // This is what makes the detail page show the report's whole life,
+            // and it is the accountability record: who changed what, and when.
             var historySql = @"
-                INSERT INTO tbl_StatusHistories (sth_OldStatus, sth_NewStatus, sth_ChangedAt, sth_ReportId, sth_ChangedByUserId)
-                VALUES (@OldStatus, @NewStatus, @ChangedAt, @ReportId, @ChangedByUserId)";
+        SELECT
+            tbl_StatusHistories.sth_OldStatus,
+            tbl_StatusHistories.sth_NewStatus,
+            tbl_StatusHistories.sth_ChangedAt,
+            tbl_Users.usr_FullName AS ChangedByName,
+            tbl_Users.usr_Role AS ChangedByRole
+        FROM tbl_StatusHistories
+        INNER JOIN tbl_Users ON tbl_StatusHistories.sth_ChangedByUserId = tbl_Users.usr_Id
+        WHERE tbl_StatusHistories.sth_ReportId = @Id
+        ORDER BY tbl_StatusHistories.sth_ChangedAt ASC";
 
-            await _connection.ExecuteAsync(historySql, new
+            var statusHistory = await _connection.QueryAsync<dynamic>(historySql, new { Id = id });
+
+            // ══════════════════════════════════════════════════════════════════
+            // ADDED — what has THIS user already done on THIS report?
+            //
+            // WHY: a resident may vote on priority once, and agree once. The
+            // backend already enforces that (VoteOnPriority and AgreeOnReport both
+            // reject a second attempt), but the browser had no way of knowing
+            // beforehand — so the buttons looked available and only failed after
+            // being clicked. Returning the user's own vote lets React show
+            // "You voted High" instead of a button that is guaranteed to fail.
+            //
+            // Both are read with the Id from the TOKEN, so this only ever tells you
+            // about your own vote, never anyone else's.
+            // ══════════════════════════════════════════════════════════════════
+            var myPriorityVote = await _connection.QueryFirstOrDefaultAsync<string>(
+                "SELECT pvt_Priority FROM tbl_PriorityVotes WHERE pvt_ReportId = @Id AND pvt_UserId = @UserId",
+                new { Id = id, UserId = currentUserId });
+
+            // bool? — true = agreed, false = disagreed, null = has not voted at all.
+            // The three states matter: null must not be confused with "disagreed".
+            var myAgreement = await _connection.QueryFirstOrDefaultAsync<bool?>(
+                "SELECT rga_IsAgreement FROM tbl_ReportAgreements WHERE rga_ReportId = @Id AND rga_UserId = @UserId",
+                new { Id = id, UserId = currentUserId });
+
+            // CHANGED: the response now carries Comments and StatusHistory too, so the
+            // detail page can be filled from this ONE request instead of three.
+            return Ok(new
             {
-                OldStatus = report.rpt_Status,           // fetched from step 1 in database
-                NewStatus = request.NewStatus,            // the new status
-                ChangedAt = DateTime.Now,                 // when the change happened
-                ReportId = id,                            // which report changed
-                ChangedByUserId = request.ChangedByUserId // who made the change
+                Report = report,
+                Assignments = assignments,
+                PriorityVotes = priorityBreakdown,
+                Comments = comments,             // ADDED
+                StatusHistory = statusHistory,   // ADDED
+                MyPriorityVote = myPriorityVote, // ADDED: "Low"/"Medium"/"High", or null
+                MyAgreement = myAgreement        // ADDED: true / false / null
             });
-
-            // Step 4 — if resolved, update points in ReportAssignments and Municipality TotalPoints
-            if (request.NewStatus == "Resolved")
-            {
-                // get all assignments for this report
-                var assignmentsSql = "SELECT rpa_Id, rpa_MunicipalityId, rpa_IsHandler FROM tbl_ReportAssignments WHERE rpa_ReportId = @ReportId";
-                var assignments = await _connection.QueryAsync<dynamic>(assignmentsSql, new { ReportId = id });
-
-                foreach (var assignment in assignments)
-                {
-                    int points = assignment.rpa_IsHandler ? 10 : -5;
-
-                    // update points on ReportAssignment
-                    await _connection.ExecuteAsync(
-                        "UPDATE tbl_ReportAssignments SET rpa_Points = @Points WHERE rpa_Id = @Id",
-                        new { Points = points, Id = assignment.rpa_Id });
-
-                    // update TotalPoints on Municipality
-                    await _connection.ExecuteAsync(
-                        "UPDATE tbl_Municipalities SET mun_TotalPoints = mun_TotalPoints + @Points WHERE mun_Id = @MunicipalityId",
-                        new { Points = points, MunicipalityId = assignment.rpa_MunicipalityId });
-                }
-            }
-
-            return Ok("Report status updated successfully");
-        }
-
-        [Authorize(Roles = "Resident,Staff,Admin")]
-        [HttpPost("{id}/comments")] // address: POST api/Reports/1/comments
-        public async Task<IActionResult> AddComment(int id, [FromBody] AddCommentRequest request)
-        {
-            // Step 1 — check the report exists
-            var checkSql = "SELECT rpt_Id FROM tbl_Reports WHERE rpt_Id = @Id";
-            var reportId = await _connection.QueryFirstOrDefaultAsync<int?>(checkSql, new { Id = id });
-            // int? — returns the Id number if found, or null if no report with that Id exists
-
-            if (reportId == null)
-                return NotFound("Report not found.");
-
-            // Step 2 — insert the comment
-            var sql = @"
-                INSERT INTO tbl_Comments (cmt_Text, cmt_CreatedAt, cmt_ReportId, cmt_UserId)
-                VALUES (@Text, @CreatedAt, @ReportId, @UserId)";
-
-            await _connection.ExecuteAsync(sql, new
-            {
-                request.Text,              // the comment text written by staff/admin
-                CreatedAt = DateTime.Now,  // when the comment was added — set by system
-                ReportId = id,             // which report this comment belongs to — from URL
-                request.UserId             // who wrote the comment — from request body
-            });
-
-            return Ok("Comment added successfully");
-        }
-
-        [Authorize(Roles = "Staff,Admin")]
-        [HttpPut("{id}/accept")] // address: PUT api/Reports/1/accept
-        public async Task<IActionResult> AcceptReport(int id, [FromBody] AcceptReportRequest request)
-        {
-            // check assignment exists for this municipality
-            var checkSql = @"
-                SELECT rpa_Id FROM tbl_ReportAssignments 
-                WHERE rpa_ReportId = @ReportId AND rpa_MunicipalityId = @MunicipalityId";
-
-            var assignmentId = await _connection.QueryFirstOrDefaultAsync<int?>(
-                checkSql, new { ReportId = id, MunicipalityId = request.MunicipalityId });
-
-            if (assignmentId == null)
-                return NotFound("This baladiye is not assigned to this report.");
-
-            // mark this baladiye as the handler
-            var updateSql = @"
-                UPDATE tbl_ReportAssignments 
-                SET rpa_IsHandler = 1, rpa_AcceptedAt = @AcceptedAt
-                WHERE rpa_ReportId = @ReportId AND rpa_MunicipalityId = @MunicipalityId";
-
-            await _connection.ExecuteAsync(updateSql, new
-            {
-                AcceptedAt = DateTime.Now,
-                ReportId = id,
-                MunicipalityId = request.MunicipalityId
-            });
-
-            return Ok("Report accepted successfully.");
-        }
-
-        [Authorize(Roles = "Resident")]
-        [HttpPost("{id}/agree")] // address: POST api/Reports/1/agree
-        public async Task<IActionResult> AgreeOnReport(int id, [FromBody] AgreementRequest request)
-        {
-            // Step 1 — check the report exists and was submitted by staff
-            var checkSql = @"
-                SELECT rpt_Id, rpt_ReporterId FROM tbl_Reports 
-                WHERE rpt_Id = @Id";
-            var report = await _connection.QueryFirstOrDefaultAsync<dynamic>(checkSql, new { Id = id });
-
-            if (report == null)
-                return NotFound("Report not found.");
-
-            // check if reporter is staff
-            var reporterSql = "SELECT usr_Role FROM tbl_Users WHERE usr_Id = @Id";
-            var reporterRole = await _connection.QueryFirstOrDefaultAsync<string>(
-                reporterSql, new { Id = (int)report.rpt_ReporterId });
-
-            if (reporterRole != "Staff")
-                return BadRequest("You can only agree on staff-submitted reports.");
-
-            // Step 2 — check if this resident already agreed/disagreed on this report
-            var existingSql = @"
-                SELECT rga_Id FROM tbl_ReportAgreements 
-                WHERE rga_ReportId = @ReportId AND rga_UserId = @UserId";
-
-            var existing = await _connection.QueryFirstOrDefaultAsync<int?>(
-                existingSql, new { ReportId = id, UserId = request.UserId });
-
-            if (existing != null)
-                return BadRequest("You have already submitted your agreement on this report.");
-
-            // Step 3 — save the agreement
-            var insertSql = @"
-                INSERT INTO tbl_ReportAgreements (rga_ReportId, rga_UserId, rga_IsAgreement)
-                VALUES (@ReportId, @UserId, @IsAgreement)";
-
-            await _connection.ExecuteAsync(insertSql, new
-            {
-                ReportId = id,
-                UserId = request.UserId,
-                IsAgreement = request.IsAgreement
-            });
-
-            // Step 4 — increment the correct counter on the report
-            if (request.IsAgreement)
-            {
-                // increment agreement count
-                await _connection.ExecuteAsync(
-                    "UPDATE tbl_Reports SET rpt_AgreementCount = rpt_AgreementCount + 1 WHERE rpt_Id = @Id",
-                    new { Id = id });
-
-                // check if agreement count reached threshold of 3
-                var countSql = "SELECT rpt_AgreementCount FROM tbl_Reports WHERE rpt_Id = @Id";
-                var agreementCount = await _connection.QueryFirstAsync<int>(countSql, new { Id = id });
-
-                if (agreementCount >= 3)
-                {
-                    // get the assignment for this report
-                    var assignmentSql = @"
-                        SELECT rpa_Id, rpa_MunicipalityId, rpa_Points 
-                        FROM tbl_ReportAssignments 
-                        WHERE rpa_ReportId = @ReportId AND rpa_IsHandler = 1";
-
-                    var assignment = await _connection.QueryFirstOrDefaultAsync<dynamic>(
-                        assignmentSql, new { ReportId = id });
-
-                    if (assignment != null && assignment.rpa_Points == 0)
-                    {
-                        // award points only once — rpa_Points == 0 prevents double awarding
-                        await _connection.ExecuteAsync(
-                            "UPDATE tbl_ReportAssignments SET rpa_Points = 10 WHERE rpa_Id = @Id",
-                            new { Id = assignment.rpa_Id });
-
-                        await _connection.ExecuteAsync(
-                            "UPDATE tbl_Municipalities SET mun_TotalPoints = mun_TotalPoints + 10 WHERE mun_Id = @MunicipalityId",
-                            new { MunicipalityId = assignment.rpa_MunicipalityId });
-                    }
-                }
-            }
-            else
-            {
-                // increment disagreement count
-                await _connection.ExecuteAsync(
-                    "UPDATE tbl_Reports SET rpt_DisagreementCount = rpt_DisagreementCount + 1 WHERE rpt_Id = @Id",
-                    new { Id = id });
-            }
-
-            return Ok(request.IsAgreement ? "Agreement submitted." : "Disagreement submitted.");
-        }
-
-        [Authorize(Roles = "Resident")]
-        [HttpPost("{id}/priority")] // address: POST api/Reports/1/priority
-        public async Task<IActionResult> VoteOnPriority(int id, [FromBody] PriorityVoteRequest request)
-        {
-            // Step 1 — check report exists and is resident-submitted
-            var checkSql = @"SELECT rpt_Id, rpt_ReporterId FROM tbl_Reports WHERE rpt_Id = @Id";
-            var report = await _connection.QueryFirstOrDefaultAsync<dynamic>(checkSql, new { Id = id });
-
-            if (report == null)
-                return NotFound("Report not found.");
-
-            // check reporter is resident
-            var reporterSql = "SELECT usr_Role FROM tbl_Users WHERE usr_Id = @Id";
-            var reporterRole = await _connection.QueryFirstOrDefaultAsync<string>(
-                reporterSql, new { Id = (int)report.rpt_ReporterId });
-
-            if (reporterRole != "Resident")
-                return BadRequest("You can only vote on priority of resident-submitted reports.");
-
-            // Step 2 — check if this resident already voted on this report
-            var existingSql = @"
-                SELECT pvt_Id FROM tbl_PriorityVotes 
-                WHERE pvt_ReportId = @ReportId AND pvt_UserId = @UserId";
-
-            var existing = await _connection.QueryFirstOrDefaultAsync<int?>(
-                existingSql, new { ReportId = id, UserId = request.UserId });
-
-            if (existing != null)
-                return BadRequest("You have already voted on this report's priority.");
-
-            // Step 3 — validate priority value
-            if (request.Priority != "Low" && request.Priority != "Medium" && request.Priority != "High")
-                return BadRequest("Priority must be Low, Medium, or High.");
-
-            // Step 4 — save the vote
-            var insertSql = @"
-                INSERT INTO tbl_PriorityVotes (pvt_ReportId, pvt_UserId, pvt_Priority)
-                VALUES (@ReportId, @UserId, @Priority)";
-
-            await _connection.ExecuteAsync(insertSql, new
-            {
-                ReportId = id,
-                UserId = request.UserId,
-                Priority = request.Priority
-            });
-
-            // Step 5 — recalculate priority based on majority vote
-            var votesSql = @"
-                SELECT pvt_Priority, COUNT(*) AS VoteCount
-                FROM tbl_PriorityVotes
-                WHERE pvt_ReportId = @ReportId
-                GROUP BY pvt_Priority
-                ORDER BY VoteCount DESC";
-
-            var votes = await _connection.QueryAsync<dynamic>(votesSql, new { ReportId = id });
-            var topPriority = votes.First().pvt_Priority; // the priority with most votes
-
-            // update report priority to majority vote
-            await _connection.ExecuteAsync(
-                "UPDATE tbl_Reports SET rpt_Priority = @Priority WHERE rpt_Id = @Id",
-                new { Priority = topPriority, Id = id });
-
-            return Ok(new { message = "Priority vote submitted.", currentPriority = topPriority });
         }
     }
 }

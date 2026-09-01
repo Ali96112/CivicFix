@@ -24,9 +24,9 @@
   gap: 8px;                                   /* space between logo and name */
 }
 
-/* the small red box containing the city emoji */
+/* the small blue box containing the city emoji */
 .navbar__logo {
-  background: var(--red);                     /* Lebanese red background */
+  background: linear-gradient(135deg, #5aa8e0 0%, #3d8fd4 100%); /* sky blue to match hero */
   width: 32px;
   height: 32px;
   border-radius: 8px;                         /* rounded corners */
@@ -44,9 +44,9 @@
   letter-spacing: -0.5px;                    /* tightens the letters slightly */
 }
 
-/* targets the <span> inside navbar__name — colors "Fix" red */
+/* targets the <span> inside navbar__name — colors "Fix" blue */
 .navbar__name span {
-  color: var(--red);
+  color: #3d8fd4;                             /* sky blue — matches logo */
 }
 
 /* the three middle links: Features, How it works, For Municipalities */
@@ -96,12 +96,12 @@
   border-color: #999;
 }
 
-/* ── Button: solid red (Request a Demo button) ── */
+/* ── Button: solid blue (Request a Demo button) ── */
 .btn-red {
   padding: 8px 20px;
   border-radius: 8px;
   border: none;                               /* removes default browser button border */
-  background: var(--red);                     /* Lebanese red background */
+  background: linear-gradient(135deg, #5aa8e0 0%, #3d8fd4 100%); /* sky blue matches logo */
   color: white;
   font-size: 13px;
   font-weight: 600;                           /* semi-bold */
@@ -116,10 +116,10 @@
 }
 
 /* ── Hero ── */
-/* the main section — dark red-black background, two columns side by side */
+/* the main section — deep navy-blue background, two columns side by side */
 .hero {
-  background: radial-gradient(ellipse at 60% 50%, #3a0a12 0%, #1a0308 40%, #0a0105 100%);
-                                              /* dark red glow from center-right */
+  background: radial-gradient(ellipse at 60% 50%, #4e7a99 0%, #3d6684 40%, #2e526e 100%);
+                                              /* deep blue glow from center-right */
   padding: 60px 72px;
   display: grid;                              /* two column layout */
   grid-template-columns: 1fr 1fr;            /* each column takes equal space */
@@ -136,24 +136,24 @@
   gap: 18px;                                  /* space between each child */
 }
 
-/* row containing the "Built for Lebanon" badge and Live dot */
+/* row containing the badge and Live dot */
 .hero__badge-row {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-/* the pill-shaped "Built for Lebanon" badge */
+/* the pill-shaped badge */
 .hero__badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 1px solid rgba(200,16,46,0.6);     /* semi-transparent red border */
-  color: #ff8fa0;                             /* light pink text */
+  border: 1px solid rgba(255,255,255,0.3);   /* soft white border */
+  color: #cfe4f2;                             /* light blue text */
   font-size: 11px;
   padding: 5px 14px;
   border-radius: 20px;                        /* pill shape */
-  background: rgba(200,16,46,0.1);           /* very faint red background */
+  background: rgba(255,255,255,0.12);        /* translucent white background */
   letter-spacing: 0.3px;
   font-weight: 500;
 }
@@ -164,7 +164,7 @@
   align-items: center;
   gap: 5px;
   font-size: 12px;
-  color: rgba(255,255,255,0.4);              /* faint white */
+  color: rgba(255,255,255,0.55);             /* light, readable on darker blue */
 }
 
 /* the small green pulsing dot next to "Live" */
@@ -192,23 +192,23 @@
   margin: 0;
 }
 
-/* modifier — makes "Let's fix it." line pink-red */
+/* modifier — makes "Let's fix it." line light blue */
 .hero__headline--red {
-  color: #ff4d6d;
+  color: #a9d0e8;
 }
 
-/* short red horizontal bar below the headline */
+/* short blue horizontal bar below the headline */
 .hero__divider {
   width: 48px;
   height: 3px;
-  background: var(--red);
+  background: #3d8fd4;                        /* sky blue accent */
   border-radius: 2px;
 }
 
 /* the paragraph description below the divider */
 .hero__description {
   font-size: 15px;
-  color: rgba(255,255,255,0.5);              /* semi-transparent white */
+  color: rgba(255,255,255,0.75);             /* light, readable on darker blue */
   line-height: 1.75;                          /* comfortable reading spacing */
   max-width: 420px;                           /* stops it from stretching too wide */
   font-weight: 400;
@@ -217,7 +217,7 @@
 /* Arabic subtitle below the description */
 .hero__arabic {
   font-size: 13px;
-  color: rgba(255,255,255,0.2);              /* very faint white */
+  color: rgba(255,255,255,0.4);              /* faint light */
   font-style: italic;
   font-weight: 400; /*thickness*/
 }
@@ -229,10 +229,10 @@
   flex-wrap: wrap;                            /* wraps to next line on small screens */
 }
 
-/* primary CTA — solid red "Report a Problem" button */
+/* primary CTA — solid blue "Report a Problem" button */
 .btn-hero-primary {
   padding: 14px 28px;
-  background: var(--red);
+  background: linear-gradient(135deg, #3d8fd4 0%, #1e6bb8 100%); /* deeper sky blue, stands out on light hero */
   color: white;
   border: none;
   border-radius: 10px;
@@ -246,18 +246,18 @@
   gap: 8px;
 }
 
-/* lifts up and adds red glow on hover */
+/* lifts up and adds blue glow on hover */
 .btn-hero-primary:hover {
   transform: translateY(-2px);               /* moves 2px upward */
-  box-shadow: 0 12px 32px rgba(200,16,46,0.4); /* red shadow below */
+  box-shadow: 0 12px 32px rgba(61,143,212,0.5); /* sky blue shadow below */
 }
 
 /* secondary CTA — ghost style "View Dashboard" button */
 .btn-hero-secondary {
   padding: 14px 28px;
-  background: rgba(255,255,255,0.08);        /* very faint white fill */
-  border: 1px solid rgba(255,255,255,0.15);  /* faint white border */
-  color: rgba(255,255,255,0.8);
+  background: rgba(255,255,255,0.12);        /* translucent white fill */
+  border: 1px solid rgba(255,255,255,0.25);  /* faint white border */
+  color: rgba(255,255,255,0.9);
   border-radius: 10px;
   font-size: 14px;
   font-weight: 400;
@@ -271,7 +271,7 @@
 
 /* brightens slightly on hover */
 .btn-hero-secondary:hover {
-  background: rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.2);
 }
 
 /* trust line — "1,432 municipalities | Encrypted | Free for residents" */
@@ -285,13 +285,13 @@
 /* each trust item */
 .hero__trust span {
   font-size: 11px;
-  color: rgba(255,255,255,0.25);             /* very faint */
+  color: rgba(255,255,255,0.5);              /* light, readable on darker blue */
   font-weight: 400;
 }
 
 /* the | dividers between trust items — even fainter */
 .hero__trust-divider {
-  color: rgba(255,255,255,0.1) !important;   /* !important overrides the span rule above */
+  color: rgba(255,255,255,0.25) !important;   /* !important overrides the span rule above */
 }
 
 /* ── Hero Right — Stats Cards ── */
@@ -304,10 +304,10 @@
 }
 
 /* ── Stats Strip ── */
-/* full-width red section — "Lebanon needs this. Now." */
+/* full-width blue section — "Lebanon needs this. Now." */
 .stats-strip {
-  background: linear-gradient(135deg, #a50e22 0%, #C8102E 50%, #a50e22 100%);
-                     /* diagonal red gradient  creates a smooth color transition between two or more colors*/
+  background: linear-gradient(135deg, #152838 0%, #182f42 50%, #152838 100%);
+                     /* diagonal blue gradient  creates a smooth color transition between two or more colors*/
   padding: 64px 72px;
   text-align: center;
   font-family: 'Inter', sans-serif;
@@ -341,7 +341,7 @@
   margin: 0 auto;                             /* centers the grid */
 }
 
-/* each card in the red strip */
+/* each card in the blue strip */
 .stats-strip__card {
   background: rgba(0,0,0,0.15);              /* subtle dark overlay */
   border-radius: 14px;
@@ -357,8 +357,8 @@
 
 /* each individual stat card */
 .stat-card {
-  background: rgba(80,10,20,0.5);            /* dark semi-transparent red */
-  border: 1px solid rgba(255,255,255,0.08);  /* very faint white border */
+  background: rgba(255,255,255,0.1);         /* translucent white on darker blue */
+  border: 1px solid rgba(255,255,255,0.18);  /* soft white border */
   border-radius: 14px;
   padding: 22px;
   transition: border-color 0.2s;
@@ -367,7 +367,7 @@
 
 /* brightens border on hover */
 .stat-card:hover {
-  border-color: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.35);
 }
 
 /* makes a card span both columns — used for the "How a report travels" card */
@@ -378,7 +378,7 @@
 /* small uppercase label at the top of each card */
 .stat-card__label {
   font-size: 10px;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.5);
   margin-bottom: 10px;
   font-weight: 600;
   letter-spacing: 1.5px;
@@ -395,13 +395,13 @@
   line-height: 1;
 }
 
-.stat-card__number--red   { color: #ff4d6d; } /* red variant */
-.stat-card__number--green { color: #4ade80; } /* green variant */
+.stat-card__number--red   { color: #a9d0e8; } /* light blue variant */
+.stat-card__number--green { color: #97c993; } /* baby green variant */
 
 /* small descriptive text below the number */
 .stat-card__sub {
   font-size: 11px;
-  color: rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.45);
   margin-bottom: 14px;
   font-weight: 400;
 }
@@ -412,14 +412,14 @@
   border-radius: 2px;
 }
 
-/* red gradient bar */
+/* blue gradient bar */
 .stat-card__bar--red {
-  background: linear-gradient(90deg, var(--red), rgba(200,16,46,0.15));
+  background: linear-gradient(90deg, var(--red), rgba(37,99,235,0.15));
 }
 
 /* green gradient bar */
 .stat-card__bar--green {
-  background: linear-gradient(90deg, #4ade80, rgba(34,197,94,0.1));
+  background: linear-gradient(90deg, #4ade80, rgba(16,185,129,0.15));
 }
 
 
@@ -432,12 +432,12 @@
   font-family: 'Inter', sans-serif;
 }
 
-/* small red uppercase label above the headline */
+/* small blue uppercase label above the headline */
 .steps__overline {
   font-size: 11px;
   letter-spacing: 3px;
   text-transform: uppercase;
-  color: var(--red);
+  color: #3d8fd4;
   text-align: center;
   margin-bottom: 10px;
   font-weight: 600;
@@ -543,20 +543,20 @@
 /* ── CTA Section ── */
 /* green gradient section — "ساهم في بناء لبنان أفضل" */
 .cta {
-  background: linear-gradient(135deg, #064e28 0%, #00A651 50%, #064e28 100%);
+  background: linear-gradient(135deg, #b5ddb0 0%, #97c993 50%, #b5ddb0 100%);
   padding: 80px 72px;
   text-align: center;
   font-family: 'Inter', sans-serif;
 }
 
 .cta__icon            { font-size: 2.5rem; margin-bottom: 20px; }
-.cta__headline-arabic { font-size: clamp(1.8rem, 3vw, 2.6rem); font-weight: 700; color: white; margin-bottom: 8px; letter-spacing: -1px; }
-.cta__headline-en     { font-size: 1rem; color: rgba(255,255,255,0.6); margin-bottom: 16px; font-weight: 400; }
+.cta__headline-arabic { font-size: clamp(1.8rem, 3vw, 2.6rem); font-weight: 700; color: #14532d; margin-bottom: 8px; letter-spacing: -1px; }
+.cta__headline-en     { font-size: 1rem; color: rgba(20,83,45,0.7); margin-bottom: 16px; font-weight: 400; }
 
 /* description paragraph */
 .cta__desc {
   font-size: 14px;
-  color: rgba(255,255,255,0.5);
+  color: rgba(20,83,45,0.65);
   max-width: 440px;
   margin: 0 auto 40px;                       /* centers it and adds space below */
   line-height: 1.8;
@@ -574,8 +574,8 @@
 /* white solid button — "ابدأ الآن / Get Started" */
 .btn-cta-primary {
   padding: 14px 36px;
-  background: white;
-  color: var(--green);                        /* green text on white background */
+  background: #14532d;                        /* deep green button */
+  color: white;                               /* white text */
   border: none;
   border-radius: 10px;
   font-size: 14px;
@@ -594,9 +594,9 @@
 /* ghost button — "View Dashboard" */
 .btn-cta-secondary {
   padding: 14px 36px;
-  background: rgba(255,255,255,0.1);
-  color: white;
-  border: 1.5px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.4);
+  color: #14532d;
+  border: 1.5px solid rgba(20,83,45,0.3);
   border-radius: 10px;
   font-size: 14px;
   font-weight: 400;
@@ -608,12 +608,12 @@
   gap: 8px;
 }
 
-.btn-cta-secondary:hover { background: rgba(255,255,255,0.15); }
+.btn-cta-secondary:hover { background: rgba(255,255,255,0.65); }
 
 /* ── Flag Strip ── */
-/* thin Lebanese flag bar — red line | cedar | green line */
+/* thin flag bar — blue line | cedar | green line */
 .flag-strip {
-  position: relative;                         /* needed so the red/green lines can be positioned inside */
+  position: relative;                         /* needed so the blue/green lines can be positioned inside */
   height: 30px;
   display: flex;
   align-items: center;
@@ -621,14 +621,14 @@
   background: white;
 }
 
-/* red line on the left */
+/* blue line on the left */
 .flag-strip__red {
   position: absolute;                         /* positioned relative to flag-strip */
   left: 0;
   top: 50%;
   transform: translateY(-50%);               /* vertically centers the line */
   height: 5px;
-  background: var(--red);
+  background: #3d8fd4;                        /* sky blue line */
   width: 47%;                                 /* leaves gap in center for cedar */
 }
 
@@ -639,7 +639,7 @@
   top: 50%;
   transform: translateY(-50%);
   height: 5px;
-  background: var(--green);
+  background: #7ed687;                        /* baby green — matches CTA */
   width: 47%;
 }
 
@@ -681,9 +681,9 @@
   letter-spacing: -0.5px;
 }
 
-/* colors "Fix" red — same trick as navbar */
+/* colors "Fix" blue — same trick as navbar */
 .footer__brand span {
-  color: var(--red);
+  color: #3d8fd4;                             /* sky blue — matches navbar */
 }
 
 /* row of footer links */
@@ -735,8 +735,8 @@
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -746,20 +746,19 @@
 
 .flow__label {
   font-size: 11px;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255,255,255,0.7);
   line-height: 1.4;
   font-weight: 500;
 }
 
 .flow__sublabel {
   font-size: 10px;
-  color: rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.4);
   font-weight: 400;
 }
 
 /* the → arrows between steps */
 .flow__arrow {
-  color: rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.3);
   font-size: 14px;
 }
-

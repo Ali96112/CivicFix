@@ -164,3 +164,4 @@ C:\Users\Win11\Desktop\CivivFix\CivicFix.Api\obj\Debug\net10.0\EFCoreSqlServerNe
 C:\Users\Win11\Desktop\CivivFix\CivicFix.Api\obj\Debug\net10.0\CivicFix.Api.sourcelink.json
 C:\Users\Win11\Desktop\CivivFix\CivicFix.Api\bin\Debug\net10.0\Dapper.dll
 C:\Users\Win11\Desktop\CivivFix\CivicFix.Api\bin\Debug\net10.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\Win11\Desktop\CivivFix\CivicFix.Api\bin\Debug\net10.0\CivicFix.Api.staticwebassets.runtime.json

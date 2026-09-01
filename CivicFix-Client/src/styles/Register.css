@@ -1,8 +1,8 @@
 /* ── Register Page ── */
-/* full page — light gray background, centers the card */
+/* full page — soft sky-tinted background, centers the card */
 .register-page {
   min-height: 100vh;                          /* fills full screen */
-  background: #f5f5f5;                        /* light gray background */
+  background: #eef4f8;                        /* very light sky-blue tint */
   display: flex;
   align-items: center;                        /* vertically centers the card */
   justify-content: center;                    /* horizontally centers the card */
@@ -15,10 +15,10 @@
 .register-card {
   background: white;
   border-radius: 16px;                        /* rounded corners */
-  box-shadow: 0 4px 32px rgba(0,0,0,0.08);   /* soft shadow */
+  box-shadow: 0 4px 32px rgba(58,109,148,0.12); /* soft sky-blue tinted shadow */
   padding: 40px;
   width: 100%;
-  max-width: 600px;                           /* card doesn't stretch too wide */
+  max-width: 800px;                           /* card doesn't stretch too wide */
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -37,9 +37,9 @@
   cursor: pointer;                            /* hand cursor — clickable, goes home */
 }
 
-/* red box with city emoji */
+/* sky blue box with city emoji */
 .register-card__logo-box {
-  background: var(--red);
+  background: linear-gradient(135deg, #5aa8e0 0%, #3d8fd4 100%); /* sky blue — matches navbar logo */
   width: 36px;
   height: 36px;
   border-radius: 8px;
@@ -57,9 +57,9 @@
   letter-spacing: -0.5px;
 }
 
-/* colors "Fix" red */
+/* colors "Fix" sky blue */
 .register-card__logo-name span {
-  color: var(--red);
+  color: #3d8fd4;
 }
 
 /* "Create account" title */
@@ -82,7 +82,7 @@
 
 /* "Sign in →" link */
 .register-card__signin-link {
-  color: var(--red);
+  color: #3d8fd4;                             /* sky blue link */
   font-weight: 600;
   cursor: pointer;
 }
@@ -118,9 +118,9 @@
   transition: background 0.2s, color 0.2s;
 }
 
-/* active step circle — red background */
+/* active step circle — sky blue background */
 .register-steps__circle--active {
-  background: var(--red);
+  background: #3d8fd4;
   color: white;
 }
 
@@ -182,9 +182,9 @@
   box-sizing: border-box;                     /* padding included in width */
 }
 
-/* red border on focus */
+/* sky blue border on focus */
 .form-input:focus {
-  border-color: var(--red);
+  border-color: #3d8fd4;
 }
 
 /* wrapper for password input + toggle button */
@@ -212,19 +212,19 @@
 
 /* error message box */
 .form-error {
-  background: #fff0f2;
-  border: 1px solid rgba(200,16,46,0.3);
-  color: var(--red);
+  background: #fef2f2;
+  border: 1px solid rgba(220,38,38,0.3);
+  color: #dc2626;
   font-size: 13px;
   padding: 10px 14px;
   border-radius: 8px;
   font-weight: 500;
 }
 
-/* main submit/continue button — solid red */
+/* main submit/continue button — solid sky blue */
 .btn-register {
   padding: 14px;
-  background: var(--red);
+  background: linear-gradient(135deg, #3d8fd4 0%, #1e6bb8 100%); /* sky blue — matches hero button */
   color: white;
   border: none;
   border-radius: 10px;
@@ -274,22 +274,33 @@
   font-weight: 400;
 }
 
-/* ── Lebanese Flag Strip ── */
-/* two colored lines at the very bottom of the card */
+/* ── Flag Strip ── */
+/* flag strip at the bottom of the card */
 .register-card__flag {
+  position: relative;
+  height: 30px;
   display: flex;
-  height: 4px;
-  margin-top: 32px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 24px;
+  margin-left: -40px;  /* cancels the card's left padding */
+  margin-right: -40px; /* cancels the card's right padding */
 }
 
-/* red line — left half */
+/* sky blue line on the left */
 .register-card__flag-red {
-  flex: 1;                                    /* takes half the width */
-  background: var(--red);
+  position: absolute;
+  left: 0;
+  height: 5px;
+  background: #3d8fd4;                        /* sky blue */
+  width: 47%;
 }
 
-/* green line — right half */
+/* baby green line on the right */
 .register-card__flag-green {
-  flex: 1;                                    /* takes the other half */
-  background: var(--green);
+  position: absolute;
+  right: 0;
+  height: 5px;
+  background: #7ed687;                        /* baby green */
+  width: 47%;
 }

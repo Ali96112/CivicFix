@@ -24,7 +24,7 @@ namespace CivicFix.Api.Controllers
                 FROM tbl_Municipalities
                 ORDER BY mun_TotalPoints DESC";
 
-            var municipalities = await _connection.QueryAsync<dynamic>(sql);
+            var municipalities = await _connection.QueryAsync<dynamic>(sql);//dynamic since it return 3 columns(join) instead of the municipalities object
 
             return Ok(municipalities);//Ok(municipalities) sends the whole list back as JSON for react
         }
