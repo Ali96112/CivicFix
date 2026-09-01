@@ -438,17 +438,6 @@ namespace CivicFix.Api.Controllers
 
 
         [Authorize]
-        // FIXED — added the ":int" route constraint.
-        //
-        // Without it this route matched ANY text, including the word "shared".
-        // So if a named route above (mine / shared) is missing — for example when
-        // the API has not been rebuilt after adding one — the request silently fell
-        // through to here, ASP.NET tried to stuff "shared" into `int id`, model
-        // binding failed, and [ApiController] answered 400 Bad Request. That error
-        // says nothing about the real problem and is very confusing to debug.
-        //
-        // With ":int" this route only matches numbers, so a missing named route
-        // now returns a plain, honest 404 instead of a misleading 400.
         [HttpGet("{id:int}")] // address: GET api/Reports/1
         public async Task<IActionResult> GetReportById(int id)
         {

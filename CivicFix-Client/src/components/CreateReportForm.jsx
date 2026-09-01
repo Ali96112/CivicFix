@@ -3,11 +3,7 @@ import MapPicker from "./MapPicker"; // click-a-spot map, for Admin and Staff
 import { readBody, errorTextOf, uploadPhoto } from "../services/apiHelpers";
 
 // The "🚨 Report a Problem" dropdown form.
-//
-// Split out of ReportForm.jsx — this was about a third of that file. It owns all
-// of its own state, so the parent only has to render it and be told when a
-// report was created.
-//
+
 // Props:
 //   role       — decides which fields appear (priority for Resident, "after"
 //                photo for Staff, map + coordinates for Admin/Staff)
@@ -45,11 +41,6 @@ function CreateReportForm({ role, categories, onCreated }) {
   // you file a report at an EXACT point — which you need to test the shared
   // report case, where a point on a border is assigned to two baladiyat at once.
   const [showCoords, setShowCoords] = useState(false);
-  // REMOVED: coordCheck / checkingCoords. They belonged to the old
-  // "🔎 Check this location" button, which called GET api/Reports/location-check
-  // before submitting. That endpoint (ReportsDiagnosticsController) is gone —
-  // the boundary check now happens only inside CreateReport when you submit,
-  // and its error message already says which baladiye and how far away you are.
 
   const [locationStatus, setLocationStatus] = useState("");
   const [error, setError] = useState("");
@@ -81,10 +72,6 @@ function CreateReportForm({ role, categories, onCreated }) {
     );
   };
 
-  // REMOVED: checkCoordinates(). It used to call GET api/Reports/location-check
-  // to preview which baladiyat a typed point belongs to. The report is validated
-  // on submit instead — CreateReport runs the same spatial test and rejects with
-  // an explanation, so the preview round trip was doing the work twice.
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -145,10 +132,10 @@ function CreateReportForm({ role, categories, onCreated }) {
 
       const data = await readBody(response);
 
-      if (response.ok) {
-        if (data.existingReportId) {
+      if (response.ok) {//after the report is successfully sent to the backend
+        if (data.existingReportId) {////If the backend says a duplicate report already exists, show that message
           setSuccess("This issue was already reported.");
-        } else {
+        } else {//The report was successfully created then clear all fields
           setSuccess("✅ Report submitted successfully!");
           setFormData({
             Title: "", Description: "", CategoryId: "",
@@ -182,19 +169,19 @@ function CreateReportForm({ role, categories, onCreated }) {
 
         <div className="form-group">
           <label className="form-label">Category / الفئة</label>
-          <select
+          <select //create a dropdownlist
             className="form-input"
             name="CategoryId"
-            value={formData.CategoryId}
+            value={formData.CategoryId}//The currently selected category ID is stored in formData.CategoryId
             onChange={handleChange}
             required
           >
             <option value="">Select a category...</option>
             {/* the backend (CategoriesController) returns rows shaped like
                 { ctg_Id: 1, ctg_Name: "Roads" } */}
-            {categories.map((cat) => (
-              <option key={cat.ctg_Id} value={cat.ctg_Id}>
-                {cat.ctg_Name}
+            {categories.map((cat) => (//Go through every category in the list
+              <option key={cat.ctg_Id} value={cat.ctg_Id}>{/*key just unique id // value: what each choice represents, here it represent the id*/}
+                {cat.ctg_Name}{/*the name the user sees. */}
               </option>
             ))}
           </select>
@@ -213,8 +200,8 @@ function CreateReportForm({ role, categories, onCreated }) {
             <select
               className="form-input"
               name="Priority"
-              value={formData.Priority}
-              onChange={handleChange}
+              value={formData.Priority}//The currently selected priority is stored in formData.Priority
+              onChange={handleChange}//this set the form data
             >
               <option value="">No priority</option>
               {/* these three strings must match the backend exactly —
@@ -231,17 +218,17 @@ function CreateReportForm({ role, categories, onCreated }) {
           The backend inserts a Staff report with status 'Resolved' straight away
           and saves request.ResolvedPhotoUrl.
         */}
-        {role === "Staff" && (
+        {role === "Staff" && (// if staff show this
           <div className="form-group">
             <label className="form-label">Photo after fixing / صورة بعد الإصلاح</label>
             <input
               className="form-input"
               type="file"
               accept="image/*"
-              onChange={(e) => setResolvedPhotoFile(e.target.files[0])}
+              onChange={(e) => setResolvedPhotoFile(e.target.files[0])}//set the first file the user selected but normally here we dont submite more than 1
             />
             {resolvedPhotoFile && (
-              <p className="location-status">📷 {resolvedPhotoFile.name}</p>
+              <p className="location-status">📷 {resolvedPhotoFile.name}</p>//if photo submitted show the file name
             )}
           </div>
         )}
@@ -300,15 +287,11 @@ function CreateReportForm({ role, categories, onCreated }) {
           </button>
 
           {/*
-            "Pick on Map", for Admin and Staff only.
-            A resident is standing at the problem, so GPS is right for them. An
-            admin or staff member is usually at a desk reporting something they
-            were told about, and GPS would give the office location.
-
+            "Pick on Map", for Admin and Staff only
             The baladiye is still worked out automatically by the backend:
             CreateReport runs a spatial query on whatever lat/long it receives.
           */}
-          {canUseMap && (
+          {canUseMap && (//if true show the map button just nothing under it tell now just button
             <button
               type="button"
               className="btn-location btn-location--map"
@@ -318,7 +301,7 @@ function CreateReportForm({ role, categories, onCreated }) {
             </button>
           )}
 
-          {canUseMap && (
+          {canUseMap && (//if true show coordinates button just nothing under it tell now just button
             <button
               type="button"
               className="btn-location btn-location--map"
@@ -328,7 +311,7 @@ function CreateReportForm({ role, categories, onCreated }) {
             </button>
           )}
 
-          {canUseMap && showCoords && (
+          {canUseMap && showCoords && (//if admin/staff and corrdinates=true  show the 2 field of coordinates button
             <div className="coord-entry">
               <div className="coord-entry__row">
                 <label className="form-label">Latitude</label>
@@ -337,9 +320,9 @@ function CreateReportForm({ role, categories, onCreated }) {
                 <input
                   className="form-input"
                   type="number"
-                  step="any"
-                  placeholder="33.8751799450001"
-                  value={formData.Latitude}
+                  step="any"//alow as many decemail numbers
+                  placeholder="33.87517"
+                  value={formData.Latitude}//the input displays the latitude currently stored in formData.
                   onChange={(e) =>
                     setFormData({ ...formData, Latitude: e.target.value })
                   }
@@ -352,45 +335,41 @@ function CreateReportForm({ role, categories, onCreated }) {
                   className="form-input"
                   type="number"
                   step="any"
-                  placeholder="35.5197367960001"
+                  placeholder="35.5197"
                   value={formData.Longitude}
                   onChange={(e) =>
                     setFormData({ ...formData, Longitude: e.target.value })
                   }
                 />
               </div>
-
-              {/* REMOVED: the "🔎 Check this location" button and its result
-                  line. You now just submit — if the point is outside your
-                  baladiye the API refuses and says how far off you are. */}
             </div>
           )}
 
-          {canUseMap && showMap && (
+          {canUseMap && showMap && (//admin/staff true and show map ture
             <MapPicker
               initialLat={formData.Latitude}
               initialLng={formData.Longitude}
-              // called every time the admin clicks a new spot on the map
-              onPick={(lat, lng) => {
+              // called every time the admin/staff clicks a new spot on the map
+              onPick={(lat, lng) => {//when i click on somewhere in the map
                 setFormData((current) => ({
                   ...current,
                   Latitude: lat,
                   Longitude: lng,
-                }));
+                }));//clicking on map or typing in long and latt update same varable(state)
                 setLocationStatus(
-                  `🗺️ Location chosen on map: ${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+                  `🗺️ Location chosen on map: ${lat.toFixed(5)}, ${lng.toFixed(5)}`,//set this msg with it long and latt
                 );
               }}
             />
           )}
 
-          {locationStatus && <p className="location-status">{locationStatus}</p>}
-        </div>
-
-        {error && <div className="form-error">{error}</div>}
-        {success && <div className="form-success">{success}</div>}
-
-        <button className="btn-submit" type="submit" disabled={loading}>
+          {locationStatus && <p className="location-status">{locationStatus}</p>}{/*show the msg if it has value */}
+        </div> 
+        
+        {error && <div className="form-error">{error}</div>}{/*If error contains something → display it like priority must contain spmething */}
+        {success && <div className="form-success">{success}</div>}{/*Report submitted successfully! */}
+         {/*these error and succes shown after clicking on button since they start empty then when subbmitted they contain msg */}
+        <button className="btn-submit" type="submit" disabled={loading}>{/*siable to click twic wait */}
           {loading ? "Submitting..." : "Submit Report / إرسال البلاغ"}
         </button>
 
