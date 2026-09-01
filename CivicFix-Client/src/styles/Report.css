@@ -1098,3 +1098,34 @@
     display: none;
   }
 }
+.detail-block {
+  margin: 16px 0;
+}
+
+.btn-block {
+  padding: 6px 14px;
+  background: transparent;
+  color: #dc2626;
+  border: 1px solid #fca5a5;      /* faint red outline instead of solid fill */
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: background 0.2s;
+}
+
+.btn-block:hover {
+  background: #fef2f2;            /* subtle red tint on hover */
+}
+
+.btn-block:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.detail-block__msg {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #666;
+}

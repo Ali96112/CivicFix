@@ -90,7 +90,10 @@ function WelcomePage() {
         <div className="navbar__links">
           <a className="navbar__link">Features</a>
           <a className="navbar__link">How it works</a>
-          <a className="navbar__link">For Municipalities</a>
+          <a className="navbar__link">My Reports</a>
+          <a className="navbar__link">Dashboard</a>
+          
+          
         </div>
         <div className="navbar__buttons">
           {isLoggedIn ? (

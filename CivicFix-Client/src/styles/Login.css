@@ -153,3 +153,9 @@
   cursor: not-allowed;                       /* shows a blocked cursor */
   transform: none;                           /* no lift effect when disabled */
 }
+.login-card__forgot {
+  text-align: left;
+  font-size: 13px;
+  margin-top: -15px;        /* was 8px — pull it up closer to the password */
+  margin-bottom: 4px;
+}
