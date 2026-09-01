@@ -690,6 +690,77 @@
   text-align: right;
 }
 
+/* ── Block user (Admin only, sits in the "Reported by" row) ── */
+/* inline-flex keeps the buttons on the same baseline as the reporter's name
+   and lets them wrap onto a second line on a narrow screen */
+.block-user {
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+.block-user__btn,
+.block-user__confirm,
+.block-user__cancel {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* quiet until you press it — this is a destructive action, not a primary one */
+.block-user__btn {
+  background: #fff;
+  color: #b3261e;
+  border: 1px solid #f0c6c2;
+}
+
+.block-user__btn:hover {
+  background: #fdf2f1;
+  border-color: #b3261e;
+}
+
+/* second step — now it looks as dangerous as it is */
+.block-user__confirm {
+  background: #b3261e;
+  color: #fff;
+  border: 1px solid #b3261e;
+}
+
+.block-user__confirm:hover:not(:disabled) {
+  background: #8f1e18;
+}
+
+.block-user__cancel {
+  background: #fff;
+  color: #6b7684;
+  border: 1px solid #d8dee6;
+}
+
+.block-user__cancel:hover:not(:disabled) {
+  background: #f4f7fa;
+}
+
+.block-user__btn:disabled,
+.block-user__confirm:disabled,
+.block-user__cancel:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.block-user__error {
+  color: #b3261e;
+  font-size: 13px;
+  text-align: right;
+  width: 100%;
+}
+
 .detail-section-title {
   margin: 26px 0 10px 0;
   font-size: 15px;

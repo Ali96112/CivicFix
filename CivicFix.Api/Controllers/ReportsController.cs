@@ -143,6 +143,24 @@ namespace CivicFix.Api.Controllers
                 }
             }
 
+            // daily limit — residents only, max 3 reports per day
+            if (reporterRole == "Resident")
+            {
+                var todayCountSql = @"
+                    SELECT COUNT(*) FROM tbl_Reports
+                    WHERE rpt_ReporterId = @ReporterId
+                    AND CAST(rpt_CreatedAt AS DATE) = CAST(GETDATE() AS DATE)";
+
+                // currentUserId (from the token), NOT request.ReporterId — the body is
+                // whatever the caller typed, so counting on it lets someone dodge their
+                // own limit by sending a different id.
+                var todayCount = await _connection.QueryFirstAsync<int>(
+                    todayCountSql, new { ReporterId = currentUserId });
+
+                if (todayCount >= 3)
+                    return BadRequest("You have reached the daily limit of 3 reports. Try again tomorrow.");
+            }
+
             // Duplicate check — for ALL users including staff
             // ask the database: is there already an open report
             // within 30 meters, same category, same baladiye, last 30 days?
@@ -228,8 +246,13 @@ namespace CivicFix.Api.Controllers
 
             // Step 3 — insert one ReportAssignment row per baladiye
             var assignmentSql = @"
-                INSERT INTO tbl_ReportAssignments (rpa_ReportId, rpa_MunicipalityId, rpa_AssignedAt, rpa_IsHandler, rpa_Points)
-                VALUES (@ReportId, @MunicipalityId, @AssignedAt, @IsHandler, 0)";
+                INSERT INTO tbl_ReportAssignments (rpa_ReportId, rpa_MunicipalityId, rpa_AssignedAt, rpa_IsHandler, rpa_AcceptedAt, rpa_Points)
+                VALUES (@ReportId, @MunicipalityId, @AssignedAt, @IsHandler, @AcceptedAt, 0)";
+
+            // owned immediately when staff reported it, OR when only ONE baladiye matched
+            // (nothing to decide). 2+ baladiyat = genuinely shared, stays unowned until
+            // the Admin picks one on the Shared Reports screen.
+            bool ownedOnCreate = reporterRole == "Staff" || municipalities.Count() == 1;
 
             foreach (var municipality in municipalities)
             {
@@ -238,7 +261,8 @@ namespace CivicFix.Api.Controllers
                     ReportId = reportId,
                     MunicipalityId = municipality.mun_Id,
                     AssignedAt = DateTime.Now,
-                    IsHandler = reporterRole == "Staff" ? 1 : 0 // staff is always the handler of their own report
+                    IsHandler = ownedOnCreate ? 1 : 0,
+                    AcceptedAt = ownedOnCreate ? (DateTime?)DateTime.Now : null
                 });
             }
 

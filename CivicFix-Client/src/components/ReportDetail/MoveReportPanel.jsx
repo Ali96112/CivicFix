@@ -1,43 +1,19 @@
 import { useState, useEffect } from "react";
 import { readBody, errorTextOf } from "../../services/apiHelpers";
 
-// NEW FILE — split out of ReportDetail.jsx.
-//
-// "↪️ Move to another baladiye" — Admin only.
-//
-// NOT the same as the "choose a handler" buttons on the Shared Reports tab.
-// Those pick among the baladiyat the spatial query already found; this one can
-// hand the report to ANY baladiye in the country. That is what you need when
-// the automatic assignment was simply wrong — a bad boundary polygon, a GPS
-// reading that drifted, or a problem that is really another baladiye's
-// responsibility despite where it sits.
-//
-// Without it, the only way to correct a misplaced report was to delete it and
-// ask the resident to file it again, losing its comments and votes.
-//
-// WHY IT MOVED OUT: it owned FOUR pieces of state and its own fetch, all of
-// which only mattered for an Admin. It now loads its own list of baladiyat in
-// its own useEffect, so the parent no longer runs an Admin-only fetch.
-//
-// Props:
-//   reportId — for the PUT url
-//   onMoved  — called after a successful move so the parent refetches
-function MoveReportPanel({ reportId, onMoved }) {
-  const [municipalities, setMunicipalities] = useState([]); // every baladiye, for the dropdown
+function MoveReportPanel({ reportId, onMoved }) {//when onMoved true =fetchreport we used it here since when we move to other baladeye  we get the new version of this report it is refteched
+  const [municipalities, setMunicipalities] = useState([]); 
   const [moveSearch, setMoveSearch] = useState(""); // what the admin typed, to narrow the list
-  const [moveTargetId, setMoveTargetId] = useState(""); // the baladiye they picked
-  const [moving, setMoving] = useState(false); // true while the move request runs
+  const [moveTargetId, setMoveTargetId] = useState(""); // the baladiye the admin picked
+  const [moving, setMoving] = useState(false); // when true change the button text
   const [error, setError] = useState("");
 
-  // GET api/Municipalities — the same public endpoint the leaderboard uses.
-  // Loaded once when this panel mounts. The parent only renders this component
-  // for an Admin, so nobody else ever makes this request.
   useEffect(() => {
     const fetchMunicipalities = async () => {
       try {
         const response = await fetch("http://localhost:5140/api/Municipalities");
         if (response.ok) {
-          setMunicipalities(await response.json());
+          setMunicipalities(await response.json());//so now muncipalities has list of all muncipalities
         }
       } catch (err) {
         // ignore — without this list the dropdown just has nothing to pick from
@@ -45,24 +21,19 @@ function MoveReportPanel({ reportId, onMoved }) {
     };
 
     fetchMunicipalities();
-  }, []); // [] = run once on mount, never again
+  }, []); 
 
-  // PUT api/Reports/{id}/move  →  ReportsAdminController.MoveReport
-  //
-  // The backend replaces the report's assignments and, if the report was already
-  // resolved, moves the +10 from the old baladiye to the new one.
-  const moveReport = async () => {
+  const moveReport = async () => {//this function goal is to Move the current report to the municipality the admin selected
     if (!moveTargetId) {
       setError("Choose a baladiye to move this report to.");
       return;
     }
 
-    // find the name so the confirmation dialog can say where it is going
     const target = municipalities.find(
-      (m) => String(m.mun_Id) === String(moveTargetId),
+      (m) => String(m.mun_Id) === String(moveTargetId),//Is this municipality's ID equal to the ID the admin selected?
     );
 
-    const confirmed = window.confirm(
+    const confirmed = window.confirm(//popup msg
       `Move this report to ${target ? target.mun_Name : "the selected baladiye"}?\n\n` +
         "It will be removed from its current baladiye. If the report was already " +
         "resolved, the points move across too.",
@@ -70,8 +41,8 @@ function MoveReportPanel({ reportId, onMoved }) {
     if (!confirmed) {
       return;
     }
-
-    setMoving(true);
+//if confirmed
+    setMoving(true);//changing button text
     setError("");
     try {
       const token = localStorage.getItem("token");

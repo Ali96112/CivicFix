@@ -326,6 +326,20 @@ namespace CivicFix.Api.Controllers
             if (Convert.ToString((object)report.rpt_Status) == "Resolved")
                 return BadRequest("This report is already resolved — the handling baladiye can no longer be changed.");
 
+            // Step 3 — the chosen baladiye must be one of THIS report's candidates.
+            //
+            // Without this check the transaction below is destructive: Step 5 deletes
+            // every assignment row whose municipality is NOT the chosen one, and Step 6
+            // then updates the chosen one. Pass an id that was never assigned to this
+            // report and the delete removes ALL the rows while the update matches none —
+            // the report ends up with zero assignments, disappears from every list query
+            // (they all INNER JOIN tbl_ReportAssignments), and can never be resolved.
+            if (await _connection.ExecuteScalarAsync<int>(
+                    @"SELECT COUNT(*) FROM tbl_ReportAssignments
+                      WHERE rpa_ReportId = @ReportId AND rpa_MunicipalityId = @MunicipalityId",
+                    new { ReportId = id, MunicipalityId = request.MunicipalityId }) == 0)
+                return BadRequest("That baladiye is not one of the baladiyat assigned to this report.");
+
             if (_connection.State != System.Data.ConnectionState.Open)
                 await _connection.OpenAsync();
 

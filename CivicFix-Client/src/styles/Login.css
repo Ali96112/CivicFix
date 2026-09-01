@@ -86,6 +86,23 @@
   cursor: pointer;
 }
 
+/* "Forgot your password?" — sits under the password field, right-aligned,
+   just above the Sign In button (where people expect to find it) */
+.login-card__forgot {
+  text-align: right;
+  margin: -4px 0 4px;                         /* pulls it close to the field above */
+  font-size: 13px;
+}
+
+.login-card__forgot-link {
+  color: #3d8fd4;                             /* same sky blue as the Register link */
+  cursor: pointer;
+}
+
+.login-card__forgot-link:hover {
+  text-decoration: underline;
+}
+
 /* ── Form ── */
 /* stacks fields vertically */
 .login-form {

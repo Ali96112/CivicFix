@@ -96,6 +96,12 @@ namespace CivicFix.Api.Controllers
                 return Unauthorized("Invalid email or password");
             // If it's false, reject here
 
+            // Blocked accounts stop here — AFTER the password check on purpose.
+            // Checking before it would tell anyone who types this email that the
+            // account exists and is blocked, without them proving it is theirs.
+            if (user.usr_IsBlocked)
+                return Unauthorized("Your account has been blocked.");
+
             // If we reach this line, both email and password were correct
             // now generate JWT token
             var claims = new[] //the info well be inside the token so that it doesnt go to database each time
@@ -150,7 +156,7 @@ namespace CivicFix.Api.Controllers
                 UserId = user.usr_Id
             });
 
-            // for now return the token directly
+            
             var resetLink = $"http://localhost:5173/reset-password?token={token}";
 
             var emailBody = $@"
@@ -242,6 +248,91 @@ namespace CivicFix.Api.Controllers
                 return NotFound("User not found.");
 
             return Ok(me);
+        }
+
+
+        [Authorize(Roles = "Admin")] // Admin only — Staff and Resident cannot block anyone
+        [HttpPut("{id:int}/block")] // address: PUT api/Users/1/block
+        public async Task<IActionResult> BlockUser(int id)
+        {
+            // Step 1 — the user must exist, and must not be an Admin.
+            var user = await _connection.QueryFirstOrDefaultAsync<dynamic>(
+                "SELECT usr_Id, usr_FullName, usr_Role, usr_IsBlocked FROM tbl_Users WHERE usr_Id = @Id",
+                new { Id = id });
+
+            if (user == null)
+                return NotFound("User not found.");
+
+            if (Convert.ToString((object)user.usr_Role) == "Admin")
+                return BadRequest("An Admin account cannot be blocked.");
+
+
+            // Step 2 —check all reports by this reporter
+            var reportIds = (await _connection.QueryAsync<int>(
+                "SELECT rpt_Id FROM tbl_Reports WHERE rpt_ReporterId = @Id",
+                new { Id = id })).ToList();
+
+            if (_connection.State != System.Data.ConnectionState.Open)//if database connectionclosed reopen connection
+                await _connection.OpenAsync();
+
+            using var transaction = _connection.BeginTransaction();//Start a database transaction and store it in the variable transaction.
+
+            try
+            {
+                // Step 3 — mark the account blocked. Login rejects it from now on.
+                await _connection.ExecuteAsync(
+                    "UPDATE tbl_Users SET usr_IsBlocked = 1 WHERE usr_Id = @Id",
+                    new { Id = id }, transaction);
+
+                // Step 4 — if they never filed anything, there is nothing to clean up.
+                if (reportIds.Count > 0)
+                {
+                    // take back the points each baladiye was given for these reports
+                    var assignments = await _connection.QueryAsync<dynamic>(
+                        "SELECT rpa_MunicipalityId, rpa_Points FROM tbl_ReportAssignments WHERE rpa_ReportId IN @Ids",
+                        new { Ids = reportIds }, transaction);
+
+                    foreach (var assignment in assignments)
+                    {
+                        int pointsToUndo = Convert.ToInt32((object)assignment.rpa_Points);
+
+                        if (pointsToUndo != 0) 
+                        {
+                            await _connection.ExecuteAsync(
+                                "UPDATE tbl_Municipalities SET mun_TotalPoints = mun_TotalPoints - @Points WHERE mun_Id = @MunicipalityId",
+                                new { Points = pointsToUndo, MunicipalityId = assignment.rpa_MunicipalityId },
+                                transaction);
+                        }
+                    }
+
+                    // Step 5 — children first, then the reports themselves.
+                    await _connection.ExecuteAsync("DELETE FROM tbl_Comments WHERE cmt_ReportId IN @Ids", new { Ids = reportIds }, transaction);
+                    await _connection.ExecuteAsync("DELETE FROM tbl_StatusHistories WHERE sth_ReportId IN @Ids", new { Ids = reportIds }, transaction);
+                    await _connection.ExecuteAsync("DELETE FROM tbl_PriorityVotes WHERE pvt_ReportId IN @Ids", new { Ids = reportIds }, transaction);
+                    await _connection.ExecuteAsync("DELETE FROM tbl_ReportAgreements WHERE rga_ReportId IN @Ids", new { Ids = reportIds }, transaction);
+                    await _connection.ExecuteAsync("DELETE FROM tbl_ReportAssignments WHERE rpa_ReportId IN @Ids", new { Ids = reportIds }, transaction);
+                    await _connection.ExecuteAsync("DELETE FROM tbl_Reports WHERE rpt_Id IN @Ids", new { Ids = reportIds }, transaction);
+                }
+
+             
+
+                transaction.Commit();//if every thing success then save eeverything
+            }
+            catch
+            {
+                // something failed halfway — undo everything, including the block,
+                // so the account is never left blocked with its reports half-deleted
+                transaction.Rollback();
+                throw;
+            }
+
+            return Ok(new
+            {
+                userId = id,
+                fullName = Convert.ToString((object)user.usr_FullName),
+                reportsDeleted = reportIds.Count,
+                message = "User blocked and their reports removed."
+            });
         }
 
 

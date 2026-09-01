@@ -111,6 +111,18 @@ return (
             </div>
           </div>
 
+          {/* "Forgot password?" — the only way into /forgot-password.
+              The screen and the API endpoint both exist; without this link
+              there was no way for a user to reach them. */}
+          <p className="login-card__forgot">
+            <span
+              className="login-card__forgot-link"
+              onClick={() => navigate('/forgot-password')}
+            >
+              Forgot your password? / نسيت كلمة المرور؟
+            </span>
+          </p>
+
           {/* error message — only shows if error is not empty */}
           {error ? <div className="form-error">{error}</div> : null}
 

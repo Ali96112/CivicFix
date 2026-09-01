@@ -53,6 +53,51 @@ const STEPS = [
     desc: "The resident confirms the fix. The municipality's public record updates. Trust is built.",
   },
 ];
+// Every tile here is something the backend actually does — no promises.
+const FEATURES = [
+  {
+    icon: "📍",
+    color: "#C8102E",
+    bg: "#fff0f2",
+    title: "Automatic routing",
+    desc: "Pick a point on the map and CivicFix finds which baladiye's boundary contains it. No dropdown, no guessing which office is yours.",
+  },
+  {
+    icon: "🔁",
+    color: "#7c3aed",
+    bg: "#f5f3ff",
+    title: "No duplicate reports",
+    desc: "Reporting something already reported within 30 metres? You're sent to the existing report to add your voice instead of creating noise.",
+  },
+  {
+    icon: "👍",
+    color: "#0284c7",
+    bg: "#f0f9ff",
+    title: "Residents set the priority",
+    desc: "Neighbours vote High, Medium or Low and confirm the problem is real. The baladiye sees what the street actually cares about.",
+  },
+  {
+    icon: "📸",
+    color: "#00A651",
+    bg: "#f0fdf4",
+    title: "Proof, not promises",
+    desc: "A report cannot be marked Resolved without an 'after' photo. Closing a ticket is not the same as fixing a street.",
+  },
+  {
+    icon: "🏆",
+    color: "#d97706",
+    bg: "#fffbeb",
+    title: "Public scoreboard",
+    desc: "Every baladiye earns points for resolving reports, and loses them for letting reports go stale. The ranking is public.",
+  },
+  {
+    icon: "🤝",
+    color: "#0f766e",
+    bg: "#f0fdfa",
+    title: "Border problems get an owner",
+    desc: "A pothole on the line between two baladiyat is assigned to both, then given to one. So it isn't everyone's job and therefore nobody's.",
+  },
+];
 const FLOW = [
   { icon: "👤", label: "Citizen", sub: "Reports issue" },
   { arrow: true },
@@ -77,6 +122,18 @@ function WelcomePage() {
     navigate("/"); // go to home
     window.location.reload(); // refresh so the hole systems reruns so navbar updates
   };
+
+  // "Report a Problem" appears in three places (hero, CTA, footer) and behaves the
+  // same in all of them: logged in → the reports page, logged out → register first.
+  // One helper so the three can never drift apart.
+  const goToReport = () => {
+    if (localStorage.getItem("token")) {
+      navigate("/report");
+    } else {
+      navigate("/register");
+    }
+  };
+
   return (
     <div>
       {/* ── Navbar ── */}
@@ -87,10 +144,28 @@ function WelcomePage() {
             Civic<span>Fix</span>
           </span>
         </div>
+        {/* Two page-scroll links first, then the app links — never mixed, so the
+            row doesn't jump between "move down this page" and "go somewhere else".
+            The app links only appear once you're logged in; before that the
+            Login / Register buttons on the right are the way in. */}
         <div className="navbar__links">
-          <a className="navbar__link">Features</a>
-          <a className="navbar__link">How it works</a>
-          <a className="navbar__link">For Municipalities</a>
+          <a className="navbar__link" href="#features">
+            Features
+          </a>
+          <a className="navbar__link" href="#how">
+            How it works
+          </a>
+
+          {isLoggedIn && (
+            <>
+              <a className="navbar__link" onClick={() => navigate("/report")}>
+                My Reports
+              </a>
+              <a className="navbar__link" onClick={() => navigate("/dashboard")}>
+                Dashboard
+              </a>
+            </>
+          )}
         </div>
         <div className="navbar__buttons">
           {isLoggedIn ? (
@@ -153,14 +228,7 @@ function WelcomePage() {
 
           {/* CTA buttons */}
           <div className="hero__cta">
-            <button
-              className="btn-hero-primary"
-              onClick={() =>
-                localStorage.getItem("token")
-                  ? navigate("/Report")
-                  : navigate("/register")
-              }
-            >
+            <button className="btn-hero-primary" onClick={goToReport}>
               🚨 Report a Problem
             </button>
             <button
@@ -274,8 +342,35 @@ function WelcomePage() {
           ))}
         </div>
       </section>
+      {/* ── Features Section ── */}
+      {/* Sits ABOVE the steps so the navbar links, read left to right, walk you
+          down the page in the same order. Reuses the .step-card styles — no new CSS. */}
+      <section className="steps" id="features">
+        <p className="steps__overline">What CivicFix does</p>
+        <h2 className="steps__headline">Six things, all of them working.</h2>
+        <div className="steps__grid">
+          {FEATURES.map((feature) => (
+            <div key={feature.title} className="step-card">
+              <div className="step-card__top">
+                <div
+                  className="step-card__icon"
+                  style={{ backgroundColor: feature.bg }}
+                >
+                  {feature.icon}
+                </div>
+              </div>
+              <h6 className="step-card__title">{feature.title}</h6>
+              <p className="step-card__desc">{feature.desc}</p>
+              <div
+                className="step-card__bar"
+                style={{ backgroundColor: feature.color }}
+              />
+            </div>
+          ))}
+        </div>
+      </section>
       {/* ── Steps Section ── */}
-      <section className="steps">
+      <section className="steps" id="how">
         <p className="steps__overline">Simple by design</p>
         <h2 className="steps__headline">Three steps. Real results.</h2>
         <div className="steps__grid">
@@ -325,14 +420,7 @@ function WelcomePage() {
           {" "}
           {/* flex row — buttons side by side */}
           {/* primary button — white, navigates to /register */}
-          <button
-            className="btn-cta-primary"
-            onClick={() =>
-              localStorage.getItem("token")
-                ? navigate("/Report")
-                : navigate("/register")
-            }
-          >
+          <button className="btn-cta-primary" onClick={goToReport}>
             📋 ابدأ الآن / Get Started
           </button>
           {/* secondary button — ghost style, no route yet */}
@@ -390,11 +478,35 @@ function WelcomePage() {
             Civic<span>Fix</span> 🇱🇧
           </div>{" "}
           {/* "Fix" colored red via CSS */}
+          {/* Same two scroll links, then the actions, then legal last —
+              the footer ends on the action, not on your account. */}
           <div className="footer__links">
-            <a className="footer__link">Features</a>
-            <a className="footer__link">How it works</a>
-            <a className="footer__link">Privacy</a>
-            <a className="footer__link">Contact</a>
+            <a className="footer__link" href="#features">
+              Features
+            </a>
+            <a className="footer__link" href="#how">
+              How it works
+            </a>
+            <a className="footer__link" onClick={() => navigate("/dashboard")}>
+              Dashboard
+            </a>
+            <a className="footer__link" onClick={goToReport}>
+              Report a Problem
+            </a>
+            {/* parked until the pages exist — preventDefault stops the jump to top */}
+            <a
+              className="footer__link"
+              href="#"
+              onClick={(e) => e.preventDefault()}
+            >
+              Privacy
+            </a>
+            <a
+              className="footer__link"
+              href="mailto:civicfix129@gmail.com?subject=CivicFix%20Support"
+            >
+              Contact
+            </a>
           </div>
         </div>{" "}
         {/* end footer__top */}
