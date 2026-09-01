@@ -1,0 +1,40 @@
+## .NET build output
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+
+## Visual Studio / Rider / VS Code
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+
+## Local secrets — never commit real credentials
+appsettings.*.local.json
+secrets.json
+.env
+.env.local
+
+## Local database files
+*.mdf
+*.ldf
+*.ndf
+
+## Uploaded report photos (user content, not source code)
+CivicFix.Api/wwwroot/uploads/
+
+## Node / React client
+node_modules/
+dist/
+build/
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+## OS noise
+Thumbs.db
+Desktop.ini
+.DS_Store
