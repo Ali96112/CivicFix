@@ -2,15 +2,13 @@ import { useState } from "react";
 import { readBody, errorTextOf } from "../../services/apiHelpers";
 
 //these props give the access to parent components
-function ReportPriorityVote({reportId,report,priorityVotes,myPriorityVote,myAgreement,role,onVoted,})
+function ReportPriorityVote({reportId,report,priorityVotes,myPriorityVote,myAgreement,role,onVoted,})//reportid can be removes//report containall detail//priorityvoties contain total votes//myprioritycote what i voted//mtaggrement trueorfalse//onvoted to refetch 
  {
-  // true while a vote OR an agreement is being sent, so the buttons can be
-  // disabled and cannot be double-clicked into a 400
-  const [voting, setVoting] = useState(false);
+  const [voting, setVoting] = useState(false);//true while a vote OR an agreement is being sent, so the buttons can be disabled and cannot be double-clicked into a 400
   const [error, setError] = useState("");
 
   // POST api/Reports/{id}/priority  →  ReportsFeedbackController.VoteOnPriority
-  const votePriority = async (priority) => {//priority is the value passed when a button is clicked.
+  const votePriority = async (priority) => {//Create an asynchronous function called votePriority that receives one value, and store that received value inside a variable called priority.
     setVoting(true);//So while the API request is running, the buttons become disabled.
     setError("");
     try {
@@ -31,7 +29,7 @@ function ReportPriorityVote({reportId,report,priorityVotes,myPriorityVote,myAgre
       );
       const body = await readBody(response);
       if (response.ok) {
-        onVoted(); // reload so the new tally and the winning priority show
+        onVoted(); 
       } else {
         setError(errorTextOf(body, "Could not submit your priority vote."));
       }
@@ -84,8 +82,12 @@ function ReportPriorityVote({reportId,report,priorityVotes,myPriorityVote,myAgre
 
   return (
     <>
-      {/* ── the tally, visible to every role ── */}
-      <h3 className="detail-section-title">🗳️ Priority votes</h3>
+    
+      
+      
+      {role === "Resident" && report.ReporterRole === "Resident" && (
+      <div className="detail-vote-panel">
+        <h3 className="detail-section-title">🗳️ Priority votes</h3>
       <div className="detail-votes">
         <span>🔴 High: {priorityVotes.High}</span>
         <span>🟡 Medium: {priorityVotes.Medium}</span>
@@ -93,18 +95,10 @@ function ReportPriorityVote({reportId,report,priorityVotes,myPriorityVote,myAgre
         <span>Total: {priorityVotes.Total}</span>
       </div>
 
-      {/*
-        A Resident votes on how urgent this report is.
-        Only shown when BOTH are true:
-          - I am a Resident
-          - this report was submitted by a Resident
-      */}
-      {role === "Resident" && report.ReporterRole === "Resident" && (
-        <div className="detail-vote-panel">
           {/*The buttons STAY on screen after you have voted, so you can changeyour mind.*/}
           <p className="detail-vote-panel__ask">
             {myPriorityVote
-              ? "Change your vote / غيّر تصويتك"
+              ? "Your vote /  تصويتك"
               : "How urgent is this? / ما مدى إلحاح هذه المشكلة؟"}
           </p>
 
@@ -112,8 +106,6 @@ function ReportPriorityVote({reportId,report,priorityVotes,myPriorityVote,myAgre
             {["Low", "Medium", "High"].map((option) => (//creating the three buttons
               <button
                 key={option}
-                // the option you currently hold gets the --chosen style, so you
-                // can see what you picked without a separate line of text
                 className={`btn-vote btn-vote--${option.toLowerCase()} ${
                   myPriorityVote === option ? "btn-vote--chosen" : ""
                 }`}

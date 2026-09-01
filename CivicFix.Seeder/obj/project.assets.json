@@ -1259,19 +1259,24 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\user\\.nuget\\packages\\": {}
+    "C:\\Users\\Win11\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\user\\Desktop\\project intern\\CivicFix\\CivicFix.Seeder\\CivicFix.Seeder.csproj",
+      "projectUniqueName": "C:\\Users\\Win11\\Desktop\\CivivFix\\CivicFix.Seeder\\CivicFix.Seeder.csproj",
       "projectName": "CivicFix.Seeder",
-      "projectPath": "C:\\Users\\user\\Desktop\\project intern\\CivicFix\\CivicFix.Seeder\\CivicFix.Seeder.csproj",
-      "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\user\\Desktop\\project intern\\CivicFix\\CivicFix.Seeder\\obj\\",
+      "projectPath": "C:\\Users\\Win11\\Desktop\\CivivFix\\CivicFix.Seeder\\CivicFix.Seeder.csproj",
+      "packagesPath": "C:\\Users\\Win11\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Win11\\Desktop\\CivivFix\\CivicFix.Seeder\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
       "configFilePaths": [
-        "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\Win11\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [

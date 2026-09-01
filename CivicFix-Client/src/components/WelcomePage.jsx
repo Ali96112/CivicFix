@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom"; // useNavigate is a function that lets us navigate between pages /login, /register
 import "../styles/Welcome.css";
-
+import Navbar from "./layout/Navbar";
+import Footer from "./layout/Footer";
 // data arrays — defined outside the function so they're not recreated every render in memory
 //array of objects with varable names
 const STATS = [
@@ -27,27 +28,41 @@ const STATS = [
 const STEPS = [
   {
     num: "01",
-    icon: "📍",
-    color: "#C8102E",
-    bg: "#fff0f2",
+    color: "#3d8fd4",
+    icon: (
+      <>
+        <rect x="3" y="7" width="18" height="13" rx="2.5" />
+        <circle cx="12" cy="13.5" r="3.4" />
+        <path d="M8.4 7l1.4-3h4.4l1.4 3" />
+      </>
+    ),
     tag: "Citizen Reports",
     title: "المواطن يبلّغ",
     desc: "A resident submits an issue — photo, location, description. CivicFix finds their municipality automatically.",
   },
   {
     num: "02",
-    icon: "🏛️",
-    color: "#7c3aed",
-    bg: "#f5f3ff",
+    color: "#3d8fd4",
+    icon: (
+      <>
+        <path d="M4 20V9.5L12 4l8 5.5V20" />
+        <path d="M9.2 20v-6h5.6v6" />
+        <path d="M3 20h18" />
+      </>
+    ),
     tag: "Baladiye Receives",
     title: "البلدية تستلم",
     desc: "The report arrives in the municipality's dashboard — categorized, prioritized, and ready to assign to a team.",
   },
   {
     num: "03",
-    icon: "✅",
-    color: "#00A651",
-    bg: "#f0fdf4",
+    color: "#4aa85a",
+    icon: (
+      <>
+        <circle cx="12" cy="12" r="8.6" />
+        <path d="M8.4 12.4l2.5 2.5 4.7-5.2" />
+      </>
+    ),
     tag: "Problem Resolved",
     title: "المشكلة تُحلّ",
     desc: "The resident confirms the fix. The municipality's public record updates. Trust is built.",
@@ -56,46 +71,44 @@ const STEPS = [
 // Every tile here is something the backend actually does — no promises.
 const FEATURES = [
   {
-    icon: "📍",
-    color: "#C8102E",
-    bg: "#fff0f2",
+    // a map pin — drawn, not an emoji, so it scales and takes the brand colour
+    icon: (
+      <>
+        <path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z" />
+        <circle cx="12" cy="10" r="2.4" />
+      </>
+    ),
     title: "Automatic routing",
-    desc: "Pick a point on the map and CivicFix finds which baladiye's boundary contains it. No dropdown, no guessing which office is yours.",
+    desc: "Drop a pin and CivicFix finds which baladiye's boundary contains it. No dropdown, no guessing which office is yours.",
+    how: "Every baladiye is stored as a real polygon — the answer takes one query.",
   },
   {
-    icon: "🔁",
-    color: "#7c3aed",
-    bg: "#f5f3ff",
-    title: "No duplicate reports",
-    desc: "Reporting something already reported within 30 metres? You're sent to the existing report to add your voice instead of creating noise.",
-  },
-  {
-    icon: "👍",
-    color: "#0284c7",
-    bg: "#f0f9ff",
+    // three rising bars — priority
+    icon: (
+      <>
+        <path d="M6 19v-5" />
+        <path d="M12 19V9" />
+        <path d="M18 19V6" />
+      </>
+    ),
     title: "Residents set the priority",
     desc: "Neighbours vote High, Medium or Low and confirm the problem is real. The baladiye sees what the street actually cares about.",
+    how: "One vote each, changeable. The tally is public on every report.",
   },
   {
-    icon: "📸",
-    color: "#00A651",
-    bg: "#f0fdf4",
-    title: "Proof, not promises",
-    desc: "A report cannot be marked Resolved without an 'after' photo. Closing a ticket is not the same as fixing a street.",
-  },
-  {
-    icon: "🏆",
-    color: "#d97706",
-    bg: "#fffbeb",
+    // a trophy
+    icon: (
+      <>
+        <path d="M7.5 4h9v5.2a4.5 4.5 0 0 1-9 0V4z" />
+        <path d="M7.5 6H4.6v.9a3 3 0 0 0 2.9 3" />
+        <path d="M16.5 6h2.9v.9a3 3 0 0 1-2.9 3" />
+        <path d="M12 13.7V17" />
+        <path d="M9 20h6" />
+      </>
+    ),
     title: "Public scoreboard",
     desc: "Every baladiye earns points for resolving reports, and loses them for letting reports go stale. The ranking is public.",
-  },
-  {
-    icon: "🤝",
-    color: "#0f766e",
-    bg: "#f0fdfa",
-    title: "Border problems get an owner",
-    desc: "A pothole on the line between two baladiyat is assigned to both, then given to one. So it isn't everyone's job and therefore nobody's.",
+    how: "Ten points for a fix. One lost per day past a week.",
   },
 ];
 const FLOW = [
@@ -109,20 +122,7 @@ const FLOW = [
 ];
 
 function WelcomePage() {
-  const navigate = useNavigate();
-  // check if user is logged in — true if a token exists in localStorage
-  const isLoggedIn = localStorage.getItem("token");
-
-  // logout — clears everything and refreshes
-  const handleLogout = () => {
-    localStorage.removeItem("token"); // remove the token
-    localStorage.removeItem("usr_Id"); // remove user id
-    localStorage.removeItem("usr_FullName"); // remove name
-    localStorage.removeItem("usr_Role"); // remove role
-    navigate("/"); // go to home
-    window.location.reload(); // refresh so the hole systems reruns so navbar updates
-  };
-
+ const navigate = useNavigate();
   // "Report a Problem" appears in three places (hero, CTA, footer) and behaves the
   // same in all of them: logged in → the reports page, logged out → register first.
   // One helper so the three can never drift apart.
@@ -136,57 +136,8 @@ function WelcomePage() {
 
   return (
     <div>
-      {/* ── Navbar ── */}
-      <nav className="navbar">
-        <div className="navbar__brand">
-          <div className="navbar__logo">🏙️</div>
-          <span className="navbar__name">
-            Civic<span>Fix</span>
-          </span>
-        </div>
-        {/* Two page-scroll links first, then the app links — never mixed, so the
-            row doesn't jump between "move down this page" and "go somewhere else".
-            The app links only appear once you're logged in; before that the
-            Login / Register buttons on the right are the way in. */}
-        <div className="navbar__links">
-          <a className="navbar__link" href="#features">
-            Features
-          </a>
-          <a className="navbar__link" href="#how">
-            How it works
-          </a>
-
-          {isLoggedIn && (
-            <>
-              <a className="navbar__link" onClick={() => navigate("/report")}>
-                My Reports
-              </a>
-              <a className="navbar__link" onClick={() => navigate("/dashboard")}>
-                Dashboard
-              </a>
-            </>
-          )}
-        </div>
-        <div className="navbar__buttons">
-          {isLoggedIn ? (
-            <button className="btn-red" onClick={handleLogout}>
-              Logout / تسجيل الخروج
-            </button>
-          ) : (
-            <>
-              <button
-                className="btn-outline"
-                onClick={() => navigate("/login")}
-              >
-                Login
-              </button>
-              <button className="btn-red" onClick={() => navigate("/register")}>
-                Register
-              </button>
-            </>
-          )}
-        </div>
-      </nav>
+      <Navbar />
+       
       {/* ── Hero ── */}
       <section className="hero">
         {/* Left side — headline + description + buttons */}
@@ -342,60 +293,80 @@ function WelcomePage() {
           ))}
         </div>
       </section>
-      {/* ── Features Section ── */}
+            {/* ── Features Section ── */}
       {/* Sits ABOVE the steps so the navbar links, read left to right, walk you
-          down the page in the same order. Reuses the .step-card styles — no new CSS. */}
-      <section className="steps" id="features">
+          down the page in the same order. */}
+      <section className="features" id="features">
         <p className="steps__overline">What CivicFix does</p>
-        <h2 className="steps__headline">Six things, all of them working.</h2>
-        <div className="steps__grid">
+        <h2 className="steps__headline">Built to actually get things fixed.</h2>
+        <p className="features__sub">
+          Three of the things that make a report land somewhere instead of disappearing.
+        </p>
+
+        <div className="features__grid">
           {FEATURES.map((feature) => (
-            <div key={feature.title} className="step-card">
-              <div className="step-card__top">
-                <div
-                  className="step-card__icon"
-                  style={{ backgroundColor: feature.bg }}
+            <div key={feature.title} className="feature-tile">
+              <div className="feature-tile__icon">
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#3d8fd4"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
                   {feature.icon}
-                </div>
+                </svg>
               </div>
-              <h6 className="step-card__title">{feature.title}</h6>
-              <p className="step-card__desc">{feature.desc}</p>
-              <div
-                className="step-card__bar"
-                style={{ backgroundColor: feature.color }}
-              />
+
+              <h6 className="feature-tile__title">{feature.title}</h6>
+              <p className="feature-tile__desc">{feature.desc}</p>
+              <p className="feature-tile__how">{feature.how}</p>
             </div>
           ))}
         </div>
+
+      
       </section>
-      {/* ── Steps Section ── */}
-      <section className="steps" id="how">
+
+            {/* ── Steps Section ── */}
+      <section className="journey" id="how">
         <p className="steps__overline">Simple by design</p>
         <h2 className="steps__headline">Three steps. Real results.</h2>
-        <div className="steps__grid">
+
+        {/* the rail — nodes joined by lines, so the eye reads 01 → 02 → 03 */}
+        <div className="journey__rail">
+          <div className="journey__node">01</div>
+          <div className="journey__line" />
+          <div className="journey__node">02</div>
+          <div className="journey__line journey__line--end" />
+          <div className="journey__node journey__node--done">03</div>
+        </div>
+
+        <div className="journey__grid">
           {STEPS.map((step) => (
-            <div key={step.num} className="step-card">
-              <div className="step-card__top">
-                <div
-                  className="step-card__icon"
-                  style={{ backgroundColor: step.bg }}
+            <div key={step.num} className="journey__step">
+              <div className="journey__icon">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke={step.color}
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
                   {step.icon}
-                </div>
-                <span className="step-card__num" style={{ color: step.color }}>
-                  {step.num}
-                </span>
+                </svg>
               </div>
-              <div className="step-card__tag" style={{ color: step.color }}>
+              <div className="journey__tag" style={{ color: step.color }}>
                 {step.tag}
               </div>
-              <h6 className="step-card__title">{step.title}</h6>
-              <p className="step-card__desc">{step.desc}</p>
-              <div
-                className="step-card__bar"
-                style={{ backgroundColor: step.color }}
-              />
+              <h6 className="journey__title">{step.title}</h6>
+              <p className="journey__desc">{step.desc}</p>
             </div>
           ))}
         </div>
@@ -469,58 +440,7 @@ function WelcomePage() {
       {/* small text below the flag strip */}
       <p className="flag-strip__label">🇱🇧 Free for all Lebanese residents</p>
       {/* ── Footer ── */}
-      <footer className="footer">
-        {" "}
-        {/* white footer */}
-        {/* top row — brand on left, links on right */}
-        <div className="footer__top">
-          <div className="footer__brand">
-            Civic<span>Fix</span> 🇱🇧
-          </div>{" "}
-          {/* "Fix" colored red via CSS */}
-          {/* Same two scroll links, then the actions, then legal last —
-              the footer ends on the action, not on your account. */}
-          <div className="footer__links">
-            <a className="footer__link" href="#features">
-              Features
-            </a>
-            <a className="footer__link" href="#how">
-              How it works
-            </a>
-            <a className="footer__link" onClick={() => navigate("/dashboard")}>
-              Dashboard
-            </a>
-            <a className="footer__link" onClick={goToReport}>
-              Report a Problem
-            </a>
-            {/* parked until the pages exist — preventDefault stops the jump to top */}
-            <a
-              className="footer__link"
-              href="#"
-              onClick={(e) => e.preventDefault()}
-            >
-              Privacy
-            </a>
-            <a
-              className="footer__link"
-              href="mailto:civicfix129@gmail.com?subject=CivicFix%20Support"
-            >
-              Contact
-            </a>
-          </div>
-        </div>{" "}
-        {/* end footer__top */}
-        {/* bottom row — copyright on left, tagline on right */}
-        <div className="footer__bottom">
-          <span className="footer__copy">© 2026 CivicFix — Lebanon</span>
-          <span className="footer__tagline">
-            Digital infrastructure for Lebanon's municipalities
-          </span>
-        </div>{" "}
-        {/* end footer__bottom */}
-      </footer>{" "}
-      {/* end footer */}
-      {/* more sections coming here */}
+       <Footer />
     </div>
   );
 }

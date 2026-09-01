@@ -1,0 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ── Footer ── */
+/* white footer at the bottom of the page */
+.footer {
+  background: white;
+  padding: 24px 72px;
+  border-top: 1px solid #f0f0f0;
+  font-family: 'Inter', sans-serif;
+}
+
+/* top row — brand on left, links on right */
+.footer__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;          /* divider line between top and bottom */
+}
+
+/* "CivicFix" brand text */
+.footer__brand {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111;
+  letter-spacing: -0.5px;
+}
+
+/* colors "Fix" blue — same trick as navbar */
+.footer__brand span {
+  color: #3d8fd4;                             /* sky blue — matches navbar */
+}
+
+/* row of footer links */
+.footer__links {
+  display: flex;
+  gap: 28px;
+}
+
+/* each footer link */
+/* cursor: pointer is set here because the links that navigate with onClick have
+   no href — without it the browser treats them as plain text and shows no hand */
+.footer__link {
+  font-size: 13px;
+  color: #9ca3af;                             /* light gray */
+  text-decoration: none;
+  font-weight: 400;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.footer__link:hover {
+  color: #333;
+}
+
+/* bottom row — copyright on left, tagline on right */
+.footer__bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer__copy {
+  font-size: 12px;
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.footer__tagline {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+/* ── Narrow screens ── */
+/* six links in a row will not fit on a phone — stack the footer and let the
+   links wrap instead of squeezing them */
+@media (max-width: 860px) {
+  .footer {
+    padding: 24px 28px;
+  }
+
+  .footer__top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .footer__links {
+    flex-wrap: wrap;
+    gap: 18px;
+  }
+
+  .footer__bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}

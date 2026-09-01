@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react"; 
-import { useNavigate } from "react-router-dom"; 
 import "../styles/Dashboard.css";
+import Navbar from "./layout/Navbar";
 
 function Dashboard() {
-  const navigate = useNavigate(); 
 
   const [municipalities, setMunicipalities] = useState([]); // holds all baladiyat from backend — starts as empty array
   const [search, setSearch] = useState(""); // holds what user typed in search box — starts empty
@@ -62,26 +61,8 @@ function Dashboard() {
   return (
     <div className="dashboard-page">
       {" "}
-      {/* full page wrapper */}
-      {/* ── Navbar ── */}
-      <nav className="dashboard-nav">
-        <div className="dashboard-nav__brand" onClick={() => navigate("/")}>
-          <div className="dashboard-nav__logo">🏙️</div>
-          <span className="dashboard-nav__name">
-            Civic<span>Fix</span>
-          </span>
-        </div>
-        <button
-          className="dashboard-nav__btn"
-          onClick={() =>
-            localStorage.getItem("token")
-              ? navigate("/report")
-              : navigate("/register")
-          }
-        >
-          🚨 Report a Problem
-        </button>
-      </nav>
+       <Navbar />
+
       {/* ── Header ── */}
       <div className="dashboard-header">
         <h1 className="dashboard-header__title">🏆 Baladiye Leaderboard</h1>

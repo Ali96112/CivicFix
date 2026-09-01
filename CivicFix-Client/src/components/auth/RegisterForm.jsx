@@ -9,7 +9,7 @@ function RegisterForm() {
     usr_FullName: "", // full name field
     usr_Email: "", // email field
     usr_PasswordHash: "", // password field
-    usr_NationalId: "", // national ID field
+    usr_PhoneNumber: "", // phone number field
   });
 
   const [showPassword, setShowPassword] = useState(false); // password visible or hidden
@@ -59,6 +59,29 @@ function RegisterForm() {
       setLoading(false); // turn off loading
     }
   };
+
+  // Lebanese numbers are a prefix plus six digits. "3" (from 03) is one digit;
+// 70/71/76/78/79/81 are two — so the grouping depends on which one it is.
+const formatPhone = (value) => {
+  let digits = value.replace(/\D/g, "");//Remove everything that is not a number.
+
+  if (digits.length > 1) digits = digits.replace(/^0+/, "");     // 03 → 3
+
+  const prefixLen = digits.startsWith("3") ? 1 : 2;
+  digits = digits.slice(0, prefixLen + 6);                        // cap at prefix + 6
+
+  const parts = [//This splits the number into parts so spaces can be added.
+    digits.slice(0, prefixLen),
+    digits.slice(prefixLen, prefixLen + 3),
+    digits.slice(prefixLen + 3),
+  ];
+
+  return parts.filter(Boolean).join(" ");
+};
+
+const handlePhoneChange = (e) => {
+  setFormData({ ...formData, usr_PhoneNumber: formatPhone(e.target.value) });
+};
 
   return (
     <div className="register-page">
@@ -143,18 +166,22 @@ function RegisterForm() {
               </button>
             </div>
           </div>
-          {/* national ID field */}
+          {/* phone number field */}
           <div className="form-group">
-            <label className="form-label">National ID / الرقم الوطني</label>
-            <input
-              className="form-input"
-              type="text"
-              name="usr_NationalId"
-              placeholder="Your Lebanese national ID number"
-              value={formData.usr_NationalId}
-              onChange={handleChange}
-              required
-            />
+            <label className="form-label">Phone number / رقم الهاتف</label>
+            <div className="phone-input">
+              <span className="phone-input__code">+961</span>
+              <input
+                className="form-input"
+                type="tel"
+                inputMode="numeric"
+                name="usr_PhoneNumber"
+                placeholder="3 123 456"
+                value={formData.usr_PhoneNumber}
+                onChange={handlePhoneChange}
+                required
+              />
+            </div>
           </div>
           {/* error message — only shows if error state is not empty */}
           {error ? <div className="form-error">{error}</div> : null}{" "}
@@ -171,27 +198,24 @@ function RegisterForm() {
           </button>
         </form>
 
-{/* Lebanese flag strip — red line | cedar | green line */}
-      <div className="register-card__flag">
-        <div className="register-card__flag-red" /> {/* red line on the left */}
-        {/* cedar SVG in the center */}
-        <svg width="24" height="24" viewBox="0 0 80 80" fill="none">
-          <rect x="36" y="60" width="8" height="14" rx="3" fill="#7B4A1E" />
-          <ellipse cx="40" cy="56" rx="34" ry="6" fill="#00843D" />
-          <ellipse cx="40" cy="44" rx="26" ry="6" fill="#009A47" />
-          <ellipse cx="40" cy="33" rx="18" ry="5.5" fill="#00B050" />
-          <ellipse cx="40" cy="23" rx="12" ry="5" fill="#00C45A" />
-          <ellipse cx="40" cy="14" rx="7" ry="4.5" fill="#00D464" />
-          <ellipse cx="40" cy="7" rx="4" ry="3.5" fill="#00E070" />
-        </svg>
-        <div className="register-card__flag-green" />{" "}
-        {/* green line on the right */}
+        {/* Lebanese flag strip — red line | cedar | green line */}
+        <div className="register-card__flag">
+          <div className="register-card__flag-red" />{" "}
+          {/* red line on the left */}
+          {/* cedar SVG in the center */}
+          <svg width="24" height="24" viewBox="0 0 80 80" fill="none">
+            <rect x="36" y="60" width="8" height="14" rx="3" fill="#7B4A1E" />
+            <ellipse cx="40" cy="56" rx="34" ry="6" fill="#00843D" />
+            <ellipse cx="40" cy="44" rx="26" ry="6" fill="#009A47" />
+            <ellipse cx="40" cy="33" rx="18" ry="5.5" fill="#00B050" />
+            <ellipse cx="40" cy="23" rx="12" ry="5" fill="#00C45A" />
+            <ellipse cx="40" cy="14" rx="7" ry="4.5" fill="#00D464" />
+            <ellipse cx="40" cy="7" rx="4" ry="3.5" fill="#00E070" />
+          </svg>
+          <div className="register-card__flag-green" />{" "}
+          {/* green line on the right */}
+        </div>
       </div>
-
-
-      </div>
-
-      
     </div>
   );
 }

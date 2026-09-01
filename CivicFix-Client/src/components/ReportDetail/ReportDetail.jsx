@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {readBody,errorTextOf,getStatusClass,} from "../../services/apiHelpers";
+import Navbar from "../layout/Navbar";
 import ReportStatusPanel from "./ReportStatusPanel";
 import ReportPriorityVote from "./ReportPriorityVote";
 import MoveReportPanel from "./MoveReportPanel";
@@ -122,33 +123,7 @@ function ReportDetail() {
 
   return (
     <div className="detail-page">
-      {/* ── Navbar ── */}
-      <nav className="report-nav">
-        <div className="report-nav__brand" onClick={() => navigate("/")}>
-          <div className="report-nav__logo">🏙️</div>
-          <span className="report-nav__name">
-            Civic<span>Fix</span>
-          </span>
-        </div>
-        {/* the same "who is signed in" chip as the reports page, so the navbar
-            does not change shape when you open a report. The name comes from
-            localStorage, saved at login — no API call needed. */}
-        <div className="report-nav__right">
-          {localStorage.getItem("usr_FullName") && (
-            <span className="report-nav__user">
-              👤 {localStorage.getItem("usr_FullName")}
-              <span className="report-nav__role">{role}</span>
-            </span>
-          )}
-
-          <button
-            className="report-nav__btn"
-            onClick={() => navigate("/report")}
-          >
-            ← Back to reports
-          </button>
-        </div>
-      </nav>
+            <Navbar />
 
       <div className="detail-container">
         {/* any error that happened AFTER the page loaded. Each child shows its

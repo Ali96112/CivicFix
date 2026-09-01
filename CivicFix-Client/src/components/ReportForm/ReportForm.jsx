@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import ReportNavbar from "../ReportNavbar";
+import Navbar from "../layout/Navbar";
 import StaffBaladiyeBadge from "./StaffBaladiyeBadge";
 import ReportTabs from "./ReportTabs";
 import StatusFilterBar from "./StatusFilterBar";
 import CreateReportForm from "./CreateReportForm";
 import ReportCard from "./ReportCard";
+
 import "../../styles/Report.css";
 
 //   ReportNavbar         the top bar (also used by ReportDetail)
@@ -103,7 +104,7 @@ function ReportForm() {
 
   return (
     <div className="report-page">
-      <ReportNavbar />
+            <Navbar />
 
       <div className="report-container">
 

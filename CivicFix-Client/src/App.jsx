@@ -8,6 +8,10 @@ import ReportForm from "./components/ReportForm/ReportForm";
 import ReportDetail from "./components/ReportDetail/ReportDetail";
 import ForgotPassword from "./components/auth/ForgotPassword";
 import ResetPassword from "./components/auth/ResetPassword";
+import About from "./components/info/About";
+import Features from "./components/info/Features";
+import Contact from "./components/info/Contact";
+import Privacy from "./components/info/Privacy";
 
 function App() {
   return (
@@ -21,6 +25,10 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/report/:id" element={<ReportDetail />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/features" element={<Features />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/privacy" element={<Privacy />} />
       </Routes>
     </BrowserRouter>
   );

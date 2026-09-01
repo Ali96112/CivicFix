@@ -50,7 +50,6 @@ namespace CivicFix.Api.Controllers
                 request.Text,              // the comment text written by staff/admin
                 CreatedAt = DateTime.Now,  // when the comment was added — set by system
                 ReportId = id,             // which report this comment belongs to — from URL
-                // was: request.UserId  // who wrote the comment — from request body
                 UserId = currentUserId // FIXED: who wrote the comment — now from the TOKEN, not the body (body was spoofable)
             });
 
@@ -128,7 +127,7 @@ namespace CivicFix.Api.Controllers
                     var assignment = await _connection.QueryFirstOrDefaultAsync<dynamic>(
                         assignmentSql, new { ReportId = id });
 
-                 
+
                     if (assignment != null && Convert.ToInt32((object)assignment.rpa_Points) == 0)
                     {
                         // award points only once — rpa_Points == 0 prevents double awarding
@@ -181,12 +180,8 @@ namespace CivicFix.Api.Controllers
                 WHERE pvt_ReportId = @ReportId AND pvt_UserId = @UserId";
 
             var existing = await _connection.QueryFirstOrDefaultAsync<int?>(//if existingSql =1 mean already voted if =null still not voted
-                existingSql, new { ReportId = id, UserId = currentUserId }); 
+                existingSql, new { ReportId = id, UserId = currentUserId });
 
-
-            // Step 3 — validate priority value
-            if (request.Priority != "Low" && request.Priority != "Medium" && request.Priority != "High")
-                return BadRequest("Priority must be Low, Medium, or High.");
 
             // Step 4 — save the vote: update the existing one, or insert a first one
             if (existing != null)
@@ -205,45 +200,16 @@ namespace CivicFix.Api.Controllers
                 await _connection.ExecuteAsync(insertSql, new
                 {
                     ReportId = id,
-                    UserId = currentUserId, 
+                    UserId = currentUserId,
                     Priority = request.Priority
                 });
             }
 
-            // Step 5 —After all residents have voted, which priority currently has the most votes?
-            var votesSql = @"
-                SELECT pvt_Priority, COUNT(*) AS VoteCount  --Give me each priority and count how many votes it hasa and put it in VoteCount
-                FROM tbl_PriorityVotes
-                WHERE pvt_ReportId = @ReportId  --count the votes belonging to this report only
-                GROUP BY pvt_Priority   --without this we cant have separate counts for High, Medium, and Low.
-                ORDER BY VoteCount DESC,  --Sort from the highest number of votes to the lowest.
-                    CASE pvt_Priority  --if priorites are equal it well show in this order H M L
-                        WHEN 'High' THEN 1
-                        WHEN 'Medium' THEN 2
-                        WHEN 'Low' THEN 3
-                        ELSE 4
-                    END";
-
-            var votes = await _connection.QueryAsync<dynamic>(votesSql, new { ReportId = id });  //high:2 Medium:3 ..
-
-            var topVote = votes.FirstOrDefault();//takes first row
-            if (topVote == null)//it weell never be null in my case just delet happen or something
-                return Ok(new { message = "Priority vote submitted.", currentPriority = (string?)null });
-
-            string topPriority = Convert.ToString((object)topVote.pvt_Priority) ?? ""; // the priority with most votes//conversion just making sure it is in c#
-
-            // update report priority to majority vote
-            await _connection.ExecuteAsync(
-                "UPDATE tbl_Reports SET rpt_Priority = @Priority WHERE rpt_Id = @Id",
-                new { Priority = topPriority, Id = id });
-
-            // CHANGED: the message now says whether this was a first vote or a change,
-            // so the user gets confirmation that their new choice actually replaced
-            // the old one rather than being silently ignored.
+           
             return Ok(new
             {
                 message = existing != null ? "Priority vote changed." : "Priority vote submitted.",
-                currentPriority = topPriority
+               
             });
         }
     }

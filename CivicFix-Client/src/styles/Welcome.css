@@ -2,118 +2,6 @@
 /* imports Inter font from Google — weights 300 to 800 (light to extra bold) */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-/* ── Navbar ── */
-/* the top bar that stays fixed while you scroll */
-.navbar {
-  background-color: #ffffff;                  /* white background */
-  border-bottom: 1px solid #f0f0f0;          /* thin light gray line at the bottom */
-  padding: 14px 48px;                         /* top/bottom 14px, left/right 48px */
-  display: flex;                              /* puts brand, links, buttons side by side */
-  justify-content: space-between;            /* pushes them to left, center, right */
-  align-items: center;                        /* vertically centers everything */
-  position: sticky;                           /* stays at top of screen when scrolling */
-  top: 0;                                     /* sticks to the very top */
-  z-index: 100;                               /* sits above all other elements */
-  font-family: 'Inter', sans-serif;
-}
-
-/* groups the logo emoji and "CivicFix" name together */
-.navbar__brand {
-  display: flex;                              /* puts logo and name side by side */
-  align-items: center;                        /* vertically centers them */
-  gap: 8px;                                   /* space between logo and name */
-}
-
-/* the small blue box containing the city emoji */
-.navbar__logo {
-  background: linear-gradient(135deg, #5aa8e0 0%, #3d8fd4 100%); /* sky blue to match hero */
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;                         /* rounded corners */
-  display: flex;
-  align-items: center;
-  justify-content: center;                    /* centers the emoji inside the box */
-  font-size: 16px;
-}
-
-/* "CivicFix" text next to the logo */
-.navbar__name {
-  font-size: 16px;
-  font-weight: 700;                           /* bold */
-  color: #111;                                /* near black */
-  letter-spacing: -0.5px;                    /* tightens the letters slightly */
-}
-
-/* targets the <span> inside navbar__name — colors "Fix" blue */
-.navbar__name span {
-  color: #3d8fd4;                             /* sky blue — matches logo */
-}
-
-/* the three middle links: Features, How it works, For Municipalities */
-.navbar__links {
-  display: flex;                              /* puts links side by side */
-  gap: 36px;                                  /* space between each link */
-}
-
-/* styles each individual link */
-.navbar__link {
-  font-size: 14px;
-  color: #555;                                /* gray text */
-  text-decoration: none;                      /* removes underline */
-  cursor: pointer;                            /* hand cursor on hover */
-  font-weight: 400;                           /* normal weight */
-  transition: color 0.2s;                    /* smooth color change on hover */
-}
-
-/* darkens the link when hovered */
-.navbar__link:hover {
-  color: #110101;
-}
-
-/* groups the Login and Demo buttons on the right */
-.navbar__buttons {
-  display: flex; /*set elements side by side */
-  gap: 10px;                                  /* space between the two buttons */
-  align-items: center;
-}
-
-/* ── Button: outline style (Login button) ── */
-.btn-outline {
-  padding: 8px 20px;
-  border-radius: 8px;
-  border: 1px solid #ddd;                     /* light gray border */
-  background: transparent;                    /* no fill — just the border */
-  color: #333;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: border-color 0.2s;             /* smooth border color change on hover */
-  font-family: 'Inter', sans-serif;
-}
-
-/* darkens the border when hovered */
-.btn-outline:hover {
-  border-color: #999;
-}
-
-/* ── Button: solid blue (Request a Demo button) ── */
-.btn-red {
-  padding: 8px 20px;
-  border-radius: 8px;
-  border: none;                               /* removes default browser button border */
-  background: linear-gradient(135deg, #5aa8e0 0%, #3d8fd4 100%); /* sky blue matches logo */
-  color: white;
-  font-size: 13px;
-  font-weight: 600;                           /* semi-bold */
-  cursor: pointer;
-  transition: opacity 0.2s;                  /* smooth fade on hover */
-  font-family: 'Inter', sans-serif;
-}
-
-/* slightly dims the button on hover */
-.btn-red:hover {
-  opacity: 0.9;
-}
 
 /* ── Hero ── */
 /* the main section — deep navy-blue background, two columns side by side */
@@ -424,15 +312,127 @@
 
 
 
-/* ── Steps Section ── */
-/* white background section — "Three steps. Real results." */
-.steps {
-  background: #f9f9f9;
-  padding: 80px 72px;
+/* ── Features Section ── */
+/* the light band above the steps — a SET of things, hence cards */
+.features {
+  background: #f7f9fb;
+  padding: 72px 72px 80px;
   font-family: 'Inter', sans-serif;
 }
 
-/* small blue uppercase label above the headline */
+/* one line under the headline, centred like it */
+.features__sub {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #7a8894;
+  text-align: center;
+  max-width: 460px;
+  margin: -38px auto 44px;                    /* pulls up under the headline */
+}
+
+.features__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* each card — flex column so the "how" line can be pushed to the bottom */
+.feature-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: #ffffff;
+  border: 1px solid #e8eef4;
+  border-radius: 16px;
+  padding: 30px 28px 26px;
+  box-shadow: 0 1px 2px rgba(17, 32, 44, 0.04);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.feature-tile:hover {
+  border-color: #cfe0ee;
+  box-shadow: 0 6px 20px rgba(61, 143, 212, 0.10);
+  transform: translateY(-2px);
+}
+
+/* the soft blue square holding the icon */
+.feature-tile__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #eaf3fb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feature-tile__title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.feature-tile__desc {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: #7a8894;
+  margin: 0;
+}
+
+/* the supporting line — quieter, pushed to the bottom of the card */
+.feature-tile__how {
+  margin: auto 0 0;                           /* auto top margin = sits at the bottom */
+  padding-top: 16px;
+  border-top: 1px solid #f0f4f8;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #9aa8b4;
+}
+
+/* the route through to the full Features page */
+.features__more {
+  display: flex;
+  justify-content: center;
+  margin-top: 36px;
+}
+
+.btn-features-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  background: #ffffff;
+  border: 1px solid #cfe0ee;
+  border-radius: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1e6bb8;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.btn-features-more:hover {
+  border-color: #3d8fd4;
+  background: #f4f9fd;
+}
+
+
+/* ── Steps Section ── */
+/* a SEQUENCE, not a set — so it reads as a connected journey, and sits on
+   white so it separates from the grey Features band above it */
+.journey {
+  background: #ffffff;
+  padding: 76px 72px 84px;
+  font-family: 'Inter', sans-serif;
+}
+
+/* .steps__overline and .steps__headline are shared with the Features
+   section above — they are genuinely identical in both, so they stay here */
 .steps__overline {
   font-size: 11px;
   letter-spacing: 3px;
@@ -443,7 +443,6 @@
   font-weight: 600;
 }
 
-/* "Three steps. Real results." headline */
 .steps__headline {
   font-size: clamp(1.6rem, 2.5vw, 2.2rem);
   font-weight: 700;
@@ -453,90 +452,95 @@
   letter-spacing: -1px;
 }
 
-/* three-column grid for the step cards */
-.steps__grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);     /* 3 equal columns */
-  gap: 24px;
+/* ── the rail ── */
+/* one flex row: node, line, node, line, node. The lines are flex-grow, so
+   they stretch to whatever space is left between the fixed-width nodes. */
+.journey__rail {
+  display: flex;
+  align-items: center;
   max-width: 1000px;
   margin: 0 auto;
+  padding: 0 88px;                            /* aligns each node over its column */
+  box-sizing: border-box;
 }
 
-/* each step card — white box with border */
-.step-card {
-  background: white;
-  border-radius: 14px;
-  padding: 28px;
-  border: 1.5px solid #f0f0f0;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-/* lifts card slightly on hover */
-.step-card:hover {
-  border-color: #e0e0e0;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-}
-
-/* top row — icon on left, step number on right */
-.step-card__top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-/* colored emoji box */
-.step-card__icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
+.journey__node {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;                             /* never squashed by the lines */
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5aa8e0 0%, #3d8fd4 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }
 
-/* large faint number "01", "02", "03" */
-.step-card__num {
-  font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: -2px;
-  opacity: 0.1;                              /* very faint — decorative only */
+/* the last node is green — the journey arrives */
+.journey__node--done {
+  background: linear-gradient(135deg, #6fc47a 0%, #4aa85a 100%);
 }
 
-/* colored tag like "Citizen Reports" */
-.step-card__tag {
-  font-size: 11px;
+.journey__line {
+  flex-grow: 1;
+  height: 2px;
+  margin: 0 14px;
+  background: #bfdcf0;
+}
+
+/* the run into the final node fades blue → green */
+.journey__line--end {
+  background: linear-gradient(90deg, #bfdcf0 0%, #a8dcae 100%);
+}
+
+/* ── the three columns under the rail ── */
+.journey__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  max-width: 1000px;
+  margin: 28px auto 0;
+}
+
+.journey__step {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  text-align: center;
+  padding: 0 8px;
+}
+
+.journey__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.journey__tag {
+  font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.6px;
   text-transform: uppercase;
-  margin-bottom: 8px;
 }
 
-/* Arabic title of the step */
-.step-card__title {
-  font-size: 1.05rem;
+.journey__title {
+  font-size: 17px;
   font-weight: 700;
   color: #111;
-  margin-bottom: 10px;
-}
-
-/* description paragraph */
-.step-card__desc {
-  font-size: 13px;
-  color: #777;
-  line-height: 1.75;
   margin: 0;
-  font-weight: 400;
+  direction: rtl;                             /* Arabic reads right to left */
 }
 
-/* short colored bar at the bottom of each step card */
-.step-card__bar {
-  height: 3px;
-  width: 32px;
-  border-radius: 2px;
-  margin-top: 20px;
-  opacity: 0.4;
+.journey__desc {
+  font-size: 13px;
+  line-height: 1.75;
+  color: #7a8894;
+  margin: 0;
+  max-width: 260px;
 }
 
 
@@ -654,66 +658,6 @@
   font-family: 'Inter', sans-serif;
 }
 
-/* ── Footer ── */
-/* white footer at the bottom of the page */
-.footer {
-  background: white;
-  padding: 24px 72px;
-  border-top: 1px solid #f0f0f0;
-  font-family: 'Inter', sans-serif;
-}
-
-/* top row — brand on left, links on right */
-.footer__top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 16px;
-  margin-bottom: 16px;
-  border-bottom: 1px solid #f0f0f0;          /* divider line between top and bottom */
-}
-
-/* "CivicFix" brand text */
-.footer__brand {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #111;
-  letter-spacing: -0.5px;
-}
-
-/* colors "Fix" blue — same trick as navbar */
-.footer__brand span {
-  color: #3d8fd4;                             /* sky blue — matches navbar */
-}
-
-/* row of footer links */
-.footer__links {
-  display: flex;
-  gap: 28px;
-}
-
-/* each footer link */
-.footer__link {
-  font-size: 13px;
-  color: #9ca3af;                             /* light gray */
-  text-decoration: none;
-  font-weight: 400;
-  transition: color 0.2s;
-}
-
-.footer__link:hover { color: #333; }
-
-/* bottom row — copyright on left, tagline on right */
-.footer__bottom {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.footer__copy    { font-size: 12px; color: #9ca3af; font-weight: 400; }
-.footer__tagline { font-size: 11px; color: #9ca3af; font-weight: 400; }
-
-
 
 
 /* ── Flow steps (inside the wide stat card) ── */
@@ -761,4 +705,80 @@
 .flow__arrow {
   color: rgba(255,255,255,0.3);
   font-size: 14px;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   Everything above is the desktop design, unchanged. These blocks only
+   take effect on narrower screens, so nothing here can alter how the
+   page looks on a laptop.
+
+   Three sizes:
+     1024px — tablets: less padding, stats drop from 4 columns to 2
+      860px — the hero stops being two columns and stacks
+      620px — phones: one column everywhere, padding tightened
+   ══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+  .hero          { padding: 48px 40px; gap: 32px; }
+  .stats-strip   { padding: 56px 40px; }
+  .journey       { padding: 64px 40px; }
+  .cta           { padding: 64px 40px; }
+
+  /* four across is too tight below this width */
+  .stats-strip__grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 860px) {
+  /* the hero stops being side-by-side — headline first, stat cards below */
+  .hero {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding: 44px 32px 52px;
+  }
+
+  .hero__description { max-width: 100%; }
+
+  /* three cards in a row do not fit — go to one column */
+  .journey__grid  { grid-template-columns: 1fr; max-width: 520px; }
+  .journey__rail  { display: none; }   /* the rail means nothing once stacked */
+  .features__grid { grid-template-columns: 1fr; max-width: 520px; }
+
+  /* the flow row inside the wide stat card gets cramped */
+  .flow { gap: 4px; }
+}
+
+@media (max-width: 620px) {
+  .hero        { padding: 32px 18px 40px; }
+  .stats-strip { padding: 44px 18px; }
+  .journey     { padding: 48px 18px; }
+  .features    { padding: 48px 18px; }
+  .cta         { padding: 48px 18px; }
+
+  /* stat cards stack rather than sitting two across */
+  .hero__right       { grid-template-columns: 1fr; }
+  .stat-card--wide   { grid-column: span 1; }
+  .stats-strip__grid { grid-template-columns: 1fr; gap: 12px; }
+
+  /* buttons go full width — easier to hit with a thumb */
+  .hero__cta,
+  .cta__buttons { flex-direction: column; align-items: stretch; }
+
+  .btn-hero-primary,
+  .btn-hero-secondary,
+  .btn-cta-primary,
+  .btn-cta-secondary { justify-content: center; }
+
+  /* the headline is set for a wide screen — ease off the tracking */
+  .hero__headline { letter-spacing: -1px; }
+
+  /* the flag strip lines squeeze the cedar off-centre on a narrow screen */
+  .flag-strip__red,
+  .flag-strip__green { width: 42%; }
+}
+
+/* people who have asked their system to reduce motion get no hover lifts */
+@media (prefers-reduced-motion: reduce) {
+  .btn-hero-primary:hover,
+  .btn-cta-primary:hover { transform: none; }
 }

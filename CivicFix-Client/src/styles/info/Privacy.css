@@ -1,0 +1,158 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ── Privacy page ── */
+/* same dark blue ground as About, Features and Contact */
+.privacy-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #2e4c60 0%, #26414f 60%, #223b48 100%);
+  font-family: 'Inter', sans-serif;
+}
+
+/* narrow column — this is the longest text page in the app */
+.privacy-page__content {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 56px 24px 72px;
+}
+
+.privacy-page__title {
+  font-size: 36px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 14px;
+  letter-spacing: -0.6px;
+}
+
+.privacy-page__title::after {
+  content: "";
+  display: block;
+  width: 52px;
+  height: 3px;
+  margin-top: 14px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #8ecdf5 0%, #5aa8e0 100%);
+}
+
+.privacy-page__updated {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #7f9aad;
+  margin: 20px 0 0;
+}
+
+.privacy-page__lead {
+  font-size: 17px;
+  line-height: 1.75;
+  color: #c9dce8;
+  margin: 14px 0 40px;
+}
+
+/* the same blue tick the About headings use */
+.privacy-page__heading {
+  position: relative;
+  font-size: 21px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 44px 0 18px;
+  padding-left: 14px;
+}
+
+.privacy-page__heading::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 2px;
+  background: #6db8ea;
+}
+
+.privacy-page__text {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #b6cbd8;
+  margin: 0 0 16px;
+}
+
+.privacy-list {
+  margin: 0 0 16px;
+  padding-left: 20px;
+}
+
+.privacy-list li {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #b6cbd8;
+  margin-bottom: 10px;
+}
+
+.privacy-list li strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.privacy-list li::marker {
+  color: #6db8ea;
+}
+
+/* ── Callout ── */
+/* the two things on this page someone would be upset to discover later.
+   Given a panel of their own so they cannot be skimmed past. */
+.privacy-note {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-left: 3px solid #8ecdf5;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin: 22px 0 8px;
+  font-size: 15px;
+  line-height: 1.8;
+  color: #c9dce8;
+}
+
+.privacy-note strong {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+/* ── Contact button ── */
+.privacy-page__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 12px 22px;
+  background: rgba(142, 205, 245, 0.14);
+  border: 1px solid rgba(142, 205, 245, 0.40);
+  border-radius: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #8ecdf5;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.privacy-page__cta:hover {
+  background: rgba(142, 205, 245, 0.22);
+  border-color: #8ecdf5;
+  transform: translateY(-1px);
+}
+
+/* ── Narrow screens ── */
+@media (max-width: 620px) {
+  .privacy-page__content {
+    padding: 36px 18px 52px;
+  }
+
+  .privacy-page__title {
+    font-size: 28px;
+  }
+
+  .privacy-note {
+    padding: 16px 18px;
+  }
+}

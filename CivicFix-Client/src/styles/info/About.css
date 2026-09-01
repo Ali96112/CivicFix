@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ── About page ── */
+/* soft dark blue — the same family as the hero, one shade calmer */
+.about-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #2e4c60 0%, #26414f 60%, #223b48 100%);
+  font-family: 'Inter', sans-serif;
+}
+
+/* narrow column — long text is easier to read when the line is short */
+.about-content {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 56px 24px 72px;
+}
+
+.about-title {
+  font-size: 36px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 14px;
+  letter-spacing: -0.6px;
+}
+
+/* short blue rule under the title — brighter now, so it reads on the dark ground */
+.about-title::after {
+  content: "";
+  display: block;
+  width: 52px;
+  height: 3px;
+  margin-top: 14px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #8ecdf5 0%, #5aa8e0 100%);
+}
+
+/* the opening paragraph — slightly bigger than the rest */
+.about-lead {
+  font-size: 17px;
+  line-height: 1.75;
+  color: #c9dce8;
+  margin: 22px 0 44px;
+}
+
+/* section headings get a small blue tick to their left */
+.about-heading {
+  position: relative;
+  font-size: 21px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 44px 0 18px;
+  padding-left: 14px;
+}
+
+.about-heading::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 2px;
+  background: #6db8ea;
+}
+
+.about-text {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #b6cbd8;
+  margin: 0 0 16px;
+}
+
+/* ── The three steps ── */
+/* translucent white over the blue, so the cards read as lit panels
+   rather than a different colour dropped on top */
+.about-step {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-left: 3px solid rgba(142, 205, 245, 0.45);
+  border-radius: 12px;
+  padding: 22px 26px;
+  margin-bottom: 14px;
+  transition: background 0.2s, border-left-color 0.2s, transform 0.2s;
+}
+
+.about-step:hover {
+  background: rgba(255, 255, 255, 0.10);
+  border-left-color: #8ecdf5;
+  transform: translateY(-1px);
+}
+
+/* "STEP 01" as a small blue pill */
+.about-step__num {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: rgba(142, 205, 245, 0.16);
+  font-size: 11px;
+  font-weight: 700;
+  color: #9ad0f5;
+  letter-spacing: 0.8px;
+}
+
+.about-step__title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 10px 0 8px;
+}
+
+.about-step__text {
+  font-size: 14px;
+  line-height: 1.75;
+  color: #b6cbd8;
+  margin: 0;
+}
+
+/* ── Narrow screens ── */
+@media (max-width: 620px) {
+  .about-content {
+    padding: 36px 18px 52px;
+  }
+
+  .about-title {
+    font-size: 28px;
+  }
+
+  .about-step {
+    padding: 18px 18px;
+  }
+}

@@ -28,15 +28,16 @@ namespace CivicFix.Api.Controllers
 
         [HttpPost("register")] // api/Users/register
         public async Task<IActionResult> Register([FromBody] User newUser) // [FromBody] the user that was registered will be under name newUser.usr_FullName
-        {// async Task<IActionResult> dont let system freeze waiting for that one request
+        {
 
             // scramble the password before saving
             string hashedPassword = BCrypt.Net.BCrypt.HashPassword(newUser.usr_PasswordHash);
 
+
             // insert the new user and return their Id immediately
-            var sql = @"INSERT INTO tbl_Users (usr_FullName, usr_Email, usr_PasswordHash, usr_Role, usr_NationalId)
-                OUTPUT INSERTED.usr_Id
-                VALUES (@FullName, @Email, @PasswordHash, @Role, @NationalId)";
+            var sql = @"INSERT INTO tbl_Users (usr_FullName, usr_Email, usr_PasswordHash, usr_Role, usr_PhoneNumber)
+            OUTPUT INSERTED.usr_Id
+            VALUES (@FullName, @Email, @PasswordHash, @Role, @PhoneNumber)";
 
             var userId = await _connection.QueryFirstAsync<int>(sql, new
             {// ExecuteAsync is used for INSERT/UPDATE/DELETE — QueryFirstAsync because we need the Id back
@@ -44,7 +45,7 @@ namespace CivicFix.Api.Controllers
                 Email = newUser.usr_Email,
                 PasswordHash = hashedPassword,
                 Role = "Resident",
-                NationalId = newUser.usr_NationalId
+                PhoneNumber = newUser.usr_PhoneNumber
             });
 
             // generate JWT token immediately after registration — same as login
@@ -156,7 +157,7 @@ namespace CivicFix.Api.Controllers
                 UserId = user.usr_Id
             });
 
-            
+
             var resetLink = $"http://localhost:5173/reset-password?token={token}";
 
             var emailBody = $@"
@@ -293,7 +294,7 @@ namespace CivicFix.Api.Controllers
                     {
                         int pointsToUndo = Convert.ToInt32((object)assignment.rpa_Points);
 
-                        if (pointsToUndo != 0) 
+                        if (pointsToUndo != 0)
                         {
                             await _connection.ExecuteAsync(
                                 "UPDATE tbl_Municipalities SET mun_TotalPoints = mun_TotalPoints - @Points WHERE mun_Id = @MunicipalityId",
@@ -311,7 +312,7 @@ namespace CivicFix.Api.Controllers
                     await _connection.ExecuteAsync("DELETE FROM tbl_Reports WHERE rpt_Id IN @Ids", new { Ids = reportIds }, transaction);
                 }
 
-             
+
 
                 transaction.Commit();//if every thing success then save eeverything
             }

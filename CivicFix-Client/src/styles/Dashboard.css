@@ -6,69 +6,6 @@
   font-family: 'Inter', sans-serif;
 }
 
-/* ── Navbar ── */
-/* dark navbar at the top */
-.dashboard-nav {
-  background: #10202e;                        /* deep navy — matches hero body */
-  padding: 16px 48px;
-  display: flex;
-  justify-content: space-between;            /* brand on left, button on right */
-  align-items: center;
-  position: sticky;                           /* stays at top when scrolling */
-  top: 0;
-  z-index: 100;
-}
-
-/* logo + "CivicFix" name */
-.dashboard-nav__brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;                            /* hand cursor — goes back to home */
-}
-
-/* sky blue box with city emoji */
-.dashboard-nav__logo {
-  background: linear-gradient(135deg, #5aa8e0 0%, #3d8fd4 100%); /* sky blue — matches navbar logo */
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-}
-
-/* "CivicFix" text */
-.dashboard-nav__name {
-  font-size: 16px;
-  font-weight: 700;
-  color: white;
-  letter-spacing: -0.5px;
-}
-
-/* colors "Fix" sky blue */
-.dashboard-nav__name span {
-  color: #5aa8e0;
-}
-
-/* "Report a Problem" button in navbar */
-.dashboard-nav__btn {
-  padding: 8px 20px;
-  background: linear-gradient(135deg, #3d8fd4 0%, #1e6bb8 100%); /* sky blue */
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.2s;
-  font-family: 'Inter', sans-serif;
-}
-
-.dashboard-nav__btn:hover {
-  opacity: 0.9;
-}
 
 /* ── Header band ── */
 /* gradient banner behind the title + search — gives depth */

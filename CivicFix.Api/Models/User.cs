@@ -6,7 +6,7 @@ namespace CivicFix.Api.Models
         public string usr_FullName { get; set; }
         public string usr_Email { get; set; }
         public string usr_PasswordHash { get; set; }
-        public string usr_NationalId { get; set; }
+        public string usr_PhoneNumber { get; set; }
         public bool usr_IsBlocked { get; set; }   // Admin blocked this account — Login rejects it
         public string? usr_Role { get; set; }
         public int? usr_MunicipalityId { get; set; }
