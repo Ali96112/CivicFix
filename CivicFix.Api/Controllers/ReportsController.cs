@@ -418,11 +418,14 @@ namespace CivicFix.Api.Controllers
 
         [Authorize]
         [HttpGet("{id:int}")] // address: GET api/Reports/1
+
         public async Task<IActionResult> GetReportById(int id)
+
         {
             // ADDED: same rule as the list above — a Staff member must not be able to
             // open a report from another baladiye just by typing its Id in the URL.
-            var currentUserId = int.Parse(User.FindFirst("Id")!.Value);
+            var currentUserId = int.Parse(User.FindFirst("Id")!.Value);
+
 
             if (User.FindFirst(ClaimTypes.Role)?.Value == "Staff")//
             {
@@ -573,7 +576,41 @@ namespace CivicFix.Api.Controllers
                 MyAgreement = myAgreement
             });
         }
+
+
+
+        [HttpGet("map")] // address: GET api/Reports/map — public, no token needed
+        public async Task<IActionResult> GetReportsForMap()
+        {
+            var sql = @"
+        SELECT
+            tbl_Reports.rpt_Id,
+            tbl_Reports.rpt_Title,
+            tbl_Reports.rpt_Status,
+            MIN(tbl_Reports.rpt_Location.Lat)  AS Latitude,
+            MIN(tbl_Reports.rpt_Location.Long) AS Longitude,
+            tbl_Categories.ctg_Name AS CategoryName,
+            STRING_AGG(tbl_Municipalities.mun_Name, ', ') AS AssignedMunicipalities
+        FROM tbl_Reports
+        INNER JOIN tbl_Categories
+            ON tbl_Reports.rpt_CategoryId = tbl_Categories.ctg_Id
+        INNER JOIN tbl_ReportAssignments
+            ON tbl_Reports.rpt_Id = tbl_ReportAssignments.rpa_ReportId
+        INNER JOIN tbl_Municipalities
+            ON tbl_ReportAssignments.rpa_MunicipalityId = tbl_Municipalities.mun_Id
+        GROUP BY
+            tbl_Reports.rpt_Id,
+            tbl_Reports.rpt_Title,
+            tbl_Reports.rpt_Status,
+            tbl_Categories.ctg_Name";
+
+            var reports = await _connection.QueryAsync<dynamic>(sql);
+            return Ok(reports);
+        }
+
+
     }
+
 }
 /*
 {

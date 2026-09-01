@@ -1,0 +1,29 @@
+.map-page__canvas {
+  width: 100%;
+  height: calc(100vh - 140px);
+}
+
+.map-page__count {
+  padding: 12px 24px;
+  margin: 0;
+  font-weight: 600;
+}
+.map-popup strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.map-popup p {
+  margin: 2px 0;
+  font-size: 13px;
+}
+
+.map-popup button {
+  margin-top: 8px;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  background: #3d8fd4;
+  color: #fff;
+  cursor: pointer;
+}

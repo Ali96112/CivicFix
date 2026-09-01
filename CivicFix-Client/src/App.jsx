@@ -12,6 +12,7 @@ import About from "./components/info/About";
 import Features from "./components/info/Features";
 import Contact from "./components/info/Contact";
 import Privacy from "./components/info/Privacy";
+import MapPage from "./components/MapPage";
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
         <Route path="/features" element={<Features />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/privacy" element={<Privacy />} />
+        <Route path="/map" element={<MapPage />} />
       </Routes>
     </BrowserRouter>
   );

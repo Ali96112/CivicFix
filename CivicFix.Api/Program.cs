@@ -142,3 +142,18 @@ app.Run();//runs and start listening for request
 
 // this page is like settings.py and manage.py
 // here where app is configured and launched
+
+
+
+
+
+
+//"ConnectionStrings": {
+//    "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=CivicFixDb;Trusted_Connection=True;TrustServerCertificate=True;"
+  //},
+
+
+
+
+
+
