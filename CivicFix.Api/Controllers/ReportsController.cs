@@ -36,13 +36,8 @@ namespace CivicFix.Api.Controllers
         [HttpPost] // address: api/Reports
         public async Task<IActionResult> CreateReport([FromBody] CreateReportRequest request)
         {
-            // Who is filing this report? Both facts come from the signed JWT, never
-            // from the request body — a body field can be faked, a signed token cannot.
-            // "User" is built into ControllerBase and represents the logged-in caller.
-            var reporterRole = User.FindFirst(ClaimTypes.Role)?.Value;
-
-            // TryParse, not int.Parse: a token without an "Id" claim gives a clean 400
-            // instead of throwing and returning a 500.
+            
+            var reporterRole = User.FindFirst(ClaimTypes.Role)?.Value; 
             if (!int.TryParse(User.FindFirst("Id")?.Value, out int currentUserId))
                 return BadRequest("Could not read user Id from token. Claim 'Id' not found.");
 
@@ -58,51 +53,20 @@ namespace CivicFix.Api.Controllers
                 if (municipalityId == null)
                     return BadRequest("Staff member is not assigned to any baladiye.");
 
-                // check if report location is within staff's baladiye boundary + 100m tolerance
-                //
-                // ══════════════════════════════════════════════════════════════
-                // FIXED — every spatial query in this file used to build the point
-                // by gluing strings together:
-                //
-                //   geography::STPointFromText(
-                //       'POINT(' + CAST(@Longitude AS NVARCHAR) + ' ' +
-                //                  CAST(@Latitude  AS NVARCHAR) + ')', 4326)
-                //
-                // Two problems with that:
-                //
-                // 1) PRECISION LOSS. CAST(<float> AS NVARCHAR) with no style keeps
-                //    only about 6 significant digits, so 35.501789 becomes "35.5018".
-                //    Every location was rounded to roughly 4 decimal places — about
-                //    10 metres — before it ever reached the polygon test. Near a
-                //    boundary that is enough to land in the wrong baladiye, or to
-                //    trip the 100m rule when it should not.
-                //
-                // 2) IT IS EASY TO GET THE ORDER BACKWARDS. WKT is POINT(long lat),
-                //    the opposite of how people say "lat, long".
-                //
-                // geography::Point(@Latitude, @Longitude, 4326) takes the two numbers
-                // as real floats — no text conversion, no rounding — and its argument
-                // order is Latitude FIRST, which reads the way coordinates are spoken.
-                // ══════════════════════════════════════════════════════════════
-                // CHANGED: this used to be SELECT COUNT(*), which answered only
-                // "yes" or "no". When it said no, the staff member got
-                // "You can only submit reports within your baladiye boundaries."
-                // and had no way to tell WHY — were they 5 metres out, or 40 km out,
-                // or is the baladiye's polygon simply wrong? Now the query returns
-                // the actual numbers, so the error message can say.
                 var locationCheckSql = @"
                     SELECT
                         mun_Name,
-                        -- 1 when the point is inside the polygon
-                        mun_Boundary.STContains(
+                        mun_Boundary.STContains(                                               --Does this municipality's boundary contain the user's location?torf
                             geography::Point(@Latitude, @Longitude, 4326)) AS ContainsPoint,
-                        -- metres from the point to the polygon (0 when inside)
-                        mun_Boundary.STDistance(
+                        mun_Boundary.STDistance(                                                --How far is the user's location from the municipality boundary?example 80
                             geography::Point(@Latitude, @Longitude, 4326)) AS DistanceMeters,
-                        -- used to spot a polygon that was imported wound the wrong way
-                        mun_Boundary.STArea() / 1000000.0 AS AreaSquareKm
+                        mun_Boundary.STArea() / 1000000.0 AS AreaSquareKm                         --Gets the total area of the municipality.
                     FROM tbl_Municipalities
                     WHERE mun_Id = @MunicipalityId";
+                    //The SQL takes one municipality and the user's GPS location, then asks:
+                    //What is the municipality's name? Is the user inside it? How far is the user from its boundary? And how large is the municipality?
+                    //returns mun_Name→ "Aley"    ContainsPoint→ true  DistanceMeters→ 80    AreaSquareKm→ 15.5
+
 
                 var boundaryCheck = await _connection.QueryFirstOrDefaultAsync<dynamic>(
                     locationCheckSql, new { MunicipalityId = municipalityId, request.Longitude, request.Latitude });
@@ -110,33 +74,27 @@ namespace CivicFix.Api.Controllers
                 if (boundaryCheck == null)
                     return BadRequest("Your baladiye could not be found in the database.");
 
-                string myBaladiyeName = (object?)boundaryCheck.mun_Name as string ?? "your baladiye";
-
-                // STContains and STDistance both return NULL when mun_Boundary is NULL,
-                // so guard before converting or this throws instead of explaining.
-                object? containsRaw = (object?)boundaryCheck.ContainsPoint;
-                object? distanceRaw = (object?)boundaryCheck.DistanceMeters;
+                //now we save the db ouput in object
+                string myBaladiyeName = (object?)boundaryCheck.mun_Name as string ?? "your baladiye";//if mun name in db is null return your baladeye
+                object? containsRaw = (object?)boundaryCheck.ContainsPoint;//checking if point inside the boundaey true or false
+                object? distanceRaw = (object?)boundaryCheck.DistanceMeters;//the distance the point from the boundary
 
                 if (containsRaw == null || distanceRaw == null)
                     return BadRequest($"{myBaladiyeName} has no boundary polygon saved, so its area cannot be checked. Re-run the boundary seeder.");
 
+                //converting object values into c# 
                 bool isInsideBoundary = Convert.ToInt32(containsRaw) == 1;
                 double distanceMeters = Convert.ToDouble(distanceRaw);
                 double areaSquareKm = Convert.ToDouble((object)boundaryCheck.AreaSquareKm);
 
-                if (!isInsideBoundary && distanceMeters >= 100)
+                if (!isInsideBoundary && distanceMeters >= 100)//reject the report if outside and more than 100m
                 {
-                    // ADDED: say exactly how far off the location is. A few metres means
-                    // the boundary is slightly imprecise; kilometres means either the
-                    // staff member really is outside their baladiye, or the polygon is
-                    // in the wrong place (usually lat/long swapped when it was imported).
+                    //This formats the distance nicely:
                     var distanceText = distanceMeters >= 1000
                         ? $"{(distanceMeters / 1000):N1} km"
                         : $"{distanceMeters:N0} m";
 
-                    // Lebanon is about 10,450 km2 in total. A single baladiye that
-                    // claims more than 20,000 km2 has an inverted ring, which SQL Server
-                    // reads as "the whole Earth except this area".
+                    //Area > 20,000 → show a warning that the boundary polygon is probably wrong.
                     var polygonWarning = areaSquareKm > 20000
                         ? $" WARNING: {myBaladiyeName}'s boundary covers {areaSquareKm:N0} km2, which is impossible — that polygon is wound the wrong way and needs ReorientObject()."
                         : "";
@@ -147,15 +105,15 @@ namespace CivicFix.Api.Controllers
                         $"(you must be inside it, or within 100 m of it).{polygonWarning}");
                 }
 
+                //here report continue so it is within the boundiers mun staff
                 // assign only staff's own baladiye — no spatial query needed
-                var staffMunicipalitySql = "SELECT mun_Id, mun_Name FROM tbl_Municipalities WHERE mun_Id = @Id";
+                var staffMunicipalitySql = "SELECT mun_Id, mun_Name FROM tbl_Municipalities WHERE mun_Id = @Id";//gets the staff member's own municipality and puts it into a list
                 var staffMunicipality = await _connection.QueryFirstAsync<Municipality>(
                     staffMunicipalitySql, new { Id = municipalityId });
-
                 // list has ONE item — staff's own baladiye only
                 municipalities = new List<Municipality> { staffMunicipality };
             }
-            else
+            else //if not staff
             {
                 // NOTE (ADDED): this branch runs for BOTH Resident and Admin.
                 // Admin is allowed to create reports and is treated exactly like a Resident
@@ -177,10 +135,7 @@ namespace CivicFix.Api.Controllers
                 if (!municipalities.Any())
                     return BadRequest("Location does not fall within any registered baladiye.");
 
-                // ADDED: a Resident is allowed to SET THE PRIORITY when creating the report,
-                // but only one of the three legal values. Before, any string went straight
-                // into the database ("banana" would have been saved as a priority) and then
-                // the ORDER BY CASE in the list queries silently dropped it to "ELSE 4".
+                //priority field
                 if (!string.IsNullOrEmpty(request.Priority) &&
                     request.Priority != "Low" && request.Priority != "Medium" && request.Priority != "High")
                 {
@@ -203,22 +158,22 @@ namespace CivicFix.Api.Controllers
                             geography::Point(@Latitude, @Longitude, 4326)) = 1)
                     AND rpt_Location.STDistance(
                         geography::Point(@Latitude, @Longitude, 4326)) < 30"
-                // NOTE (ADDED, kept on purpose): the Staff query above has NO
-                // "rpt_Status != 'Resolved'" filter, because staff reports are inserted
-                // as 'Resolved' straight away — adding that filter would make duplicate
-                // detection useless for staff. This is intentional, not a bug.
-                : @"
+                    :
+                //Is not resolved.
+                //Has the same category as the new report.
+                //Was created in the last 20 days.//Is in the same baladiye as the user's location.//Is less than 30 meters away from the user's location.
+                 @"
                     SELECT TOP 1 rpt_Id
                     FROM tbl_Reports
                     INNER JOIN tbl_ReportAssignments ON rpt_Id = rpa_ReportId
                     WHERE rpt_Status != 'Resolved'
                     AND rpt_CategoryId = @CategoryId
                     AND rpt_CreatedAt > DATEADD(day, -20, GETDATE())
-                    AND rpa_MunicipalityId IN (SELECT mun_Id FROM tbl_Municipalities
-                        WHERE mun_Boundary.STContains(
+                    AND rpa_MunicipalityId IN (SELECT mun_Id FROM tbl_Municipalities       ---User's GPS location → which municipality contains it? → get that municipality's ID → compare it with the report's municipality ID.
+                        WHERE mun_Boundary.STContains(                                     --The report's municipality ID must be one of the municipality IDs returned by the query inside the parentheses.
                             geography::Point(@Latitude, @Longitude, 4326)) = 1)
                     AND rpt_Location.STDistance(
-                        geography::Point(@Latitude, @Longitude, 4326)) < 30";
+                        geography::Point(@Latitude, @Longitude, 4326)) < 30";//The existing report must be less than 30 meters from the user's location.
 
             var existingReportId = await _connection.QueryFirstOrDefaultAsync<int?>(
                 duplicateSql, new { request.CategoryId, request.Longitude, request.Latitude });
@@ -266,8 +221,6 @@ namespace CivicFix.Api.Controllers
                 ResolvedPhotoUrl = reporterRole == "Staff" ? request.ResolvedPhotoUrl : null, // only staff provides this
                 request.Longitude,
                 request.Latitude,
-                // FIXED: was request.ReporterId (came from the body, so a user could
-                // file a report in someone else's name). Now taken from the signed token.
                 ReporterId = currentUserId,
                 request.CategoryId,
                 Priority = reporterRole == "Staff" ? null : request.Priority // staff reports dont need priority
@@ -289,7 +242,7 @@ namespace CivicFix.Api.Controllers
                 });
             }
 
-            return Ok(new { ReportId = reportId, AssignedMunicipalities = municipalities.Select(m => m.mun_Name) });
+            return Ok(new { ReportId = reportId, AssignedMunicipalities = municipalities.Select(m => m.mun_Name) });//sended back to frontend
         }
 
 

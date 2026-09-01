@@ -48,8 +48,8 @@ function ReportForm() {
         tab === "shared"
           ? "http://localhost:5140/api/Reports/shared"
           : tab === "mine"
-            ? "http://localhost:5140/api/Reports/mine"
-            : "http://localhost:5140/api/Reports";
+            ? "http://localhost:5140/api/Reports/mine"//get my reports
+            : "http://localhost:5140/api/Reports";//get all reports
 
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
@@ -143,7 +143,7 @@ function ReportForm() {
         {showForm && (
           <CreateReportForm
             role={role}
-            categories={categories}
+            categories={categories}//the array is sended
             onCreated={() => {
               setShowForm(false);
               fetchReports(activeTab);

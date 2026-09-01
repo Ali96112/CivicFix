@@ -1,19 +1,17 @@
-import { useState } from 'react'; // useState to store form field values
-import { useNavigate } from 'react-router-dom'; // useNavigate to switch pages after login
-import '../styles/Login.css'; // styles for this page
-
+import { useState } from 'react'; 
+import { useNavigate } from 'react-router-dom'; 
+import '../styles/Login.css'; 
 function LoginForm() {
 
-  const navigate = useNavigate(); // to go to /Report after login
-
+  const navigate = useNavigate(); 
   const [formData, setFormData] = useState({
-    Email: '',    // email field — matches what backend expects
-    Password: '', // password field — matches what backend expects
+    Email: '',    
+    Password: '', 
   });
 
-  const [showPassword, setShowPassword] = useState(false); // password visible or hidden
-  const [error, setError] = useState('');                  // error message shown to user
-  const [loading, setLoading] = useState(false);           // true while waiting for server
+  const [showPassword, setShowPassword] = useState(false); 
+  const [error, setError] = useState('');  
+  const [loading, setLoading] = useState(false);         
 const handleChange = (e) => { // e = the event — info about what the user just typed
     setFormData({
       ...formData,                      // keep all existing field values

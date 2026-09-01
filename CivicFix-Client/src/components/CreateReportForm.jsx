@@ -45,8 +45,11 @@ function CreateReportForm({ role, categories, onCreated }) {
   // you file a report at an EXACT point — which you need to test the shared
   // report case, where a point on a border is assigned to two baladiyat at once.
   const [showCoords, setShowCoords] = useState(false);
-  const [coordCheck, setCoordCheck] = useState("");
-  const [checkingCoords, setCheckingCoords] = useState(false);
+  // REMOVED: coordCheck / checkingCoords. They belonged to the old
+  // "🔎 Check this location" button, which called GET api/Reports/location-check
+  // before submitting. That endpoint (ReportsDiagnosticsController) is gone —
+  // the boundary check now happens only inside CreateReport when you submit,
+  // and its error message already says which baladiye and how far away you are.
 
   const [locationStatus, setLocationStatus] = useState("");
   const [error, setError] = useState("");
@@ -78,58 +81,10 @@ function CreateReportForm({ role, categories, onCreated }) {
     );
   };
 
-  // Asks the API which baladiyat the typed coordinates fall into, BEFORE the
-  // report is submitted. Calls GET api/Reports/location-check.
-  //
-  // This is what makes the shared-report case testable: paste a border point,
-  // press check, and you can see whether it matches one baladiye or two before
-  // you commit to filing anything.
-  const checkCoordinates = async () => {
-    if (!formData.Latitude || !formData.Longitude) {
-      setCoordCheck("Enter both a latitude and a longitude first.");
-      return;
-    }
-
-    setCheckingCoords(true);
-    setCoordCheck("");
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        `http://localhost:5140/api/Reports/location-check?latitude=${formData.Latitude}&longitude=${formData.Longitude}`,
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-
-      const body = await readBody(response);
-
-      if (!response.ok) {
-        setCoordCheck(errorTextOf(body, "Could not check this location."));
-        return;
-      }
-
-      const matches = body.MatchingBaladiyat || [];
-
-      if (matches.length === 0) {
-        setCoordCheck(
-          "⚠️ This point is not inside any baladiye — a report here would be rejected.",
-        );
-      } else if (matches.length === 1) {
-        setCoordCheck(
-          `✅ One baladiye: ${matches[0].mun_Name}. This report will not be shared.`,
-        );
-      } else {
-        // this is the case worth demonstrating — two or more baladiyat means the
-        // report lands on the Admin's Shared Reports tab for a decision
-        const names = matches.map((m) => m.mun_Name).join(" + ");
-        setCoordCheck(
-          `🔀 ${matches.length} baladiyat: ${names}. This report will be SHARED and will need an admin to choose who handles it.`,
-        );
-      }
-    } catch (err) {
-      setCoordCheck("Could not connect to server.");
-    } finally {
-      setCheckingCoords(false);
-    }
-  };
+  // REMOVED: checkCoordinates(). It used to call GET api/Reports/location-check
+  // to preview which baladiyat a typed point belongs to. The report is validated
+  // on submit instead — CreateReport runs the same spatial test and rejects with
+  // an explanation, so the preview round trip was doing the work twice.
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -405,16 +360,9 @@ function CreateReportForm({ role, categories, onCreated }) {
                 />
               </div>
 
-              <button
-                type="button"
-                className="btn-location"
-                disabled={checkingCoords}
-                onClick={checkCoordinates}
-              >
-                {checkingCoords ? "Checking..." : "🔎 Check this location"}
-              </button>
-
-              {coordCheck && <p className="coord-entry__result">{coordCheck}</p>}
+              {/* REMOVED: the "🔎 Check this location" button and its result
+                  line. You now just submit — if the point is outside your
+                  baladiye the API refuses and says how far off you are. */}
             </div>
           )}
 
