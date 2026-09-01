@@ -703,15 +703,14 @@ namespace CivicFix.Api.Controllers
             if (report == null)
                 return NotFound("Report not found.");
 
-            string reportTitle = (object?)report.rpt_Title as string ?? "";
 
             // Step 2 — Dapper opens and closes the connection by itself for a single
             // query, but a transaction needs the connection to stay open across several
             // queries, so we open it explicitly here.
-            if (_connection.State != System.Data.ConnectionState.Open)
+            if (_connection.State != System.Data.ConnectionState.Open)//keep database connection open since we want to delet many thing from database at once assigment coments....
                 await _connection.OpenAsync();
 
-            using var transaction = _connection.BeginTransaction();
+            using var transaction = _connection.BeginTransaction();//if closed this reopen it
 
             try
             {
@@ -719,18 +718,16 @@ namespace CivicFix.Api.Controllers
                 // how many points each baladiye was given for this report.
                 var assignments = await _connection.QueryAsync<dynamic>(
                     "SELECT rpa_MunicipalityId, rpa_Points FROM tbl_ReportAssignments WHERE rpa_ReportId = @ReportId",
-                    new { ReportId = id }, transaction);
+                    new { ReportId = id }, transaction);//Before deleting the report assignments, first get all the municipalities connected to this report and how many points each one got from it.
 
                 // Step 4 — undo the points on each baladiye.
-                // Subtracting rpa_Points works for both directions: the handler got +10
-                // so it loses 10; the others were awarded 0, so subtracting 0 is a no-op.
-                foreach (var assignment in assignments)
+                foreach (var assignment in assignments)//loop on every report assigment
                 {
-                    int pointsToUndo = Convert.ToInt32((object)assignment.rpa_Points);
+                    int pointsToUndo = Convert.ToInt32((object)assignment.rpa_Points);//gets that assignment's points and converts them to an int
 
                     if (pointsToUndo != 0) // nothing to undo for an unresolved report
                     {
-                        await _connection.ExecuteAsync(
+                        await _connection.ExecuteAsync(//Find that municipality and subtract the points that came from this report
                             "UPDATE tbl_Municipalities SET mun_TotalPoints = mun_TotalPoints - @Points WHERE mun_Id = @MunicipalityId",
                             new { Points = pointsToUndo, MunicipalityId = assignment.rpa_MunicipalityId },
                             transaction);
@@ -745,22 +742,20 @@ namespace CivicFix.Api.Controllers
                 await _connection.ExecuteAsync("DELETE FROM tbl_PriorityVotes WHERE pvt_ReportId = @Id", new { Id = id }, transaction);
                 await _connection.ExecuteAsync("DELETE FROM tbl_ReportAgreements WHERE rga_ReportId = @Id", new { Id = id }, transaction);
                 await _connection.ExecuteAsync("DELETE FROM tbl_ReportAssignments WHERE rpa_ReportId = @Id", new { Id = id }, transaction);
-
                 // finally the report itself
                 await _connection.ExecuteAsync("DELETE FROM tbl_Reports WHERE rpt_Id = @Id", new { Id = id }, transaction);
 
-                // everything worked — make it permanent
-                transaction.Commit();
+              
+                transaction.Commit();//keep all changes 
             }
             catch
             {
                 // something failed halfway — undo every delete above so the database
-                // is left exactly as it was, then let the error bubble up as a 500.
-                transaction.Rollback();
+                transaction.Rollback();//cancel all changes if one of the delets didnt work
                 throw;
             }
 
-            return Ok(new { message = $"Report \"{reportTitle}\" deleted.", reportId = id });
+            return Ok(new { reportId = id });
         }
     }
 }

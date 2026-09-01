@@ -1,6 +1,6 @@
 import { useState } from "react"; // useState lets us store and update form field values
 import { useNavigate } from "react-router-dom"; // useNavigate lets us switch pages after registration
-import "../styles/Register.css"; // styles for this page
+import "../../styles/Register.css"; // styles for this page
 
 function RegisterForm() {
   const navigate = useNavigate(); // to go to login page after registration

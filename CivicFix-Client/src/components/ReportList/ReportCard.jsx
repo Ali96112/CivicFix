@@ -5,7 +5,7 @@ import {
   errorTextOf,
   getStatusClass,
   STATUS_OPTIONS,
-} from "../services/apiHelpers";
+} from "../../services/apiHelpers";
 
 // ONE report in the list.
 //
@@ -81,7 +81,7 @@ function ReportCard({ rep, role, onChanged }) {
   // Admin deletes a report permanently. DELETE api/Reports/{id}
   // The backend also removes its comments, history, votes and assignments, and
   // gives back any points the baladiyat had already been awarded for it.
-  const deleteReport = async () => {
+  const deleteReport = async () => {//delete the current report when the user clicks the Delete button.
     // this is destructive and cannot be undone, so it is worth one extra click
     const confirmed = window.confirm(
       `Delete "${rep.rpt_Title}" permanently?\n\nThis also removes its comments, status history and votes. It cannot be undone.`,
@@ -90,7 +90,7 @@ function ReportCard({ rep, role, onChanged }) {
       return;
     }
 
-    setBusy(true);
+    setBusy(true);//Usually this is used to disable the delete button so the user cannot click it multiple times.
     setError("");
     try {
       const token = localStorage.getItem("token");
@@ -103,6 +103,7 @@ function ReportCard({ rep, role, onChanged }) {
 
       if (response.ok) {
         onChanged();
+        
       } else {
         setError(errorTextOf(data, "Could not delete the report."));
       }

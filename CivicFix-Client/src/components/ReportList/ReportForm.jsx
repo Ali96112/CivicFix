@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
-import ReportNavbar from "./ReportNavbar";
+// ReportNavbar lives one level UP, in components/, not in this folder — both
+// ReportList and ReportDetail use it, and a file shared by two feature folders
+// belongs to neither of them. That is why this one import says "../".
+import ReportNavbar from "../ReportNavbar";
 import StaffBaladiyeBadge from "./StaffBaladiyeBadge";
 import ReportTabs from "./ReportTabs";
 import StatusFilterBar from "./StatusFilterBar";
 import CreateReportForm from "./CreateReportForm";
 import ReportCard from "./ReportCard";
-import "../styles/Report.css";
+import "../../styles/Report.css";
 
 // The reports page.
 //
@@ -48,8 +51,8 @@ function ReportForm() {
         tab === "shared"
           ? "http://localhost:5140/api/Reports/shared"
           : tab === "mine"
-            ? "http://localhost:5140/api/Reports/mine"//get my reports
-            : "http://localhost:5140/api/Reports";//get all reports
+            ? "http://localhost:5140/api/Reports/mine"
+            : "http://localhost:5140/api/Reports";
 
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
@@ -143,7 +146,7 @@ function ReportForm() {
         {showForm && (
           <CreateReportForm
             role={role}
-            categories={categories}//the array is sended
+            categories={categories}
             onCreated={() => {
               setShowForm(false);
               fetchReports(activeTab);

@@ -443,30 +443,25 @@ namespace CivicFix.Api.Controllers
         {
             // ADDED: same rule as the list above — a Staff member must not be able to
             // open a report from another baladiye just by typing its Id in the URL.
-            // Resident and Admin can open any report.
-            // who is asking? Straight from the signed JWT, never the request body.
-            // TryParse, not int.Parse: a missing claim gives a 400, not a 500 crash.
             var idClaim = User.FindFirst("Id")?.Value;
             if (!int.TryParse(idClaim, out int currentUserId))
                 return BadRequest("Could not read user Id from token. Claim 'Id' not found.");
 
-            if (User.FindFirst(ClaimTypes.Role)?.Value == "Staff")
+            if (User.FindFirst(ClaimTypes.Role)?.Value == "Staff")//
             {
                 var myMunicipalityId = await _connection.QueryFirstOrDefaultAsync<int?>(
-                    "SELECT usr_MunicipalityId FROM tbl_Users WHERE usr_Id = @Id", new { Id = currentUserId });
+                    "SELECT usr_MunicipalityId FROM tbl_Users WHERE usr_Id = @Id", new { Id = currentUserId });//find the Staff member's baladiye id
                 if (myMunicipalityId == null)
                     return BadRequest("Staff member is not assigned to any baladiye.");
 
                 if (await _connection.QueryFirstAsync<int>(
                     @"SELECT COUNT(*) FROM tbl_ReportAssignments
-                      WHERE rpa_ReportId = @ReportId AND rpa_MunicipalityId = @MunicipalityId",
+                      WHERE rpa_ReportId = @ReportId AND rpa_MunicipalityId = @MunicipalityId",//Check if this report belongs to that baladiye
                     new { ReportId = id, MunicipalityId = myMunicipalityId.Value }) == 0)
                     return StatusCode(403, "This report does not belong to your baladiye."); // 403 = logged in, but not allowed
 
                 // ADDED — an undecided shared report is hidden from Staff in the lists,
-                // so it must be blocked here too. Hiding a card does nothing if the
-                // report can still be opened by typing /report/13 in the address bar.
-                // 2 or more assignment rows = the Admin has not allocated it yet.
+                // so it must be blocked here too. 
                 if (await _connection.QueryFirstAsync<int>(
                     "SELECT COUNT(*) FROM tbl_ReportAssignments WHERE rpa_ReportId = @ReportId",
                     new { ReportId = id }) > 1)
@@ -488,9 +483,7 @@ namespace CivicFix.Api.Controllers
             tbl_Categories.ctg_Name AS CategoryName,
             tbl_Users.usr_FullName AS ReporterName,   -- ADDED: who reported it
             tbl_Users.usr_Role AS ReporterRole,       -- ADDED: Resident or Staff
-            -- ADDED: the point is stored as a geography type, which cannot be sent
-            -- as JSON directly. .Lat and .Long pull out the plain numbers so React
-            -- can show them (and later drop a pin on a map).
+            --nackedend send back long and latt since frontend need these not point
             tbl_Reports.rpt_Location.Lat AS Latitude,
             tbl_Reports.rpt_Location.Long AS Longitude
         FROM tbl_Reports
@@ -527,13 +520,7 @@ namespace CivicFix.Api.Controllers
 
             var priorityVotesRaw = await _connection.QueryAsync<dynamic>(priorityVotesSql, new { Id = id });
 
-            // ADDED: copy the `dynamic` rows into a plain Dictionary<string,int> first.
-            // The old code compared dynamics inside LINQ lambdas
-            // (v.pvt_Priority == "High" and v.Sum(v => (int)v.VoteCount)), which the
-            // compiler cannot check — those only fail at RUNTIME with a
-            // RuntimeBinderException. A simple foreach with explicit Convert calls is
-            // boring, but it is checked at build time and it is obvious what it does.
-            var voteCounts = new Dictionary<string, int>();
+            var voteCounts = new Dictionary<string, int>();//this sum the votes
             foreach (var voteRow in priorityVotesRaw)
             {
                 string priorityName = Convert.ToString((object)voteRow.pvt_Priority) ?? "";
@@ -556,8 +543,6 @@ namespace CivicFix.Api.Controllers
             };
 
             // ADDED — the comments people left on this report, newest last so the
-            // detail page can read them top to bottom like a conversation.
-            // Joined to tbl_Users so each comment shows a name, not a user Id.
             var commentsSql = @"
         SELECT
             tbl_Comments.cmt_Id,
@@ -572,10 +557,8 @@ namespace CivicFix.Api.Controllers
 
             var comments = await _connection.QueryAsync<dynamic>(commentsSql, new { Id = id });
 
-            // ADDED — the full status trail (Submitted → In Progress → Resolved),
+            // the full status trail (Submitted → In Progress → Resolved),
             // written by UpdateReportStatus every time the status changes.
-            // This is what makes the detail page show the report's whole life,
-            // and it is the accountability record: who changed what, and when.
             var historySql = @"
         SELECT
             tbl_StatusHistories.sth_OldStatus,
@@ -590,25 +573,12 @@ namespace CivicFix.Api.Controllers
 
             var statusHistory = await _connection.QueryAsync<dynamic>(historySql, new { Id = id });
 
-            // ══════════════════════════════════════════════════════════════════
-            // ADDED — what has THIS user already done on THIS report?
-            //
-            // WHY: a resident may vote on priority once, and agree once. The
-            // backend already enforces that (VoteOnPriority and AgreeOnReport both
-            // reject a second attempt), but the browser had no way of knowing
-            // beforehand — so the buttons looked available and only failed after
-            // being clicked. Returning the user's own vote lets React show
-            // "You voted High" instead of a button that is guaranteed to fail.
-            //
-            // Both are read with the Id from the TOKEN, so this only ever tells you
-            // about your own vote, never anyone else's.
-            // ══════════════════════════════════════════════════════════════════
-            var myPriorityVote = await _connection.QueryFirstOrDefaultAsync<string>(
+            
+            var myPriorityVote = await _connection.QueryFirstOrDefaultAsync<string>(//what did user vote
                 "SELECT pvt_Priority FROM tbl_PriorityVotes WHERE pvt_ReportId = @Id AND pvt_UserId = @UserId",
                 new { Id = id, UserId = currentUserId });
 
-            // bool? — true = agreed, false = disagreed, null = has not voted at all.
-            // The three states matter: null must not be confused with "disagreed".
+          
             var myAgreement = await _connection.QueryFirstOrDefaultAsync<bool?>(
                 "SELECT rga_IsAgreement FROM tbl_ReportAgreements WHERE rga_ReportId = @Id AND rga_UserId = @UserId",
                 new { Id = id, UserId = currentUserId });
@@ -620,11 +590,48 @@ namespace CivicFix.Api.Controllers
                 Report = report,
                 Assignments = assignments,
                 PriorityVotes = priorityBreakdown,
-                Comments = comments,             // ADDED
-                StatusHistory = statusHistory,   // ADDED
-                MyPriorityVote = myPriorityVote, // ADDED: "Low"/"Medium"/"High", or null
-                MyAgreement = myAgreement        // ADDED: true / false / null
+                Comments = comments,            
+                StatusHistory = statusHistory,   
+                MyPriorityVote = myPriorityVote, 
+                MyAgreement = myAgreement        
             });
         }
     }
 }
+/*
+{
+  "Report": {
+    "rpt_Id": 7,
+    "rpt_Title": "Broken Street Light",
+    "rpt_Status": "Submitted",
+    "CategoryName": "Lighting",
+    "ReporterName": "Ali"
+  },
+
+  "Assignments": [
+    {
+      "MunicipalityName": "Beirut",
+      "rpa_IsHandler": true
+    }
+  ],
+
+  "PriorityVotes": {
+    "High": 4,
+    "Medium": 2,
+    "Low": 1,
+    "Total": 7
+  },
+
+  "Comments": [
+    ...
+  ],
+
+  "StatusHistory": [
+    ...
+  ],
+
+  "MyPriorityVote": "High",
+
+  "MyAgreement": true
+}
+*/

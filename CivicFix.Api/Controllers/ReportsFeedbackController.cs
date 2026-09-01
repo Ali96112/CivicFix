@@ -39,25 +39,9 @@ namespace CivicFix.Api.Controllers
             if (!int.TryParse(idClaim, out int currentUserId))
                 return BadRequest("Could not read user Id from token. Claim 'Id' not found.");
 
-            // ADDED: empty comments are not useful
+            //empty comments are not useful
             if (string.IsNullOrWhiteSpace(request.Text))
                 return BadRequest("Comment text cannot be empty.");
-
-            // ADDED: Staff can only comment on their own baladiye's reports —
-            // same rule as viewing and updating. Resident/Admin can comment anywhere.
-            if (User.FindFirst(ClaimTypes.Role)?.Value == "Staff")
-            {
-                var myMunicipalityId = await _connection.QueryFirstOrDefaultAsync<int?>(
-                    "SELECT usr_MunicipalityId FROM tbl_Users WHERE usr_Id = @Id", new { Id = currentUserId });
-                if (myMunicipalityId == null)
-                    return BadRequest("Staff member is not assigned to any baladiye.");
-
-                if (await _connection.QueryFirstAsync<int>(
-                    @"SELECT COUNT(*) FROM tbl_ReportAssignments
-                      WHERE rpa_ReportId = @ReportId AND rpa_MunicipalityId = @MunicipalityId",
-                    new { ReportId = id, MunicipalityId = myMunicipalityId.Value }) == 0)
-                    return StatusCode(403, "You can only comment on reports assigned to your baladiye.");
-            }
 
             // Step 1 — check the report exists
             var checkSql = "SELECT rpt_Id FROM tbl_Reports WHERE rpt_Id = @Id";
@@ -87,14 +71,10 @@ namespace CivicFix.Api.Controllers
 
         [Authorize(Roles = "Resident")]
         [HttpPost("{id:int}/agree")] // address: POST api/Reports/1/agree
+
         public async Task<IActionResult> AgreeOnReport(int id, [FromBody] AgreementRequest request)
         {
-            // ADDED: the voter is the logged-in resident, taken from the token.
-            // Before, request.UserId came from the body, so one resident could cast
-            // agreements in another resident's name and farm points for a baladiye.
-            // who is asking? Straight from the signed JWT, never the request body.
-            // TryParse, not int.Parse: a missing claim gives a 400, not a 500 crash.
-            var idClaim = User.FindFirst("Id")?.Value;
+            var idClaim = User.FindFirst("Id")?.Value;//find which resdient is answering
             if (!int.TryParse(idClaim, out int currentUserId))
                 return BadRequest("Could not read user Id from token. Claim 'Id' not found.");
 
@@ -107,7 +87,7 @@ namespace CivicFix.Api.Controllers
             if (report == null)
                 return NotFound("Report not found.");
 
-            // check if reporter is staff
+            // check if reporter is staff so resdient just agree on reporter
             var reporterSql = "SELECT usr_Role FROM tbl_Users WHERE usr_Id = @Id";
             var reporterRole = await _connection.QueryFirstOrDefaultAsync<string>(
                 reporterSql, new { Id = (int)report.rpt_ReporterId });
@@ -123,16 +103,6 @@ namespace CivicFix.Api.Controllers
             var existing = await _connection.QueryFirstOrDefaultAsync<int?>(
                 existingSql, new { ReportId = id, UserId = currentUserId }); // FIXED: token Id, not body Id
 
-            // NOTE (ADDED): unlike the priority vote, this one is deliberately
-            // FINAL and cannot be changed.
-            //
-            // WHY THE TWO DIFFER: a priority vote only reorders a list, so letting
-            // people change their mind costs nothing. This vote AWARDS POINTS —
-            // the handling baladiye gets +10 once three residents agree, and those
-            // points are already on the public leaderboard. Allowing someone to
-            // withdraw an agreement afterwards would mean taking points back off a
-            // baladiye that had already been credited, and the whole score would
-            // become unstable. So this answer is asked once and kept.
             if (existing != null)
                 return BadRequest("You have already submitted your agreement on this report.");
 
@@ -171,9 +141,7 @@ namespace CivicFix.Api.Controllers
                     var assignment = await _connection.QueryFirstOrDefaultAsync<dynamic>(
                         assignmentSql, new { ReportId = id });
 
-                    // FIXED: `assignment.rpa_Points == 0` on a dynamic is resolved at
-                    // runtime. Converting to a real int first makes it a normal
-                    // compile-checked comparison.
+                 
                     if (assignment != null && Convert.ToInt32((object)assignment.rpa_Points) == 0)
                     {
                         // award points only once — rpa_Points == 0 prevents double awarding
@@ -201,29 +169,23 @@ namespace CivicFix.Api.Controllers
 
         [Authorize(Roles = "Resident")]
         [HttpPost("{id:int}/priority")] // address: POST api/Reports/1/priority
-        public async Task<IActionResult> VoteOnPriority(int id, [FromBody] PriorityVoteRequest request)
+        public async Task<IActionResult> VoteOnPriority(int id, [FromBody] PriorityVoteRequest request)//the frontend send to here priority:High 
         {
-            // ADDED (context): this endpoint IS the "Resident can set priority" rule.
-            // A resident picks an initial priority when creating the report, and then
-            // any resident can vote here — the report's priority becomes the majority.
-
-            // who is asking? Straight from the signed JWT, never the request body.
-            // TryParse, not int.Parse: a missing claim gives a 400, not a 500 crash.
-            var idClaim = User.FindFirst("Id")?.Value;
+            var idClaim = User.FindFirst("Id")?.Value;//find how is voting
             if (!int.TryParse(idClaim, out int currentUserId))
                 return BadRequest("Could not read user Id from token. Claim 'Id' not found.");
 
-            // Step 1 — check report exists and is resident-submitted
+            // Step 1 — check report exists //give me its report ID and the ID of the person who created it
             var checkSql = @"SELECT rpt_Id, rpt_ReporterId FROM tbl_Reports WHERE rpt_Id = @Id";
-            var report = await _connection.QueryFirstOrDefaultAsync<dynamic>(checkSql, new { Id = id });
+            var report = await _connection.QueryFirstOrDefaultAsync<dynamic>(checkSql, new { Id = id });//report id from url
 
             if (report == null)
                 return NotFound("Report not found.");
 
-            // check reporter is resident
+            // check reporter how created the report is resident
             var reporterSql = "SELECT usr_Role FROM tbl_Users WHERE usr_Id = @Id";
             var reporterRole = await _connection.QueryFirstOrDefaultAsync<string>(
-                reporterSql, new { Id = (int)report.rpt_ReporterId });
+                reporterSql, new { Id = (int)report.rpt_ReporterId });//getting the reporter to here 
 
             if (reporterRole != "Resident")
                 return BadRequest("You can only vote on priority of resident-submitted reports.");
@@ -233,22 +195,9 @@ namespace CivicFix.Api.Controllers
                 SELECT pvt_Id FROM tbl_PriorityVotes
                 WHERE pvt_ReportId = @ReportId AND pvt_UserId = @UserId";
 
-            var existing = await _connection.QueryFirstOrDefaultAsync<int?>(
-                existingSql, new { ReportId = id, UserId = currentUserId }); // FIXED: token Id, not body Id
+            var existing = await _connection.QueryFirstOrDefaultAsync<int?>(//if existingSql =1 mean already voted if =null still not voted
+                existingSql, new { ReportId = id, UserId = currentUserId }); 
 
-            // CHANGED — a second vote used to be rejected outright with
-            // "You have already voted on this report's priority." Now it CHANGES
-            // the existing vote instead.
-            //
-            // WHY THIS IS SAFE: the row is found by (report, user), so a person
-            // still only ever has ONE vote on a report — changing it replaces
-            // their old choice rather than adding a second one. The majority is
-            // recalculated from scratch in Step 5 below, so the totals stay
-            // correct. Nobody can inflate a priority by voting repeatedly.
-            //
-            // (The agree/disagree vote in AgreeOnReport is deliberately NOT
-            // changeable — see the note there. It awards points, so letting people
-            // take an answer back would mean clawing points off a baladiye.)
 
             // Step 3 — validate priority value
             if (request.Priority != "Low" && request.Priority != "Medium" && request.Priority != "High")
@@ -271,38 +220,32 @@ namespace CivicFix.Api.Controllers
                 await _connection.ExecuteAsync(insertSql, new
                 {
                     ReportId = id,
-                    UserId = currentUserId, // FIXED: was request.UserId from the body
+                    UserId = currentUserId, 
                     Priority = request.Priority
                 });
             }
 
-            // Step 5 — recalculate priority based on majority vote
-            // FIXED: added a tie-breaker. With only "ORDER BY VoteCount DESC", a 1-1-1
-            // tie let SQL Server pick any winner, so the same report could flip between
-            // High and Low on every refresh. Now a tie resolves to the more severe
-            // priority (High > Medium > Low), which is the safe direction.
+            // Step 5 —After all residents have voted, which priority currently has the most votes?
             var votesSql = @"
-                SELECT pvt_Priority, COUNT(*) AS VoteCount
+                SELECT pvt_Priority, COUNT(*) AS VoteCount  --Give me each priority and count how many votes it hasa and put it in VoteCount
                 FROM tbl_PriorityVotes
-                WHERE pvt_ReportId = @ReportId
-                GROUP BY pvt_Priority
-                ORDER BY VoteCount DESC,
-                    CASE pvt_Priority
+                WHERE pvt_ReportId = @ReportId  --count the votes belonging to this report only
+                GROUP BY pvt_Priority   --without this we cant have separate counts for High, Medium, and Low.
+                ORDER BY VoteCount DESC,  --Sort from the highest number of votes to the lowest.
+                    CASE pvt_Priority  --if priorites are equal it well show in this order H M L
                         WHEN 'High' THEN 1
                         WHEN 'Medium' THEN 2
                         WHEN 'Low' THEN 3
                         ELSE 4
                     END";
 
-            var votes = await _connection.QueryAsync<dynamic>(votesSql, new { ReportId = id });
+            var votes = await _connection.QueryAsync<dynamic>(votesSql, new { ReportId = id });  //high:2 Medium:3 ..
 
-            // FIXED: votes.First() threw an InvalidOperationException (500 error) on an
-            // empty list. FirstOrDefault + a null check returns a clean answer instead.
-            var topVote = votes.FirstOrDefault();
-            if (topVote == null)
+            var topVote = votes.FirstOrDefault();//takes first row
+            if (topVote == null)//it weell never be null in my case just delet happen or something
                 return Ok(new { message = "Priority vote submitted.", currentPriority = (string?)null });
 
-            string topPriority = Convert.ToString((object)topVote.pvt_Priority) ?? ""; // the priority with most votes
+            string topPriority = Convert.ToString((object)topVote.pvt_Priority) ?? ""; // the priority with most votes//conversion just making sure it is in c#
 
             // update report priority to majority vote
             await _connection.ExecuteAsync(
