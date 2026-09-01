@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Authorization; // ADDED: needed for [Authorize] on Ge
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using CivicFix.Api.Services;
 
 namespace CivicFix.Api.Controllers
 {
@@ -15,15 +14,13 @@ namespace CivicFix.Api.Controllers
     [Route("api/[controller]")] //urls.py so path here api/Users/
     public class UsersController : ControllerBase //ControllerBase is inheriting ready made behavior like: sending responds ok(),unauthorized()
     {
-        private readonly SqlConnection _connection;
-        private readonly IConfiguration _configuration;
-        private readonly EmailSender _emailSender;
+        private readonly SqlConnection _connection; // direct raw SQL connection Dapper use to know where to go with querys
+        private readonly IConfiguration _configuration; // reads appsettings.json
 
-        public UsersController(SqlConnection connection, IConfiguration configuration, EmailSender emailSender)
-        {
-            _connection = connection;
-            _configuration = configuration;
-            _emailSender = emailSender;
+        public UsersController(SqlConnection connection, IConfiguration configuration) //so the UserController is created it run this method
+        {//NET creates the controller, calls the constructor once, both objects are stored in _connection and _configuration — every method in the class can then use them freely without setting them up again.
+            _connection = connection;  // the one object your controller uses to talk to the database.
+            _configuration = configuration;//the one object your controller uses to talk to the setting
         }
 
         [HttpPost("register")] // api/Users/register
@@ -94,10 +91,10 @@ namespace CivicFix.Api.Controllers
             bool passwordMatches = BCrypt.Net.BCrypt.Verify(request.Password, user.usr_PasswordHash);//it scramble the entered pass to compare it with hashed
             if (!passwordMatches)
                 return Unauthorized("Invalid email or password");
+            // If it's false, reject here
 
-            if (user.usr_IsBlocked)
-                return Unauthorized("Your account has been blocked.");
-
+            // If we reach this line, both email and password were correct
+            // now generate JWT token
             var claims = new[] //the info well be inside the token so that it doesnt go to database each time
             {
                 new Claim("Id", user.usr_Id.ToString()),//claim just stores strings
@@ -150,24 +147,8 @@ namespace CivicFix.Api.Controllers
                 UserId = user.usr_Id
             });
 
-           
-            // build the reset link pointing to your frontend reset page, with the token attached
-            var resetLink = $"http://localhost:5173/reset-password?token={token}";
-
-            // the email body — HTML so the link is clickable
-            var emailBody = $@"
-                <h2>CivicFix Password Reset</h2>
-                <p>Hello {user.usr_FullName},</p>
-                <p>You requested to reset your password. Click below to set a new one:</p>
-                <p><a href='{resetLink}'>Reset My Password</a></p>
-                <p>This link expires in 1 hour.</p>
-                <p>If you didn't request this, ignore this email.</p>";
-
-            // send the email to the user's own email address (from the database)
-            await _emailSender.SendEmailAsync(user.usr_Email, "CivicFix Password Reset", emailBody);
-
-            // tell the frontend it worked — the token is NOT returned anymore, it's in the email
-            return Ok(new { message = "A password reset link has been sent to your email." });
+            // for now return the token directly
+            return Ok(new { message = "Password reset token generated.", token = token });
         }
 
 
@@ -212,8 +193,8 @@ namespace CivicFix.Api.Controllers
         }
 
 
-
-        [Authorize(Roles = "Staff")]
+       
+        [Authorize(Roles = "Staff")] 
         [HttpGet("me")] // address: GET api/Users/me
         public async Task<IActionResult> GetMe()
         {
@@ -241,42 +222,6 @@ namespace CivicFix.Api.Controllers
                 return NotFound("User not found.");
 
             return Ok(me);
-        }
-
-
-
-        [Authorize(Roles = "Admin")]
-        [HttpPut("{id}/block")] // PUT api/Users/1/block
-        public async Task<IActionResult> BlockUser(int id)
-        {
-            // 1 — mark the user as blocked
-            await _connection.ExecuteAsync(
-                "UPDATE tbl_Users SET usr_IsBlocked = 1 WHERE usr_Id = @Id",
-                new { Id = id });
-
-            // 2 — find their "Submitted" reports
-            var reportIdsSql = @"SELECT rpt_Id FROM tbl_Reports 
-                         WHERE rpt_ReporterId = @Id AND rpt_Status = 'Submitted'";
-            var reportIds = (await _connection.QueryAsync<int>(reportIdsSql, new { Id = id })).ToList();
-
-            // 3 — delete the children of those reports, then the reports (order matters)
-            if (reportIds.Count > 0)
-            {
-                await _connection.ExecuteAsync(
-                    "DELETE FROM tbl_ReportAgreements WHERE rga_ReportId IN @Ids", new { Ids = reportIds });
-                await _connection.ExecuteAsync(
-                    "DELETE FROM tbl_PriorityVotes WHERE pvt_ReportId IN @Ids", new { Ids = reportIds });
-                await _connection.ExecuteAsync(
-                    "DELETE FROM tbl_Comments WHERE cmt_ReportId IN @Ids", new { Ids = reportIds });
-                await _connection.ExecuteAsync(
-                    "DELETE FROM tbl_StatusHistories WHERE sth_ReportId IN @Ids", new { Ids = reportIds });
-                await _connection.ExecuteAsync(
-                    "DELETE FROM tbl_ReportAssignments WHERE rpa_ReportId IN @Ids", new { Ids = reportIds });
-                await _connection.ExecuteAsync(
-                    "DELETE FROM tbl_Reports WHERE rpt_Id IN @Ids", new { Ids = reportIds });
-            }
-
-            return Ok("User blocked and their submitted reports deleted.");
         }
 
 

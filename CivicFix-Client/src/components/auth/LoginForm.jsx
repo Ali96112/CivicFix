@@ -1,72 +1,63 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import "../../styles/Login.css";
+import { useState } from 'react'; 
+import { useNavigate } from 'react-router-dom'; 
+import '../../styles/Login.css'; 
 function LoginForm() {
-  const navigate = useNavigate();
+
+  const navigate = useNavigate(); 
   const [formData, setFormData] = useState({
-    Email: "",
-    Password: "",
+    Email: '',    
+    Password: '', 
   });
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const handleChange = (e) => {
-    // e = the event — info about what the user just typed
+  const [showPassword, setShowPassword] = useState(false); 
+  const [error, setError] = useState('');  
+  const [loading, setLoading] = useState(false);         
+const handleChange = (e) => { // e = the event — info about what the user just typed
     setFormData({
-      ...formData, // keep all existing field values
-      [e.target.name]: e.target.value, // update only the field the user typed in
+      ...formData,                      // keep all existing field values
+      [e.target.name]: e.target.value,  // update only the field the user typed in
     });
   };
-  const handleSubmit = async (e) => {
-    // async = can wait for server without freezing the page
+const handleSubmit = async (e) => { // async = can wait for server without freezing the page
     e.preventDefault(); // stops browser from refreshing on submit
-    setError(""); // clear any previous error
-    setLoading(true); // show "Signing in..." on the button
+    setError('');        // clear any previous error
+    setLoading(true);    // show "Signing in..." on the button
 
-    try {
-      // try to send the request — if something goes wrong jump to catch
-      const response = await fetch("http://localhost:5140/api/Users/login", {
-        method: "POST", // POST = sending data to server
-        headers: { "Content-Type": "application/json" }, // tell server we're sending JSON
-        body: JSON.stringify(formData), // convert formData to JSON string
+    try { // try to send the request — if something goes wrong jump to catch
+      const response = await fetch('http://localhost:5140/api/Users/login', {
+        method: 'POST',                                    // POST = sending data to server
+        headers: { 'Content-Type': 'application/json' },  // tell server we're sending JSON
+        body: JSON.stringify(formData),                    // convert formData to JSON string
       });
 
-      if (response.ok) {
-        // server said success
-        const data = await response.json(); // read response from backend
-        localStorage.setItem("token", data.token); // store the token
-        localStorage.setItem("usr_Id", data.usr_Id); // store the user id
-        localStorage.setItem("usr_FullName", data.usr_FullName); // store the name
-        localStorage.setItem("usr_Role", data.usr_Role); // store the role
-        navigate("/report"); // go to report page
-      } else {
-        // server said something went wrong
+      if (response.ok) { // server said success
+        const data = await response.json();                    // read response from backend
+        localStorage.setItem('token', data.token);             // store the token
+        localStorage.setItem('usr_Id', data.usr_Id);           // store the user id
+        localStorage.setItem('usr_FullName', data.usr_FullName); // store the name
+        localStorage.setItem('usr_Role', data.usr_Role);       // store the role
+        navigate('/report');                                   // go to report page
+      } else { // server said something went wrong
         const message = await response.text(); // read the error message from server
-        setError(message || "Invalid email or password."); // show it on screen
+        setError(message || 'Invalid email or password.'); // show it on screen
       }
-    } catch (err) {
-      // couldn't reach the server at all
-      setError("Could not connect to server. Please try again.");
-    } finally {
-      // runs no matter what — success or error
+
+    } catch (err) { // couldn't reach the server at all
+      setError('Could not connect to server. Please try again.');
+    } finally { // runs no matter what — success or error
       setLoading(false); // turn off loading
     }
   };
-  return (
-    <div className="login-page">
-      {" "}
-      {/* full page — light gray background */}
+return (
+    <div className="login-page"> {/* full page — light gray background */}
+
       {/* white card — centered on the page */}
       <div className="login-card">
+
         {/* logo — clicking goes back to home */}
-        <div className="login-card__logo" onClick={() => navigate("/")}>
-          <div className="login-card__logo-box">🏙️</div>{" "}
-          {/* red box with city emoji */}
-          <span className="login-card__logo-name">
-            Civic<span>Fix</span>
-          </span>{" "}
-          {/* "Fix" colored red */}
+        <div className="login-card__logo" onClick={() => navigate('/')}>
+          <div className="login-card__logo-box">🏙️</div> {/* red box with city emoji */}
+          <span className="login-card__logo-name">Civic<span>Fix</span></span> {/* "Fix" colored red */}
         </div>
 
         {/* title */}
@@ -74,17 +65,15 @@ function LoginForm() {
 
         {/* "Don't have an account? Register" */}
         <p className="login-card__register">
-          Don't have an account?{" "}
-          <span
-            className="login-card__register-link"
-            onClick={() => navigate("/register")}
-          >
+          Don't have an account?{' '}
+          <span className="login-card__register-link" onClick={() => navigate('/register')}>
             Register →
           </span>
         </p>
 
         {/* the form */}
         <form className="login-form" onSubmit={handleSubmit}>
+
           {/* email field */}
           <div className="form-group">
             <label className="form-label">Email address</label>
@@ -105,7 +94,7 @@ function LoginForm() {
             <div className="form-input-wrapper">
               <input
                 className="form-input form-input--password"
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 name="Password"
                 placeholder="Your password"
                 value={formData.Password}
@@ -117,28 +106,23 @@ function LoginForm() {
                 className="form-input__toggle"
                 onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? "🙈" : "👁️"}
+                {showPassword ? '🙈' : '👁️'}
               </button>
             </div>
           </div>
-          
-           <p className="login-card__forgot">
-                <span
-                  className="login-card__register-link"
-                  onClick={() => navigate("/forgot-password")}
-                >
-                  Forgot password? / نسيت كلمة المرور
-                </span>
-              </p>
-
 
           {/* error message — only shows if error is not empty */}
           {error ? <div className="form-error">{error}</div> : null}
 
           {/* submit button */}
-          <button className="btn-login" type="submit" disabled={loading}>
-            {loading ? "Signing in..." : "Sign In / تسجيل الدخول"}
+          <button
+            className="btn-login"
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? 'Signing in...' : 'Sign In / تسجيل الدخول'}
           </button>
+
         </form>
 
         {/* Lebanese flag strip */}
@@ -155,10 +139,16 @@ function LoginForm() {
           </svg>
           <div className="login-card__flag-green" />
         </div>
-      </div>{" "}
-      {/* end login-card */}
+
+      </div> {/* end login-card */}
+
     </div> // end login-page
   );
+
+
+
+
+
 }
 
 export default LoginForm;

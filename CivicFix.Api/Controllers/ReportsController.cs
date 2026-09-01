@@ -8,7 +8,19 @@ using System.Security.Claims;
 
 namespace CivicFix.Api.Controllers
 {
+    // ══════════════════════════════════════════════════════════════════════════
+    // CORE REPORT ENDPOINTS — creating a report, listing them, opening one.
+    // These are the endpoints every role touches.
+    //
+    // Split out of the original 1,900-line ReportsController. Each of the four
+    // report controllers is self-contained — it carries its own connection and its
+    // own copy of the small helpers it needs, so no file depends on another.
+    // ══════════════════════════════════════════════════════════════════════════
     [ApiController]
+    // NOT [Route("api/[controller]")] — that token expands to the class name, so
+    // this file would answer on api/Reports and every URL below would change.
+    // Written out in full, these endpoints keep the exact addresses they had when
+    // they all lived in one ReportsController.
     [Route("api/Reports")]
     public class ReportsController : ControllerBase
     {
@@ -130,20 +142,6 @@ namespace CivicFix.Api.Controllers
                     return BadRequest("Priority must be Low, Medium, or High.");
                 }
             }
-            // daily limit — residents only, max 3 reports per day
-            if (reporterRole == "Resident")
-            {
-                var todayCountSql = @"
-                    SELECT COUNT(*) FROM tbl_Reports
-                    WHERE rpt_ReporterId = @ReporterId
-                    AND CAST(rpt_CreatedAt AS DATE) = CAST(GETDATE() AS DATE)";
-
-                var todayCount = await _connection.QueryFirstAsync<int>(
-                    todayCountSql, new { request.ReporterId });
-
-                if (todayCount >= 3)
-                    return BadRequest("You have reached the daily limit of 3 reports. Try again tomorrow.");
-            }
 
             // Duplicate check — for ALL users including staff
             // ask the database: is there already an open report
@@ -230,11 +228,8 @@ namespace CivicFix.Api.Controllers
 
             // Step 3 — insert one ReportAssignment row per baladiye
             var assignmentSql = @"
-                INSERT INTO tbl_ReportAssignments (rpa_ReportId, rpa_MunicipalityId, rpa_AssignedAt, rpa_IsHandler, rpa_AcceptedAt, rpa_Points)
-                VALUES (@ReportId, @MunicipalityId, @AssignedAt, @IsHandler, @AcceptedAt, 0)";
-
-            // ══════════════════════════════════════════════════════════════
-            bool ownedOnCreate = reporterRole == "Staff" || municipalities.Count() == 1;//the person creating the report is Staff, OR only one municipality was matched.
+                INSERT INTO tbl_ReportAssignments (rpa_ReportId, rpa_MunicipalityId, rpa_AssignedAt, rpa_IsHandler, rpa_Points)
+                VALUES (@ReportId, @MunicipalityId, @AssignedAt, @IsHandler, 0)";
 
             foreach (var municipality in municipalities)
             {
@@ -243,9 +238,7 @@ namespace CivicFix.Api.Controllers
                     ReportId = reportId,
                     MunicipalityId = municipality.mun_Id,
                     AssignedAt = DateTime.Now,
-                    IsHandler = ownedOnCreate ? 1 : 0,
-                    
-                    AcceptedAt = ownedOnCreate ? (DateTime?)DateTime.Now : null
+                    IsHandler = reporterRole == "Staff" ? 1 : 0 // staff is always the handler of their own report
                 });
             }
 

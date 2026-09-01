@@ -74,4 +74,4 @@ export function getStatusClass(status) {
 
 // the statuses the backend accepts — this list must match `allowedStatuses`
 // in ReportsAdminController.UpdateReportStatus, or the API will reject the change
-export const STATUS_OPTIONS = ["Submitted", "In Progress", "Resolved"];
+export const STATUS_OPTIONS = ["Submitted", "In Progress", "Resolved", "Rejected"];

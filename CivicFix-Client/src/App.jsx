@@ -6,8 +6,6 @@ import RegisterForm from './components/auth/RegisterForm';
 import Dashboard from './components/Dashboard';
 import ReportForm from './components/ReportForm/ReportForm';
 import ReportDetail from './components/ReportDetail/ReportDetail';
-import ForgotPassword from './components/auth/ForgotPassword';
-import ResetPassword from './components/auth/ResetPassword';
 
 function App() {
   return (
@@ -18,8 +16,6 @@ function App() {
         <Route path="/register" element={<RegisterForm />} />
         <Route path="/report" element={<ReportForm />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/report/:id" element={<ReportDetail />} />
       </Routes>
     </BrowserRouter>

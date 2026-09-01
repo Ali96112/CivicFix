@@ -20,10 +20,6 @@ function ReportDetail() {
   const [loading, setLoading] = useState(true);//are we currently waiting for the backend
   const [error, setError] = useState("");
 
-  //for blocking
-  const [blocking, setBlocking] = useState(false);
-  const [blockMsg, setBlockMsg] = useState("");
-
   // GET api/Reports/{id} → ReportsController.GetReportById
  
   const fetchReport = async (isFirstLoad = false) => {//firstload is just to now first time opening the scrren so it show loading on
@@ -54,30 +50,6 @@ function ReportDetail() {
   useEffect(() => {
     fetchReport(true); 
   }, [id]); 
-
-    const handleBlock = async () => {
-    if (!window.confirm(`Block ${report.ReporterName}? Their submitted reports will be deleted.`)) return;
-    setBlocking(true);
-    setBlockMsg("");
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        `http://localhost:5140/api/Users/${report.rpt_ReporterId}/block`,
-        { method: "PUT", headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (response.ok) {
-        setBlockMsg("✅ User blocked. Their submitted reports were deleted.");
-      } else {
-        const body = await readBody(response);
-        setBlockMsg(errorTextOf(body, "Could not block user."));
-      }
-    } catch (err) {
-      setBlockMsg("Could not connect to server.");
-    } finally {
-      setBlocking(false);
-    }
-  };
-
 
   // ── the three early states: loading, failed, and loaded ──
   if (loading) {
@@ -129,7 +101,9 @@ function ReportDetail() {
       </nav>
 
       <div className="detail-container">
-        
+        {/* any error that happened AFTER the page loaded. Each child shows its
+            own errors inside its own panel now, so this is only for the reload
+            that follows one of their actions. */}
         {error && <p className="report-status report-status--error">{error}</p>}
 
         {/* ── headline ── */}
@@ -205,17 +179,6 @@ function ReportDetail() {
             </span>
           </div>
         </div>
-
-        {/* ── block reporter, Admin only ── */}
-        {role === "Admin" && report.rpt_ReporterId != localStorage.getItem("usr_Id") && (
-          <div className="detail-block">
-            <button className="btn-block" onClick={handleBlock} disabled={blocking}>
-              {blocking ? "Blocking..." : `🚫 Block ${report.ReporterName}`}
-            </button>
-            {blockMsg && <p className="detail-block__msg">{blockMsg}</p>}
-          </div>
-        )}
-
 
         {/* ── which baladiyat this report went to ── */}
         <h3 className="detail-section-title">🏛️ Assigned baladiyat</h3>
