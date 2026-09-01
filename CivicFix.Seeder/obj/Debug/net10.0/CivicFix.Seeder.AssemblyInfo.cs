@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CivicFix.Seeder")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+754dd9330afa214cbc1b33e40e83460b167b51ac")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+37b149fe7f1a3bbaf29b3489c84af1113addf5cd")]
 [assembly: System.Reflection.AssemblyProductAttribute("CivicFix.Seeder")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CivicFix.Seeder")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -140,7 +140,7 @@ function ReportForm() {
             categories={categories}
             onCreated={() => {
               setShowForm(false);
-              fetchReports(activeTab);
+              fetchReports(activeTab);//reload reports
             }}
           />
         )}

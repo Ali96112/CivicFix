@@ -8,7 +8,7 @@ import { readBody, errorTextOf, uploadPhoto } from "../../services/apiHelpers";
 //                photo for Staff, map + coordinates for Admin/Staff)
 //   categories — the dropdown options, already fetched by the parent
 //   onCreated  — called after a successful submit so the parent reloads the list
-function CreateReportForm({ role, categories, onCreated }) {
+function CreateReportForm({ role, categories, onCreated }) {//oncreated is called on end it inherets from parent so it load and refetch report and close the form
   const [formData, setFormData] = useState({
     Title: "",
     Description: "",
@@ -77,11 +77,6 @@ function CreateReportForm({ role, categories, onCreated }) {
       const token = localStorage.getItem("token");
       const userId = localStorage.getItem("usr_Id");
 
-      // Upload the chosen image files FIRST, and keep the URLs the API gives
-      // back. This has to happen before the report is created, because the
-      // report row stores the photo URL, so the file must already be on the
-      // server by then. If an upload fails it throws, and the catch below shows
-      // the reason — the report is not created with a broken photo link.
       let reportedPhotoUrl = null;
       if (reportedPhotoFile) {
         reportedPhotoUrl = await uploadPhoto(reportedPhotoFile);
@@ -98,20 +93,16 @@ function CreateReportForm({ role, categories, onCreated }) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
+        body: JSON.stringify({//convert to jsn
           ...formData,
           CategoryId: parseInt(formData.CategoryId),
-          // These two are not typed by the user. They are the URLs returned by
-          // POST api/Uploads above, after the real files were saved into the
-          // API's wwwroot/uploads folder.
+          
           ReportedPhotoUrl: reportedPhotoUrl,
           // NOTE: the backend IGNORES this and takes the reporter's Id from the
           // JWT token instead, because a body field can be faked. It is still
           // sent so nothing breaks, but it no longer decides who owns the report.
           ReporterId: parseInt(userId),
-          // Priority is a STRING in the database ("Low" / "Medium" / "High").
-          // It used to be parseInt(...) here, which turned "High" into NaN and
-          // then null, so the resident's priority was silently thrown away.
+          
           Priority: formData.Priority || null,
           // only staff send an "after" photo; for anyone else this stays null,
           // so an empty string is never stored as a photo URL

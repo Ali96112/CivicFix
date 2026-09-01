@@ -224,10 +224,7 @@ namespace CivicFix.Api.Controllers
         [HttpGet("me")] // address: GET api/Users/me
         public async Task<IActionResult> GetMe()
         {
-            var idClaim = User.FindFirst("Id")?.Value;
-
-            if (!int.TryParse(idClaim, out int userId))//id chanding icliam from string to int send bade request
-                return BadRequest("Could not read user Id from token. Claim 'Id' not found.");
+            var userId = int.Parse(User.FindFirst("Id")!.Value);
 
             var sql = @"
                 SELECT

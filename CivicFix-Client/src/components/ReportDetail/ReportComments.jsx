@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { readBody, errorTextOf } from "../../services/apiHelpers";
 
-function ReportComments({ reportId, comments, onPosted }) {
+function ReportComments({ reportId, comments, onPosted }) {//coments:contains the list of comments for this report  //onposted:when i write the comment it reloads the report so it well show
   const [commentText, setCommentText] = useState("");
   const [postingComment, setPostingComment] = useState(false);
   const [error, setError] = useState("");

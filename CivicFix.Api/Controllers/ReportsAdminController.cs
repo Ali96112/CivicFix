@@ -146,9 +146,7 @@ namespace CivicFix.Api.Controllers
             //   Resident → already blocked by the [Authorize] line above
 
             //It does not trust the frontend to tell it who the user is
-            var idClaim = User.FindFirst("Id")?.Value;
-            if (!int.TryParse(idClaim, out int currentUserId))
-                return BadRequest("Could not read user Id from token. Claim 'Id' not found.");
+            var currentUserId = int.Parse(User.FindFirst("Id")!.Value);
 
             var currentRole = User.FindFirst(ClaimTypes.Role)?.Value;
 

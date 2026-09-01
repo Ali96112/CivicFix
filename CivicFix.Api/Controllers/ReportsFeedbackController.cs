@@ -34,24 +34,13 @@ namespace CivicFix.Api.Controllers
         public async Task<IActionResult> AddComment(int id, [FromBody] AddCommentRequest request)
         {
             // who is asking? Straight from the signed JWT, never the request body.
-            // TryParse, not int.Parse: a missing claim gives a 400, not a 500 crash.
-            var idClaim = User.FindFirst("Id")?.Value;
-            if (!int.TryParse(idClaim, out int currentUserId))
-                return BadRequest("Could not read user Id from token. Claim 'Id' not found.");
+            var currentUserId = int.Parse(User.FindFirst("Id")!.Value);
 
             //empty comments are not useful
             if (string.IsNullOrWhiteSpace(request.Text))
                 return BadRequest("Comment text cannot be empty.");
 
-            // Step 1 — check the report exists
-            var checkSql = "SELECT rpt_Id FROM tbl_Reports WHERE rpt_Id = @Id";
-            var reportId = await _connection.QueryFirstOrDefaultAsync<int?>(checkSql, new { Id = id });
-            // int? — returns the Id number if found, or null if no report with that Id exists
-
-            if (reportId == null)
-                return NotFound("Report not found.");
-
-            // Step 2 — insert the comment
+            // insert the comment
             var sql = @"
                 INSERT INTO tbl_Comments (cmt_Text, cmt_CreatedAt, cmt_ReportId, cmt_UserId)
                 VALUES (@Text, @CreatedAt, @ReportId, @UserId)";
@@ -74,9 +63,7 @@ namespace CivicFix.Api.Controllers
 
         public async Task<IActionResult> AgreeOnReport(int id, [FromBody] AgreementRequest request)
         {
-            var idClaim = User.FindFirst("Id")?.Value;//find which resdient is answering
-            if (!int.TryParse(idClaim, out int currentUserId))
-                return BadRequest("Could not read user Id from token. Claim 'Id' not found.");
+            var currentUserId = int.Parse(User.FindFirst("Id")!.Value);//find which resdient is answering
 
             // Step 1 — check the report exists and was submitted by staff
             var checkSql = @"
@@ -171,9 +158,7 @@ namespace CivicFix.Api.Controllers
         [HttpPost("{id:int}/priority")] // address: POST api/Reports/1/priority
         public async Task<IActionResult> VoteOnPriority(int id, [FromBody] PriorityVoteRequest request)//the frontend send to here priority:High 
         {
-            var idClaim = User.FindFirst("Id")?.Value;//find how is voting
-            if (!int.TryParse(idClaim, out int currentUserId))
-                return BadRequest("Could not read user Id from token. Claim 'Id' not found.");
+            var currentUserId = int.Parse(User.FindFirst("Id")!.Value);//find how is voting
 
             // Step 1 — check report exists //give me its report ID and the ID of the person who created it
             var checkSql = @"SELECT rpt_Id, rpt_ReporterId FROM tbl_Reports WHERE rpt_Id = @Id";

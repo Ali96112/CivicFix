@@ -34,9 +34,7 @@ namespace CivicFix.Api.Controllers
                 return BadRequest("The photo is too large. Maximum size is 5 MB.");
 
             // Step 3 — extension check.
-            // This is a security step, not a convenience one: without it someone
-            // could upload a .exe or a .html file and the server would happily
-            // host it for anyone to download.
+            
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
 
             if (string.IsNullOrEmpty(extension) || !AllowedExtensions.Contains(extension))
@@ -54,18 +52,12 @@ namespace CivicFix.Api.Controllers
             Directory.CreateDirectory(uploadsFolder);///create the uploads folder
 
             // Step 5 — invent a brand new file name.
-            //
-            // We deliberately DO NOT keep the user's original file name. Two reasons:
-            //   - two people uploading "photo.jpg" would overwrite each other
-            //   - a crafted file name like "..\..\appsettings.json" could otherwise
-            //     write outside the uploads folder (a path traversal attack)
-            // A Guid is unique and contains no user-controlled characters.
+       
             var safeFileName = $"{Guid.NewGuid()}{extension}";//save file in another way: bgdfgdsfs
             var fullPath = Path.Combine(uploadsFolder, safeFileName);//C:\Users\Win11\Desktop\CivicFix\wwwroot\uploads\a83f9c2e.jpg
 
             // Step 6 — write the bytes to disk.
-            // System.IO.File is spelled out because ControllerBase already has a
-            // method called File(), and the plain name would refer to that instead.
+            
             using (var stream = System.IO.File.Create(fullPath))
             {
                 await file.CopyToAsync(stream);

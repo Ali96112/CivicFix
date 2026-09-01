@@ -38,8 +38,7 @@ namespace CivicFix.Api.Controllers
         {
 
             var reporterRole = User.FindFirst(ClaimTypes.Role)?.Value;
-            if (!int.TryParse(User.FindFirst("Id")?.Value, out int currentUserId))
-                return BadRequest("Could not read user Id from token. Claim 'Id' not found.");
+            var currentUserId = int.Parse(User.FindFirst("Id")!.Value);
 
             IEnumerable<Municipality> municipalities;//this list is empty it well hold baladiye names
 
@@ -281,8 +280,7 @@ namespace CivicFix.Api.Controllers
             // The filter is the WHERE clause built further down.
 
             // who is asking? Straight from the signed JWT, never the request body.
-            if (!int.TryParse(User.FindFirst("Id")?.Value, out int userId))
-                return BadRequest("Could not read user Id from token. Claim 'Id' not found.");
+            var userId = int.Parse(User.FindFirst("Id")!.Value);
 
             var role = User.FindFirst(ClaimTypes.Role)?.Value;
             if (string.IsNullOrEmpty(role))
@@ -352,12 +350,8 @@ namespace CivicFix.Api.Controllers
         [HttpGet("mine")] // address: GET api/Reports/mine
         public async Task<IActionResult> GetMyReports()
         {
-            // read the Id claim safely
-            var idClaim = User.FindFirst("Id")?.Value;
-            if (string.IsNullOrEmpty(idClaim))
-                return BadRequest("Could not read user Id from token. Claim 'Id' not found.");
-
-            var userId = int.Parse(idClaim);
+            // read the Id claim from the signed token
+            var userId = int.Parse(User.FindFirst("Id")!.Value);
             var role = User.FindFirst(ClaimTypes.Role)?.Value;
             if (string.IsNullOrEmpty(role))
                 return BadRequest("Could not read role from token.");
@@ -428,9 +422,7 @@ namespace CivicFix.Api.Controllers
         {
             // ADDED: same rule as the list above — a Staff member must not be able to
             // open a report from another baladiye just by typing its Id in the URL.
-            var idClaim = User.FindFirst("Id")?.Value;
-            if (!int.TryParse(idClaim, out int currentUserId))
-                return BadRequest("Could not read user Id from token. Claim 'Id' not found.");
+            var currentUserId = int.Parse(User.FindFirst("Id")!.Value);
 
             if (User.FindFirst(ClaimTypes.Role)?.Value == "Staff")//
             {
