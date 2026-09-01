@@ -23,8 +23,8 @@ namespace CivicFix.Api.Controllers
                 SELECT mun_Id, mun_Name, mun_TotalPoints
                 FROM tbl_Municipalities
                 ORDER BY mun_TotalPoints DESC";
-
-            var municipalities = await _connection.QueryAsync<dynamic>(sql);//dynamic since it return 3 columns(join) instead of the municipalities object
+            //Use dynamic when the SQL result does not fit neatly into one existing model, or when you only need a small custom result and don’t want to create a new class for it.
+            var municipalities = await _connection.QueryAsync<dynamic>(sql);//“Dapper, don’t map this result to a specific C# class. Just give me objects with whatever columns this SQL returned.”
 
             return Ok(municipalities);//Ok(municipalities) sends the whole list back as JSON for react
         }

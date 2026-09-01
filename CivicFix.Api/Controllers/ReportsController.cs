@@ -32,12 +32,12 @@ namespace CivicFix.Api.Controllers
         }
 
 
-        [Authorize(Roles = "Resident,Staff,Admin")]
+        [Authorize]
         [HttpPost] // address: api/Reports
         public async Task<IActionResult> CreateReport([FromBody] CreateReportRequest request)
         {
-            
-            var reporterRole = User.FindFirst(ClaimTypes.Role)?.Value; 
+
+            var reporterRole = User.FindFirst(ClaimTypes.Role)?.Value;
             if (!int.TryParse(User.FindFirst("Id")?.Value, out int currentUserId))
                 return BadRequest("Could not read user Id from token. Claim 'Id' not found.");
 
@@ -63,9 +63,9 @@ namespace CivicFix.Api.Controllers
                         mun_Boundary.STArea() / 1000000.0 AS AreaSquareKm                         --Gets the total area of the municipality.
                     FROM tbl_Municipalities
                     WHERE mun_Id = @MunicipalityId";
-                    //The SQL takes one municipality and the user's GPS location, then asks:
-                    //What is the municipality's name? Is the user inside it? How far is the user from its boundary? And how large is the municipality?
-                    //returns mun_Name→ "Aley"    ContainsPoint→ true  DistanceMeters→ 80    AreaSquareKm→ 15.5
+                //The SQL takes one municipality and the user's GPS location, then asks:
+                //What is the municipality's name? Is the user inside it? How far is the user from its boundary? And how large is the municipality?
+                //returns mun_Name→ "Aley"    ContainsPoint→ true  DistanceMeters→ 80    AreaSquareKm→ 15.5
 
 
                 var boundaryCheck = await _connection.QueryFirstOrDefaultAsync<dynamic>(
@@ -159,9 +159,9 @@ namespace CivicFix.Api.Controllers
                     AND rpt_Location.STDistance(
                         geography::Point(@Latitude, @Longitude, 4326)) < 30"
                     :
-                //Is not resolved.
-                //Has the same category as the new report.
-                //Was created in the last 20 days.//Is in the same baladiye as the user's location.//Is less than 30 meters away from the user's location.
+                 //Is not resolved.
+                 //Has the same category as the new report.
+                 //Was created in the last 20 days.//Is in the same baladiye as the user's location.//Is less than 30 meters away from the user's location.
                  @"
                     SELECT TOP 1 rpt_Id
                     FROM tbl_Reports
@@ -288,32 +288,15 @@ namespace CivicFix.Api.Controllers
             string whereClause = "";
 
             if (role == "Staff")
-            {
-                // Staff only: keep a report if at least ONE of its assignments points
-                // at the staff member's own baladiye. EXISTS is used (not a plain
-                // WHERE on the join) so STRING_AGG still lists every baladiye.
-                //
-                // ADDED — the second condition hides UNDECIDED SHARED REPORTS.
-                //
-                // A report that landed on a border is assigned to 2 or 3 baladiyat at
-                // once and nobody owns it yet. Showing it to all of them means three
-                // staff members each thinking it might be someone else's job. So it
-                // stays hidden from every baladiye until an Admin allocates it on the
-                // Shared Reports screen.
-                //
-                // Why counting rows is enough: AssignHandler DELETES the losing
-                // baladiyat when the Admin picks one. So the count tells you the state
-                // directly —
-                //     2 or more rows = still shared, nobody decided
-                //     exactly 1 row  = decided (or was never shared)
-                // which is why there is no need to look at rpa_IsHandler here.
+            {//Show the report only if it belongs to the logged-in staff member’s municipality AND it is assigned to only one municipality total.
+                //select 1: mean I don’t care what data is in the row. Just return something if a matching row exists
                 whereClause = @"WHERE EXISTS (
                             SELECT 1 FROM tbl_ReportAssignments AS my_assignment
                             WHERE my_assignment.rpa_ReportId = tbl_Reports.rpt_Id
                             AND my_assignment.rpa_MunicipalityId =
-                                (SELECT usr_MunicipalityId FROM tbl_Users WHERE usr_Id = @userId))
+                                (SELECT usr_MunicipalityId FROM tbl_Users WHERE usr_Id = @userId)) --Is the current report assigned to my municipality
                           AND (SELECT COUNT(*) FROM tbl_ReportAssignments
-                               WHERE rpa_ReportId = tbl_Reports.rpt_Id) = 1 ";
+                               WHERE rpa_ReportId = tbl_Reports.rpt_Id) = 1 ";//Is this report assigned to exactly one municipality
             }
             // Resident and Admin fall through with whereClause = "" → they see everything
 
@@ -333,7 +316,7 @@ namespace CivicFix.Api.Controllers
             END,
             tbl_Reports.rpt_CreatedAt DESC";
 
-            // ADDED: stitch the three parts together, same idea as GetMyReports
+
             var sql = baseSql + whereClause + groupOrderSql;
 
             var reports = await _connection.QueryAsync<dynamic>(sql, new { userId = userId });
@@ -345,7 +328,6 @@ namespace CivicFix.Api.Controllers
         [HttpGet("mine")] // address: GET api/Reports/mine
         public async Task<IActionResult> GetMyReports()
         {
-
             // read the Id claim safely
             var idClaim = User.FindFirst("Id")?.Value;
             if (string.IsNullOrEmpty(idClaim))
@@ -380,36 +362,16 @@ namespace CivicFix.Api.Controllers
 
             if (role == "Resident")
             {
-                // resident sees only reports they submitted
                 whereClause = "WHERE tbl_Reports.rpt_ReporterId = @userId ";
             }
-            else if (role == "Staff")
-            {
-                // staff sees only reports assigned to their baladiye
-                // subquery gets their MunicipalityId from tbl_Users
-                //
-                // FIXED: this used to be
-                //   WHERE tbl_ReportAssignments.rpa_MunicipalityId = (SELECT ...)
-                // which filtered the JOINED rows. Because STRING_AGG runs AFTER the
-                // WHERE, a report shared by 2 baladiyat would only show ONE name in
-                // AssignedMunicipalities. EXISTS filters the REPORT instead of the
-                // joined rows, so the full list of baladiyat is still aggregated.
-                //
-                // ADDED — same "hide undecided shared reports" rule as GetAllReports.
-                // Both list endpoints need it, or the report simply reappears on the
-                // other tab and the rule achieves nothing.
-                whereClause = @"WHERE EXISTS (
-                            SELECT 1 FROM tbl_ReportAssignments AS my_assignment
-                            WHERE my_assignment.rpa_ReportId = tbl_Reports.rpt_Id
-                            AND my_assignment.rpa_MunicipalityId =
-                                (SELECT usr_MunicipalityId FROM tbl_Users WHERE usr_Id = @userId))
-                          AND (SELECT COUNT(*) FROM tbl_ReportAssignments
-                               WHERE rpa_ReportId = tbl_Reports.rpt_Id) = 1 ";
-            }
-            else
+            else if (role == "Admin")
             {
                 // admin sees everything — no filter
                 whereClause = "";
+            }
+            else
+            {
+                return StatusCode(403, "This endpoint is for Residents and Admins. Staff should use GET api/Reports, which already returns their baladiye's reports.");
             }
 
             // the GROUP BY and ORDER BY are the same as GetAllReports
@@ -435,7 +397,6 @@ namespace CivicFix.Api.Controllers
             var reports = await _connection.QueryAsync<dynamic>(fullSql, new { userId });
             return Ok(reports);
         }
-
 
         [Authorize]
         [HttpGet("{id:int}")] // address: GET api/Reports/1
@@ -573,12 +534,12 @@ namespace CivicFix.Api.Controllers
 
             var statusHistory = await _connection.QueryAsync<dynamic>(historySql, new { Id = id });
 
-            
+
             var myPriorityVote = await _connection.QueryFirstOrDefaultAsync<string>(//what did user vote
                 "SELECT pvt_Priority FROM tbl_PriorityVotes WHERE pvt_ReportId = @Id AND pvt_UserId = @UserId",
                 new { Id = id, UserId = currentUserId });
 
-          
+
             var myAgreement = await _connection.QueryFirstOrDefaultAsync<bool?>(
                 "SELECT rga_IsAgreement FROM tbl_ReportAgreements WHERE rga_ReportId = @Id AND rga_UserId = @UserId",
                 new { Id = id, UserId = currentUserId });
@@ -590,10 +551,10 @@ namespace CivicFix.Api.Controllers
                 Report = report,
                 Assignments = assignments,
                 PriorityVotes = priorityBreakdown,
-                Comments = comments,            
-                StatusHistory = statusHistory,   
-                MyPriorityVote = myPriorityVote, 
-                MyAgreement = myAgreement        
+                Comments = comments,
+                StatusHistory = statusHistory,
+                MyPriorityVote = myPriorityVote,
+                MyAgreement = myAgreement
             });
         }
     }

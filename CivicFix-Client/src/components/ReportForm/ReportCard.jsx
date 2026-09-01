@@ -7,39 +7,23 @@ import {
   STATUS_OPTIONS,
 } from "../../services/apiHelpers";
 
-// ONE report in the list.
-//
-// Split out of ReportForm.jsx. The important change is that each card now owns
-// its own "am I being edited / am I busy" state. In the old version the parent
-// held editingId / rowBusyId / assigningId and compared them against every card
-// on every render — four pieces of state in the parent to describe one card.
-//
-// Props:
 //   rep       — the report row from the API
 //   role      — decides whether the admin controls appear
-//   onChanged — called after a save, delete or assign, so the parent reloads
+//   onChanged — a function from the parent used to reload the report list after something changes
 function ReportCard({ rep, role, onChanged }) {
   const navigate = useNavigate();
+  const [editing, setEditing] = useState(false);// is this card's change-status panel open?
+  const [editStatus, setEditStatus] = useState(rep.rpt_Status);//store selected status
+  const [editPhotoUrl, setEditPhotoUrl] = useState(rep.rpt_ResolvedPhotoUrl || "");//stores the resolved photo URL
+  const [busy, setBusy] = useState(false);//prevents repeated clicks
+  const [error, setError] = useState("");//store any error msg
 
-  // is this card's change-status panel open?
-  const [editing, setEditing] = useState(false);
-  const [editStatus, setEditStatus] = useState(rep.rpt_Status);
-  const [editPhotoUrl, setEditPhotoUrl] = useState(rep.rpt_ResolvedPhotoUrl || "");
-
-  // true while THIS card has a request in flight, so its buttons can be
-  // disabled without freezing the rest of the page
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-
-  // Admin changes the status from the list. PUT api/Reports/{id}/status
-  const saveStatus = async () => {
-    // the backend refuses "Resolved" without a photo, so catch it here first
-    // and give a clear message instead of a round trip that fails
+  
+  const saveStatus = async () => {//runs when admin change report status
     if (editStatus === "Resolved" && !editPhotoUrl.trim()) {
       setError("A photo of the fix is required before marking a report Resolved.");
       return;
     }
-
     setBusy(true);
     setError("");
     try {
@@ -52,9 +36,6 @@ function ReportCard({ rep, role, onChanged }) {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          // ChangedByUserId is ignored by the backend now (it reads the JWT
-          // instead, so nobody can blame a status change on another user),
-          // but it is still sent so the request shape stays unchanged.
           body: JSON.stringify({
             NewStatus: editStatus,
             ResolvedPhotoUrl: editPhotoUrl || null,
@@ -66,8 +47,8 @@ function ReportCard({ rep, role, onChanged }) {
       const data = await readBody(response);
 
       if (response.ok) {
-        setEditing(false);
-        onChanged();
+        setEditing(false);//closes the panel
+        onChanged();//report reload
       } else {
         setError(errorTextOf(data, "Could not update the status."));
       }
@@ -78,10 +59,7 @@ function ReportCard({ rep, role, onChanged }) {
     }
   };
 
-  // Admin deletes a report permanently. DELETE api/Reports/{id}
-  // The backend also removes its comments, history, votes and assignments, and
-  // gives back any points the baladiyat had already been awarded for it.
-  const deleteReport = async () => {//delete the current report when the user clicks the Delete button.
+  const deleteReport = async () => {//When the Admin clicks the trash button
     // this is destructive and cannot be undone, so it is worth one extra click
     const confirmed = window.confirm(
       `Delete "${rep.rpt_Title}" permanently?\n\nThis also removes its comments, status history and votes. It cannot be undone.`,
@@ -117,7 +95,7 @@ function ReportCard({ rep, role, onChanged }) {
   // Admin pushes a shared report to one baladiye.
   // PUT api/Reports/{id}/assign-handler removes the other baladiyat entirely,
   // so the report ends up with exactly one owner and leaves the Shared tab.
-  const assignHandler = async (municipalityId) => {
+  const assignHandler = async (municipalityId) => {//Assigning a shared report
     setBusy(true);
     setError("");
     try {

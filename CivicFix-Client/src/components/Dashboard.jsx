@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react"; // useState to store data, useEffect to fetch on load
-import { useNavigate } from "react-router-dom"; //we'll use it to fetch the baladiyat from the backend automatically when the page opens.
+import { useState, useEffect } from "react"; 
+import { useNavigate } from "react-router-dom"; 
 import "../styles/Dashboard.css";
 
 function Dashboard() {
-  const navigate = useNavigate(); // to navigate to /report or /register
+  const navigate = useNavigate(); 
 
   const [municipalities, setMunicipalities] = useState([]); // holds all baladiyat from backend — starts as empty array
   const [search, setSearch] = useState(""); // holds what user typed in search box — starts empty

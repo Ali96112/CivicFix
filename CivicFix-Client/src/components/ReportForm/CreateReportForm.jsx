@@ -2,12 +2,7 @@ import { useState } from "react";
 import MapPicker from "./MapPicker"; // click-a-spot map, for Admin and Staff
 import { readBody, errorTextOf, uploadPhoto } from "../../services/apiHelpers";
 
-// The "🚨 Report a Problem" dropdown form.
-//
-// Split out of ReportForm.jsx — this was about a third of that file. It owns all
-// of its own state, so the parent only has to render it and be told when a
-// report was created.
-//
+// The Report a Problem" dropdown form.
 // Props:
 //   role       — decides which fields appear (priority for Resident, "after"
 //                photo for Staff, map + coordinates for Admin/Staff)
@@ -24,32 +19,13 @@ function CreateReportForm({ role, categories, onCreated }) {
     Longitude: "",
     Priority: "",
   });
-
-  // The real image FILES the user picked, held until submit.
-  // These are browser File objects, not strings — they are uploaded to
-  // POST api/Uploads inside handleSubmit, and the URLs it returns are what
-  // actually get sent to the API as ReportedPhotoUrl / ResolvedPhotoUrl.
   const [reportedPhotoFile, setReportedPhotoFile] = useState(null);
   const [resolvedPhotoFile, setResolvedPhotoFile] = useState(null);
 
-  // Is the map open? Only Admin and Staff ever see the toggle for it.
-  // A resident standing at the pothole should use real GPS, not pick a spot
-  // from a map, so residents keep the GPS button only.
   const [showMap, setShowMap] = useState(false);
   const canUseMap = role === "Admin" || role === "Staff";
 
-  // The "type the coordinates" panel, also Admin and Staff only.
-  //
-  // WHY IT EXISTS: GPS gives you wherever you are standing, and the map is a
-  // blind click because baladiye boundaries are not drawn on it. Neither lets
-  // you file a report at an EXACT point — which you need to test the shared
-  // report case, where a point on a border is assigned to two baladiyat at once.
   const [showCoords, setShowCoords] = useState(false);
-  // REMOVED: coordCheck / checkingCoords. They belonged to the old
-  // "🔎 Check this location" button, which called GET api/Reports/location-check
-  // before submitting. That endpoint (ReportsDiagnosticsController) is gone —
-  // the boundary check now happens only inside CreateReport when you submit,
-  // and its error message already says which baladiye and how far away you are.
 
   const [locationStatus, setLocationStatus] = useState("");
   const [error, setError] = useState("");

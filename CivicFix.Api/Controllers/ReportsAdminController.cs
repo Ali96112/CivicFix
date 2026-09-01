@@ -7,19 +7,7 @@ using System.Security.Claims;
 
 namespace CivicFix.Api.Controllers
 {
-    // ══════════════════════════════════════════════════════════════════════════
-    // ACTIONS ON AN EXISTING REPORT — Staff and Admin only.
-    //
-    // Everything here changes a report rather than reading it: its status, which
-    // baladiye owns it, or whether it exists at all. Grouped together because they
-    // share one audience — every endpoint below is [Authorize(Roles = "Staff,Admin")]
-    // or Admin-only, so the whole file has a single, obvious reader.
-    // ══════════════════════════════════════════════════════════════════════════
     [ApiController]
-    // NOT [Route("api/[controller]")] — that token expands to the class name, so
-    // this file would answer on api/ReportsAdmin and every URL below would change.
-    // Written out in full, these endpoints keep the exact addresses they had when
-    // they all lived in one ReportsController.
     [Route("api/Reports")]
     public class ReportsAdminController : ControllerBase
     {
@@ -30,22 +18,6 @@ namespace CivicFix.Api.Controllers
             _connection = connection;
         }
 
-
-        // ══════════════════════════════════════════════════════════════════════
-        // NEW ENDPOINT — the Admin's "shared reports" screen.
-        //
-        // WHY IT EXISTS: when a Resident reports a problem, CreateReport runs a
-        // spatial query and inserts one tbl_ReportAssignments row for EVERY baladiye
-        // whose polygon contains the point (or is within 100m of it). A pothole on a
-        // road that sits on the border between two baladiyat therefore gets assigned
-        // to BOTH, and neither of them owns it — rpa_IsHandler is 0 on both rows.
-        //
-        // This endpoint lists exactly those reports so the Admin can look at them and
-        // push each one to a single baladiye (see AssignHandler below).
-        //
-        // It returns the report PLUS its list of candidate baladiyat, so React can
-        // draw one button per candidate without making a second call per report.
-        // ══════════════════════════════════════════════════════════════════════
         [Authorize(Roles = "Admin")] // only Admin — Staff/Resident have no business here
         [HttpGet("shared")] // address: GET api/Reports/shared
         public async Task<IActionResult> GetSharedReports()
@@ -85,13 +57,13 @@ namespace CivicFix.Api.Controllers
             if (sharedReports.Count == 0)
                 return Ok(new List<object>());
 
-            // Step 2 — collect the Ids we just found, so we can fetch all their
-            // candidate baladiyat in ONE query instead of one query per report.
-            var reportIds = new List<int>();
+            
+            var reportIds = new List<int>();//create a list that well have report ids
             foreach (var row in sharedReports)
-                reportIds.Add(Convert.ToInt32((object)row.rpt_Id));
+                reportIds.Add(Convert.ToInt32((object)row.rpt_Id));//it get only reports id numbers [2,7,..]
 
             // Dapper expands the @Ids list into IN (1, 2, 3, ...) automatically
+            //give me all the municipalities assigned to each one.
             var candidatesSql = @"
                 SELECT
                     tbl_ReportAssignments.rpa_ReportId,
@@ -102,31 +74,24 @@ namespace CivicFix.Api.Controllers
                 FROM tbl_ReportAssignments
                 INNER JOIN tbl_Municipalities
                     ON tbl_ReportAssignments.rpa_MunicipalityId = tbl_Municipalities.mun_Id
-                WHERE tbl_ReportAssignments.rpa_ReportId IN @Ids
+                WHERE tbl_ReportAssignments.rpa_ReportId IN @Ids --Only get municipality assignments for each reports id
                 ORDER BY tbl_Municipalities.mun_Name";
 
             var candidateRows = await _connection.QueryAsync<dynamic>(candidatesSql, new { Ids = reportIds });
 
             // Step 3 — group the candidates by report Id, so each report can carry its own list.
-            // A Dictionary keyed by report Id is the fast way to do this in memory.
-            // HandlerCandidate (defined at the bottom of this class) is used instead of an
-            // anonymous type so that the .Any(c => c.IsHandler) check below is real,
-            // compile-checked C# rather than reflection.
             var candidatesByReport = new Dictionary<int, List<HandlerCandidate>>();
+            //assume canadiantrow contain : Report 1 → Beirut Report 1 → Baabda Report 3 → Zahle
 
             foreach (var candidate in candidateRows)
             {
-                int candidateReportId = Convert.ToInt32((object)candidate.rpa_ReportId);
+                int candidateReportId = Convert.ToInt32((object)candidate.rpa_ReportId);//Get the report ID from the current row=1
+                if (!candidatesByReport.ContainsKey(candidateReportId))//at first it is empty so it well be false! so true it well run
+                    candidatesByReport[candidateReportId] = new List<HandlerCandidate>();//Report 1 now has an empty list ready to store its candidate municipalities
 
-                // first time we see this report, create its empty list
-                if (!candidatesByReport.ContainsKey(candidateReportId))
-                    candidatesByReport[candidateReportId] = new List<HandlerCandidate>();
+                object? acceptedAtRaw = (object?)candidate.rpa_AcceptedAt;//Example if no handler has been chosen: if well be acceptedat=null stil no one handled it
 
-                // AcceptedAt is NULL in the database until a baladiye is chosen, so it
-                // is read through AsDateTime which turns null/DBNull into a real null.
-                object? acceptedAtRaw = (object?)candidate.rpa_AcceptedAt;
-
-                candidatesByReport[candidateReportId].Add(new HandlerCandidate
+                candidatesByReport[candidateReportId].Add(new HandlerCandidate//add a municipality object into Report 1's list
                 {
                     mun_Id = Convert.ToInt32((object)candidate.mun_Id),
                     mun_Name = (object?)candidate.mun_Name as string ?? "",
@@ -137,11 +102,8 @@ namespace CivicFix.Api.Controllers
                 });
             }
 
-            // Step 4 — stitch each report together with its candidate list.
-            // CHANGED: builds real SharedReportDto objects (see Models/SharedReportDto.cs)
-            // instead of `new { ... }`. An anonymous type built from Dapper `dynamic`
-            // values ends up with dynamic-typed properties, which are only checked at
-            // runtime and serialize unpredictably. Real classes keep this honest.
+            // Step 4 This part takes the shared reports and combines each report with the municipality list we created earlie
+           
             var result = new List<SharedReportDto>();
 
             foreach (var row in sharedReports)
@@ -178,15 +140,12 @@ namespace CivicFix.Api.Controllers
         [HttpPut("{id:int}/status")] // address: PUT api/Reports/1/status
         public async Task<IActionResult> UpdateReportStatus(int id, [FromBody] UpdateStatusRequest request)
         {
-            // ══════════════════════════════════════════════════════════════════
             // CHANGED (ADDED BLOCK) — new rule you asked for:
             //   Admin    → can update the status of ANY report
             //   Staff    → can update ONLY reports assigned to their own baladiye
             //   Resident → already blocked by the [Authorize] line above
-            // ══════════════════════════════════════════════════════════════════
 
-            // who is asking? Straight from the signed JWT, never the request body.
-            // TryParse, not int.Parse: a missing claim gives a 400, not a 500 crash.
+            //It does not trust the frontend to tell it who the user is
             var idClaim = User.FindFirst("Id")?.Value;
             if (!int.TryParse(idClaim, out int currentUserId))
                 return BadRequest("Could not read user Id from token. Claim 'Id' not found.");
@@ -199,8 +158,7 @@ namespace CivicFix.Api.Controllers
             if (string.IsNullOrWhiteSpace(request.NewStatus) || !allowedStatuses.Contains(request.NewStatus))
                 return BadRequest($"Status must be one of: {string.Join(", ", allowedStatuses)}.");
 
-            // ADDED: a "Resolved" report should carry the proof photo.
-            // Without this, the old code happily wrote NULL over an existing photo.
+            //Resolved photo is required
             if (request.NewStatus == "Resolved" && string.IsNullOrWhiteSpace(request.ResolvedPhotoUrl))
                 return BadRequest("A resolved photo is required when setting the status to Resolved.");
 
@@ -226,10 +184,7 @@ namespace CivicFix.Api.Controllers
                     new { ReportId = id, MunicipalityId = myMunicipalityId.Value }) == 0)
                     return StatusCode(403, "You can only update reports assigned to your baladiye.");
 
-                // ADDED — Staff cannot resolve a report the Admin has not allocated yet.
-                // This is the one that matters most: without it, a staff member on a
-                // shared report could mark it Resolved and take the +10 points before
-                // the Admin ever decided whose job it was. 2+ assignment rows = undecided.
+                //Staff cannot resolve a report the Admin has not allocated yet.
                 if (await _connection.QueryFirstAsync<int>(
                     "SELECT COUNT(*) FROM tbl_ReportAssignments WHERE rpa_ReportId = @ReportId",
                     new { ReportId = id }) > 1)
@@ -272,62 +227,31 @@ namespace CivicFix.Api.Controllers
                 ChangedByUserId = currentUserId     // who made the change
             });
 
-            // Step 4 — if resolved, update points in ReportAssignments and Municipality TotalPoints
-            if (request.NewStatus == "Resolved")
-            {
-                // get all assignments for this report
-                // CHANGED: also selects rpa_Points, so we can tell whether this report
-                // has already paid out (see the double-award guard further down).
+            // Step 4 When a report becomes Resolved, figure out which baladiye actually handled it and give that baladiye 10 points — but don't give the same 10 points twice
+            if (request.NewStatus == "Resolved")//runs only when resolved
+            {//Get every baladiye assigned to this report
                 var assignmentsSql = "SELECT rpa_Id, rpa_MunicipalityId, rpa_IsHandler, rpa_Points FROM tbl_ReportAssignments WHERE rpa_ReportId = @ReportId";
                 var assignments = (await _connection.QueryAsync<dynamic>(assignmentsSql, new { ReportId = id })).ToList();
-
-                // ══════════════════════════════════════════════════════════════
-                // CHANGED — THE RULE IS NOW SIMPLY: THE BALADIYE THAT FIXES IT GAINS.
-                //
-                // It used to be "+10 for the handler, -5 for everyone else". The -5
-                // was meant to punish a baladiye that ignored a shared report, but it
-                // backfired: rpa_IsHandler starts at 0 for every RESIDENT-submitted
-                // report (see CreateReport) and only becomes 1 if somebody calls
-                // /accept or /assign-handler — which nothing forces. So the normal
-                // flow was:
-                //
-                //   resident reports a pothole in Beirut
-                //     → one assignment row, Beirut, rpa_IsHandler = 0
-                //   Beirut fixes it and marks the report Resolved
-                //     → the loop saw IsHandler = 0 and took 5 points OFF Beirut
-                //
-                // The baladiye that did the work lost points for doing it — that is
-                // why 150 became 145.
-                //
-                // THE PENALTY IS GONE. Now the baladiye that resolves a report gains
-                // +10 and nobody else is touched. Two things still have to be right:
-                //
-                //   1. we must know WHICH baladiye resolved it, so the points land on
-                //      the correct one (worked out just below)
-                //   2. a report must not pay out twice if it is resolved, reopened and
-                //      resolved again (the rpa_Points guard in the loop)
-                // ══════════════════════════════════════════════════════════════
-
+                //Is there already a handler
                 bool anyHandler = assignments.Any(a => Convert.ToBoolean((object)a.rpa_IsHandler));
 
-                if (!anyHandler)
+                if (!anyHandler)//nobody is the handler
                 {
                     int? handlerMunicipalityId = null;
 
                     if (currentRole == "Staff")
                     {
-                        // a staff member resolving a report IS the baladiye doing the work
+                        // a staff member resolving and make that baladiye the handler
                         handlerMunicipalityId = await _connection.QueryFirstOrDefaultAsync<int?>(
                     "SELECT usr_MunicipalityId FROM tbl_Users WHERE usr_Id = @Id", new { Id = currentUserId });
                     }
                     else if (assignments.Count == 1)
                     {
-                        // an Admin resolved it, and only one baladiye was ever assigned —
-                        // there is nobody else it could have been
+                        // an Admin resolved it, and only one baladiye was ever assigned 
                         handlerMunicipalityId = Convert.ToInt32((object)assignments[0].rpa_MunicipalityId);
                     }
 
-                    if (handlerMunicipalityId != null)
+                    if (handlerMunicipalityId != null)//after the code has figured out which baladiye should be the handler
                     {
                         await _connection.ExecuteAsync(@"
                             UPDATE tbl_ReportAssignments
@@ -335,7 +259,7 @@ namespace CivicFix.Api.Controllers
                             WHERE rpa_ReportId = @ReportId AND rpa_MunicipalityId = @MunicipalityId",
                             new { AcceptedAt = DateTime.Now, ReportId = id, MunicipalityId = handlerMunicipalityId });
 
-                        // re-read so the loop below sees the handler we just set
+                        // Mark that baladiye as the handler
                         assignments = (await _connection.QueryAsync<dynamic>(
                             assignmentsSql, new { ReportId = id })).ToList();
 
@@ -352,28 +276,14 @@ namespace CivicFix.Api.Controllers
                     return Ok("Report marked as Resolved. No points were awarded, because no baladiye is marked as the handler — choose one on the Shared Reports screen first.");
                 }
 
-                foreach (var assignment in assignments)
+                foreach (var assignment in assignments)//assignments contains the baladiyat assigned to this report
                 {
-                    // FIXED: rpa_IsHandler arrives as a dynamic BIT. Using it straight
-                    // inside a `? :` is resolved at runtime and throws
-                    // RuntimeBinderException if the column type ever changes.
-                    // The (object) cast forces the compiler to pick Convert.ToBoolean(object)
-                    // at BUILD time, and Convert handles bit / int / bool all the same.
-                    bool isHandler = Convert.ToBoolean((object)assignment.rpa_IsHandler);
-
-                    // CHANGED: the other baladiyat on a shared report are simply left
-                    // alone now. They used to lose 5 points here — that penalty is gone.
+                    bool isHandler = Convert.ToBoolean((object)assignment.rpa_IsHandler);//isHandler=true
                     if (!isHandler)
                     {
-                        continue;
+                        continue;//skip the loop for this assigment baladeye and move to other baladeye to check
                     }
-
-                    // CHANGED: don't pay the same report twice. rpa_Points is 0 until a
-                    // report pays out, so a non-zero value means this baladiye has already
-                    // been credited — which happens if a report is resolved, reopened and
-                    // resolved again. Without this, each round trip would hand out another
-                    // +10 and the leaderboard could be inflated at will.
-                    int alreadyAwarded = Convert.ToInt32((object)assignment.rpa_Points);
+                    int alreadyAwarded = Convert.ToInt32((object)assignment.rpa_Points);//Check whether this report already gave points
                     if (alreadyAwarded != 0)
                     {
                         continue;
@@ -397,20 +307,7 @@ namespace CivicFix.Api.Controllers
         }
 
 
-        // ══════════════════════════════════════════════════════════════════════
-        // NEW ENDPOINT — the Admin picks WHICH baladiye a shared report goes to.
-        //
-        // This is the button behind each baladiye name on the "shared" tab.
-        // It sets rpa_IsHandler = 1 on the chosen baladiye and, importantly,
-        // clears it on all the others, so a report always has exactly ONE owner.
-        //
-        // Why a separate endpoint instead of reusing PUT {id}/accept:
-        // /accept is what a STAFF member calls to claim a report for their OWN
-        // baladiye, and it must never clear another baladiye's handler flag —
-        // otherwise any staff member could steal ownership (and the +10 points)
-        // from a baladiye that already accepted. This endpoint is Admin-only and
-        // is allowed to overwrite, so the two jobs stay separate.
-        // ══════════════════════════════════════════════════════════════════════
+
         [Authorize(Roles = "Admin")] // Admin only — this overwrites other baladiyat's flags
         [HttpPut("{id:int}/assign-handler")] // address: PUT api/Reports/1/assign-handler
         public async Task<IActionResult> AssignHandler(int id, [FromBody] MunicipalityRequest request)
@@ -426,43 +323,9 @@ namespace CivicFix.Api.Controllers
                 return NotFound("Report not found.");
 
             // Step 2 — a resolved report is frozen.
-            // UpdateReportStatus already handed out points based on who the handler was
-            // (+10 to the baladiye that resolved it). Changing the handler now would
-            // leave those points pointing at the wrong baladiye, so we refuse.
             if (Convert.ToString((object)report.rpt_Status) == "Resolved")
                 return BadRequest("This report is already resolved — the handling baladiye can no longer be changed.");
 
-            // Step 3 — the chosen baladiye must actually be one of the report's candidates.
-            // Without this check an admin could push a report to a baladiye that is
-            // nowhere near the location.
-            if (await _connection.QueryFirstAsync<int>(
-                    @"SELECT COUNT(*) FROM tbl_ReportAssignments
-                      WHERE rpa_ReportId = @ReportId AND rpa_MunicipalityId = @MunicipalityId",
-                    new { ReportId = id, MunicipalityId = request.MunicipalityId }) == 0)
-                return BadRequest("That baladiye is not one of the baladiyat assigned to this report.");
-
-            // ══════════════════════════════════════════════════════════════════
-            // CHANGED — choosing a baladiye now GIVES THE REPORT TO IT OUTRIGHT.
-            //
-            // Before, this only flipped rpa_IsHandler: the chosen baladiye got 1
-            // and the others got 0, but their assignment rows stayed. So in the
-            // database a report "given to Furn ech Chebak" was still linked to
-            // Beirut and Chiayah too, and it kept appearing on the Shared Reports
-            // tab as though nothing had been decided.
-            //
-            // Now the other baladiyat are removed entirely. After this call the
-            // report has exactly ONE assignment row — the chosen baladiye, marked
-            // as handler — so the database says plainly who owns it, and the report
-            // drops off the Shared Reports tab because it is no longer shared.
-            //
-            // Changing your mind later is still possible: use the
-            // "↪️ Move to another baladiye" panel on the report's detail page,
-            // which can hand it to any baladiye in the country.
-            // ══════════════════════════════════════════════════════════════════
-
-            // several tables change below, so it runs as one transaction — either
-            // the whole handover happens or none of it does. A failure halfway
-            // could otherwise leave the report with no baladiye at all.
             if (_connection.State != System.Data.ConnectionState.Open)
                 await _connection.OpenAsync();
 
@@ -532,30 +395,7 @@ namespace CivicFix.Api.Controllers
         }
 
 
-        // ══════════════════════════════════════════════════════════════════════
-        // NEW ENDPOINT — the Admin MOVES a report to a different baladiye.
-        //
-        // HOW THIS DIFFERS FROM /assign-handler:
-        //   /assign-handler picks a winner from the baladiyat the report is ALREADY
-        //   assigned to. It cannot introduce a new one.
-        //   /move replaces the assignments entirely with one baladiye of the admin's
-        //   choosing — ANY baladiye in the country, whether the spatial query found
-        //   it or not.
-        //
-        // WHY IT IS NEEDED: the automatic assignment is only as good as the boundary
-        // polygons. If a report lands on the wrong baladiye — bad boundary data, a
-        // GPS reading that drifted, or a problem that is genuinely another baladiye's
-        // responsibility despite where it sits — there was previously no way to
-        // correct it short of deleting the report and asking the resident to file
-        // it again, which loses its comments, votes and history.
-        //
-        // THE POINTS HAVE TO BE UNWOUND FIRST. If the report was already resolved,
-        // the old baladiye was credited +10 and that is on the public leaderboard.
-        // Moving the report without reversing that would leave a baladiye holding
-        // points for work now attributed to somebody else. So every existing
-        // assignment's rpa_Points is subtracted back off its baladiye before the
-        // rows are replaced.
-        // ══════════════════════════════════════════════════════════════════════
+
         [Authorize(Roles = "Admin")] // Admin only — this overrides the spatial assignment
         [HttpPut("{id:int}/move")] // address: PUT api/Reports/1/move
         public async Task<IActionResult> MoveReport(int id, [FromBody] MunicipalityRequest request)
@@ -668,29 +508,7 @@ namespace CivicFix.Api.Controllers
         }
 
 
-        // ══════════════════════════════════════════════════════════════════════
-        // NEW ENDPOINT — the Admin deletes a report for good.
-        //
-        // This is a HARD delete: the row really leaves tbl_Reports, it does not just
-        // get hidden. Because of that there are two things it has to do carefully.
-        //
-        // 1) CHILD ROWS FIRST.
-        //    In AppDbContext every relationship is set to DeleteBehavior.Restrict,
-        //    which means SQL Server REFUSES to delete a report while anything still
-        //    points at it. So the children are deleted first, in the right order:
-        //    comments, status history, priority votes, agreements, assignments —
-        //    and only then the report itself.
-        //
-        // 2) GIVE THE POINTS BACK.
-        //    If the report was already resolved, each baladiye's mun_TotalPoints was
-        //    changed (+10 for the baladiye that resolved it). Deleting the report
-        //    without undoing that would leave the public leaderboard permanently wrong,
-        //    showing points for a report that no longer exists. So each assignment's
-        //    rpa_Points is subtracted back out before the rows are removed.
-        //
-        // The whole thing runs inside a TRANSACTION: if any step fails, everything is
-        // rolled back and nothing is half-deleted.
-        // ══════════════════════════════════════════════════════════════════════
+
         [Authorize(Roles = "Admin")] // Admin only — Staff and Resident cannot delete anything
         [HttpDelete("{id:int}")] // address: DELETE api/Reports/1
         public async Task<IActionResult> DeleteReport(int id)
@@ -745,7 +563,7 @@ namespace CivicFix.Api.Controllers
                 // finally the report itself
                 await _connection.ExecuteAsync("DELETE FROM tbl_Reports WHERE rpt_Id = @Id", new { Id = id }, transaction);
 
-              
+
                 transaction.Commit();//keep all changes 
             }
             catch

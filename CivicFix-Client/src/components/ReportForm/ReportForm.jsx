@@ -1,7 +1,4 @@
 import { useState, useEffect } from "react";
-// ReportNavbar lives one level UP, in components/, not in this folder — both
-// ReportList and ReportDetail use it, and a file shared by two feature folders
-// belongs to neither of them. That is why this one import says "../".
 import ReportNavbar from "../ReportNavbar";
 import StaffBaladiyeBadge from "./StaffBaladiyeBadge";
 import ReportTabs from "./ReportTabs";
@@ -10,12 +7,6 @@ import CreateReportForm from "./CreateReportForm";
 import ReportCard from "./ReportCard";
 import "../../styles/Report.css";
 
-// The reports page.
-//
-// This file used to be ~1,300 lines. It is now just the page layout plus the
-// one thing the whole page shares: the list of reports and which tab is showing.
-// Everything else moved out —
-//
 //   ReportNavbar         the top bar (also used by ReportDetail)
 //   StaffBaladiyeBadge   "Your baladiye: Beirut — 140 pts"
 //   ReportTabs           All / My Reports / Shared Reports
@@ -52,7 +43,7 @@ function ReportForm() {
           ? "http://localhost:5140/api/Reports/shared"
           : tab === "mine"
             ? "http://localhost:5140/api/Reports/mine"
-            : "http://localhost:5140/api/Reports";
+            : "http://localhost:5140/api/Reports";//if tab=all
 
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
